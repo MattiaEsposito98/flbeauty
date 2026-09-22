@@ -29,10 +29,10 @@ class ProductForm
                             ->columnSpan(1),
                         TextInput::make('slug')
                             ->label('Slug (URL)')
-                            ->required()
-                            ->unique(ignoreRecord: true)
+                            ->disabled()
+                            ->dehydrated()
                             ->maxLength(255)
-                            ->helperText('Generato automaticamente dal nome, puoi modificarlo.')
+                            ->helperText('Generato automaticamente dal nome. In caso di doppioni viene reso unico da solo (es. matita-nera-2).')
                             ->columnSpan(1),
                         Textarea::make('description')
                             ->label('Descrizione')
