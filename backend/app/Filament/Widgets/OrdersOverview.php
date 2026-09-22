@@ -2,8 +2,11 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Resources\Products\ProductResource;
 use App\Models\Order;
 use App\Models\Product;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -25,15 +28,21 @@ class OrdersOverview extends StatsOverviewWidget
         return [
             Stat::make('Ordini da gestire', $nuovi)
                 ->description('Nuovi ordini in attesa')
-                ->color($nuovi > 0 ? 'warning' : 'success'),
+                ->descriptionIcon(Heroicon::OutlinedArrowRight, 'after')
+                ->color($nuovi > 0 ? 'warning' : 'success')
+                ->url(OrderResource::getUrl('index')),
 
             Stat::make('Fatturato stimato (mese)', number_format((float) $fatturatoMese, 2, ',', '.').' €')
                 ->description('Ordini non annullati')
-                ->color('success'),
+                ->descriptionIcon(Heroicon::OutlinedArrowRight, 'after')
+                ->color('success')
+                ->url(OrderResource::getUrl('index')),
 
             Stat::make('Prodotti attivi', $prodottiAttivi)
                 ->description('Visibili nel negozio')
-                ->color('primary'),
+                ->descriptionIcon(Heroicon::OutlinedArrowRight, 'after')
+                ->color('primary')
+                ->url(ProductResource::getUrl('index')),
         ];
     }
 }

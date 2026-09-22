@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Models\Product;
+use App\Models\ShippingRate;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -78,14 +79,29 @@ class OrderForm
 
                         Placeholder::make('subtotal_preview')
                             ->label('Subtotale articoli')
-                            ->content(function (callable $get) {
-                                $items = $get('items') ?? [];
-                                $subtotal = collect($items)->sum(
-                                    fn ($item) => (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0)
-                                );
+                            ->content(fn (callable $get) => self::formatEuro(self::itemsSubtotal($get))),
+                    ]),
 
-                                return number_format($subtotal, 2, ',', '.').' €';
+                Section::make('Spedizione')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('shipping_rate_id')
+                            ->label('Metodo di spedizione')
+                            ->relationship('shippingRate', 'name', fn ($query) => $query->where('is_active', true))
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('shipping_cost', ShippingRate::find($state)?->price ?? 0);
                             }),
+                        TextInput::make('shipping_cost')
+                            ->label('Costo spedizione')
+                            ->numeric()
+                            ->prefix('€')
+                            ->default(0)
+                            ->required()
+                            ->live()
+                            ->helperText('Precompilato in base al metodo scelto, puoi modificarlo.'),
                     ]),
 
                 Section::make('Sconto, stato e totale')
@@ -108,14 +124,11 @@ class OrderForm
                             ->default('nuovo')
                             ->required(),
                         Placeholder::make('total_preview')
-                            ->label('Totale ordine (calcolato al salvataggio)')
+                            ->label('Totale ordine (articoli + spedizione, calcolato al salvataggio)')
                             ->content(function (callable $get) {
-                                $items = $get('items') ?? [];
-                                $subtotal = collect($items)->sum(
-                                    fn ($item) => (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0)
-                                );
+                                $total = self::itemsSubtotal($get) + (float) ($get('shipping_cost') ?? 0);
 
-                                return number_format($subtotal, 2, ',', '.').' €';
+                                return self::formatEuro($total);
                             })
                             ->columnSpanFull(),
                         Textarea::make('notes')
@@ -124,5 +137,19 @@ class OrderForm
                             ->columnSpanFull(),
                     ]),
             ]);
+    }
+
+    protected static function itemsSubtotal(callable $get): float
+    {
+        $items = $get('items') ?? [];
+
+        return collect($items)->sum(
+            fn ($item) => (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0)
+        );
+    }
+
+    protected static function formatEuro(float $value): string
+    {
+        return number_format($value, 2, ',', '.').' €';
     }
 }

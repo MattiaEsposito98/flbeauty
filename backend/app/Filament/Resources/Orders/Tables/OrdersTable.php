@@ -27,6 +27,10 @@ class OrdersTable
                     ->label('Email')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('shippingRate.name')
+                    ->label('Spedizione')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('discount.code')
                     ->label('Sconto')
                     ->badge()

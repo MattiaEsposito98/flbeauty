@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Support\PinkAvatarProvider;
+use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -32,10 +34,15 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('images/logo-mark.png'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('favicon.png'))
+            ->defaultAvatarProvider(PinkAvatarProvider::class)
+            ->defaultThemeMode(ThemeMode::Light)
             ->colors([
                 'primary' => Color::hex('#B76E79'),
                 'danger' => Color::Rose,
-                'gray' => Color::Stone,
+                'warning' => Color::Amber,
+                'success' => Color::Emerald,
+                'info' => Color::Sky,
+                'gray' => Color::hex('#BFA39E'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

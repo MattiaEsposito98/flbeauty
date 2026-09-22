@@ -14,6 +14,8 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'discount_id',
+        'shipping_rate_id',
+        'shipping_cost',
         'customer_name',
         'customer_email',
         'customer_phone',
@@ -26,7 +28,13 @@ class Order extends Model
     {
         return [
             'total' => 'decimal:2',
+            'shipping_cost' => 'decimal:2',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn (Order $order) => $order->recalculateTotal());
     }
 
     public function user(): BelongsTo
@@ -39,6 +47,11 @@ class Order extends Model
         return $this->belongsTo(Discount::class);
     }
 
+    public function shippingRate(): BelongsTo
+    {
+        return $this->belongsTo(ShippingRate::class);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
@@ -46,10 +59,14 @@ class Order extends Model
 
     public function recalculateTotal(): void
     {
-        $total = $this->items()->get()->sum(
+        $itemsTotal = $this->items()->get()->sum(
             fn (OrderItem $item) => $item->quantity * $item->unit_price
         );
 
-        $this->updateQuietly(['total' => $total]);
+        $total = $itemsTotal + (float) $this->shipping_cost;
+
+        if ((float) $this->total !== $total) {
+            $this->updateQuietly(['total' => $total]);
+        }
     }
 }
