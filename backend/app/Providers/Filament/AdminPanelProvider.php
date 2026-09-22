@@ -28,8 +28,14 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('F&L Beauty')
+            ->brandLogo(asset('images/logo-mark.png'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(asset('favicon.png'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#B76E79'),
+                'danger' => Color::Rose,
+                'gray' => Color::Stone,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
