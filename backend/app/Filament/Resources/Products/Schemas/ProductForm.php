@@ -43,7 +43,11 @@ class ProductForm
                                 TextInput::make('name')
                                     ->label('Nome')
                                     ->required()
-                                    ->maxLength(255),
+                                    ->maxLength(255)
+                                    ->unique(table: \App\Models\Category::class)
+                                    ->validationMessages([
+                                        'unique' => 'Esiste già una categoria con questo nome.',
+                                    ]),
                             ])
                             ->columnSpanFull(),
                         Textarea::make('description')
@@ -79,7 +83,7 @@ class ProductForm
                     ->schema([
                         FileUpload::make('images')
                             ->label('Immagini prodotto')
-                            ->helperText('La prima immagine caricata sarà usata come copertina. Trascina per riordinare.')
+                            ->helperText('La prima immagine caricata sarà usata come copertina. Trascina per riordinare. Da telefono o tablet puoi anche scattare la foto al momento.')
                             ->image()
                             ->imageEditor()
                             ->multiple()
@@ -87,13 +91,15 @@ class ProductForm
                             ->maxFiles(8)
                             ->directory('products/images')
                             ->visibility('public')
+                            ->extraInputAttributes(['capture' => 'environment'])
                             ->columnSpanFull(),
                         FileUpload::make('video')
                             ->label('Video prodotto')
-                            ->helperText('Facoltativo, es. un breve video dimostrativo del prodotto.')
+                            ->helperText('Facoltativo, es. un breve video dimostrativo del prodotto. Da telefono o tablet puoi anche registrarlo al momento.')
                             ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
                             ->directory('products/videos')
                             ->visibility('public')
+                            ->extraInputAttributes(['capture' => 'environment'])
                             ->columnSpanFull(),
                     ]),
             ]);
