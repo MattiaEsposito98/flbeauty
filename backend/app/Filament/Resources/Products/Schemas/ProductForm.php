@@ -83,7 +83,7 @@ class ProductForm
                     ->schema([
                         FileUpload::make('images')
                             ->label('Immagini prodotto')
-                            ->helperText('La prima immagine caricata sarà usata come copertina. Trascina per riordinare. Da telefono o tablet puoi anche scattare la foto al momento.')
+                            ->helperText('La prima immagine caricata sarà usata come copertina. Trascina per riordinare. Da telefono o tablet il selettore file permette anche di scattare una foto al momento.')
                             ->image()
                             ->imageEditor()
                             ->multiple()
@@ -91,15 +91,13 @@ class ProductForm
                             ->maxFiles(8)
                             ->directory('products/images')
                             ->visibility('public')
-                            ->extraInputAttributes(['capture' => 'environment'])
                             ->columnSpanFull(),
                         FileUpload::make('video')
                             ->label('Video prodotto')
-                            ->helperText('Facoltativo, es. un breve video dimostrativo del prodotto. Da telefono o tablet puoi anche registrarlo al momento.')
+                            ->helperText('Facoltativo, es. un breve video dimostrativo del prodotto. Da telefono o tablet il selettore file permette anche di registrarlo al momento.')
                             ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
                             ->directory('products/videos')
                             ->visibility('public')
-                            ->extraInputAttributes(['capture' => 'environment'])
                             ->columnSpanFull(),
                     ]),
             ]);
