@@ -28,6 +28,8 @@ class DiscountResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'code';
 
+    protected static ?int $navigationSort = 40;
+
     public static function form(Schema $schema): Schema
     {
         return DiscountForm::configure($schema);

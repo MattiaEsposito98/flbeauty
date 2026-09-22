@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -23,6 +24,12 @@ class ProductsTable
                 TextColumn::make('name')
                     ->label('Nome')
                     ->searchable()
+                    ->sortable(),
+                TextColumn::make('category.name')
+                    ->label('Categoria')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('—')
                     ->sortable(),
                 TextColumn::make('price')
                     ->label('Prezzo')
@@ -55,6 +62,9 @@ class ProductsTable
             ->filters([
                 TernaryFilter::make('is_active')
                     ->label('Attivo'),
+                SelectFilter::make('category_id')
+                    ->label('Categoria')
+                    ->relationship('category', 'name'),
             ])
             ->recordActions([
                 EditAction::make(),

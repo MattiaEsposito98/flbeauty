@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
@@ -34,6 +34,18 @@ class ProductForm
                             ->maxLength(255)
                             ->helperText('Generato automaticamente dal nome. In caso di doppioni viene reso unico da solo (es. matita-nera-2).')
                             ->columnSpan(1),
+                        Select::make('category_id')
+                            ->label('Categoria')
+                            ->relationship('category', 'name', fn ($query) => $query->where('is_active', true))
+                            ->searchable()
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->label('Nome')
+                                    ->required()
+                                    ->maxLength(255),
+                            ])
+                            ->columnSpanFull(),
                         Textarea::make('description')
                             ->label('Descrizione')
                             ->rows(4)
