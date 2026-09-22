@@ -63,13 +63,24 @@ class ProductForm
                             ->inline(false),
                     ]),
 
-                Section::make('Immagine')
+                Section::make('Immagini e video')
                     ->schema([
-                        FileUpload::make('image')
-                            ->label('Immagine prodotto')
+                        FileUpload::make('images')
+                            ->label('Immagini prodotto')
+                            ->helperText('La prima immagine caricata sarà usata come copertina. Trascina per riordinare.')
                             ->image()
                             ->imageEditor()
-                            ->directory('products')
+                            ->multiple()
+                            ->reorderable()
+                            ->maxFiles(8)
+                            ->directory('products/images')
+                            ->visibility('public')
+                            ->columnSpanFull(),
+                        FileUpload::make('video')
+                            ->label('Video prodotto')
+                            ->helperText('Facoltativo, es. un breve video dimostrativo del prodotto.')
+                            ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
+                            ->directory('products/videos')
                             ->visibility('public')
                             ->columnSpanFull(),
                     ]),

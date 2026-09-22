@@ -17,7 +17,7 @@ class ProductsTable
     {
         return $table
             ->columns([
-                ImageColumn::make('image')
+                ImageColumn::make('cover_image')
                     ->label('Immagine')
                     ->square(),
                 TextColumn::make('name')

@@ -14,9 +14,10 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'images',
+        'video',
         'price',
         'stock',
-        'image',
         'is_active',
     ];
 
@@ -26,7 +27,13 @@ class Product extends Model
             'price' => 'decimal:2',
             'stock' => 'integer',
             'is_active' => 'boolean',
+            'images' => 'array',
         ];
+    }
+
+    public function getCoverImageAttribute(): ?string
+    {
+        return $this->images[0] ?? null;
     }
 
     public function orderItems(): HasMany
