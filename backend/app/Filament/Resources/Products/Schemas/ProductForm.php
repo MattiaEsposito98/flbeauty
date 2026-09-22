@@ -83,7 +83,7 @@ class ProductForm
                     ->schema([
                         FileUpload::make('images')
                             ->label('Immagini prodotto')
-                            ->helperText('La prima immagine caricata sarà usata come copertina. Trascina per riordinare. Da telefono o tablet il selettore file permette anche di scattare una foto al momento.')
+                            ->helperText('La prima immagine sarà usata come copertina. Trascina per riordinare.')
                             ->image()
                             ->imageEditor()
                             ->multiple()
@@ -92,12 +92,49 @@ class ProductForm
                             ->directory('products/images')
                             ->visibility('public')
                             ->columnSpanFull(),
+                        FileUpload::make('camera_capture')
+                            ->label('📷 Scatta una foto ora')
+                            ->helperText('Solo da telefono/tablet: apre direttamente la fotocamera. La foto scattata si aggiunge alla galleria sopra.')
+                            ->image()
+                            ->imageEditor()
+                            ->extraInputAttributes(['capture' => 'environment'])
+                            ->directory('products/images')
+                            ->visibility('public')
+                            ->live()
+                            ->dehydrated(false)
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                if (blank($state)) {
+                                    return;
+                                }
+
+                                $set('images', [...($get('images') ?? []), $state]);
+                                $set('camera_capture', null);
+                            })
+                            ->columnSpanFull(),
                         FileUpload::make('video')
                             ->label('Video prodotto')
-                            ->helperText('Facoltativo, es. un breve video dimostrativo del prodotto. Da telefono o tablet il selettore file permette anche di registrarlo al momento.')
+                            ->helperText('Facoltativo, es. un breve video dimostrativo del prodotto.')
                             ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
                             ->directory('products/videos')
                             ->visibility('public')
+                            ->columnSpanFull(),
+                        FileUpload::make('camera_capture_video')
+                            ->label('🎥 Registra un video ora')
+                            ->helperText('Solo da telefono/tablet: apre direttamente la fotocamera in modalità video. Sostituisce il video sopra.')
+                            ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
+                            ->extraInputAttributes(['capture' => 'environment'])
+                            ->directory('products/videos')
+                            ->visibility('public')
+                            ->live()
+                            ->dehydrated(false)
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if (blank($state)) {
+                                    return;
+                                }
+
+                                $set('video', $state);
+                                $set('camera_capture_video', null);
+                            })
                             ->columnSpanFull(),
                     ]),
             ]);
