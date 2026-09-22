@@ -1,0 +1,7 @@
+/* Nasconde i campi "scatta foto/video" su schermi da tablet/desktop in su (>=768px).
+   Restano visibili solo su smartphone, dove ha senso offrire lo scatto diretto. */
+@media (min-width: 768px) {
+    .fl-mobile-only {
+        display: none !important;
+    }
+}
