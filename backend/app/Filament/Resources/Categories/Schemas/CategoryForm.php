@@ -16,11 +16,12 @@ class CategoryForm
     {
         return $schema
             ->components([
-                Section::make('Categoria')
-                    ->columns(2)
+                Section::make('Dati categoria')
+                    ->description('Le categorie servono a raggruppare i prodotti nel negozio.')
                     ->schema([
                         TextInput::make('name')
                             ->label('Nome')
+                            ->placeholder('Es. Trucco viso')
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
@@ -41,24 +42,21 @@ class CategoryForm
                                 return $exists
                                     ? '⚠️ Esiste già una categoria chiamata "'.$state.'". Usa quella invece di crearne una nuova.'
                                     : null;
-                            })
-                            ->columnSpan(1),
+                            }),
+                        Textarea::make('description')
+                            ->label('Descrizione')
+                            ->placeholder('Facoltativa, una breve descrizione della categoria.')
+                            ->rows(3),
+                        Toggle::make('is_active')
+                            ->label('Categoria attiva')
+                            ->helperText('Se disattivata, non sarà selezionabile per nuovi prodotti.')
+                            ->default(true),
                         TextInput::make('slug')
                             ->label('Slug (URL)')
                             ->disabled()
                             ->dehydrated()
                             ->maxLength(255)
-                            ->helperText('Generato automaticamente dal nome.')
-                            ->columnSpan(1),
-                        Textarea::make('description')
-                            ->label('Descrizione')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                        Toggle::make('is_active')
-                            ->label('Attiva')
-                            ->helperText('Visibile nel negozio')
-                            ->default(true)
-                            ->inline(false),
+                            ->helperText('Generato automaticamente dal nome, sempre unico.'),
                     ]),
             ]);
     }

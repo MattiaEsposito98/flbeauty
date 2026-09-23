@@ -5,8 +5,8 @@ namespace App\Filament\Resources\Discounts\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -19,38 +19,31 @@ class DiscountsTable
                 TextColumn::make('code')
                     ->label('Codice')
                     ->searchable()
-                    ->weight('bold'),
-                TextColumn::make('description')
-                    ->label('Descrizione')
-                    ->searchable()
-                    ->limit(40),
-                TextColumn::make('type')
-                    ->label('Tipo')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state) => $state === 'fisso' ? 'Importo fisso' : 'Percentuale')
-                    ->color(fn (string $state) => $state === 'fisso' ? 'info' : 'primary'),
+                    ->weight('bold')
+                    ->copyable()
+                    ->copyMessage('Codice copiato')
+                    ->description(fn ($record) => $record->description),
                 TextColumn::make('value')
-                    ->label('Valore')
+                    ->label('Sconto')
+                    ->badge()
+                    ->color(fn ($record) => $record->type === 'fisso' ? 'info' : 'primary')
                     ->formatStateUsing(fn ($state, $record) => $record->type === 'fisso'
                         ? number_format((float) $state, 2, ',', '.').' €'
-                        : number_format((float) $state, 0).' %')
+                        : rtrim(rtrim(number_format((float) $state, 2, ',', '.'), '0'), ',').'%')
                     ->sortable(),
                 TextColumn::make('starts_at')
-                    ->label('Dal')
-                    ->dateTime('d/m/Y H:i')
+                    ->label('Valido dal')
+                    ->dateTime('d/m/Y')
+                    ->placeholder('Sempre')
                     ->sortable(),
                 TextColumn::make('ends_at')
-                    ->label('Al')
-                    ->dateTime('d/m/Y H:i')
+                    ->label('Fino al')
+                    ->dateTime('d/m/Y')
+                    ->placeholder('Nessuna scadenza')
                     ->sortable(),
-                IconColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('Attivo')
-                    ->boolean(),
-                TextColumn::make('created_at')
-                    ->label('Creato il')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->alignCenter(),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
@@ -64,6 +57,9 @@ class DiscountsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->emptyStateHeading('Nessuno sconto')
+            ->emptyStateDescription('Crea un codice sconto da comunicare ai clienti.');
     }
 }

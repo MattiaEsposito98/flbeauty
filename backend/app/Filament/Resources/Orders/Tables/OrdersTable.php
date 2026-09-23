@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Orders\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -18,15 +19,34 @@ class OrdersTable
                 TextColumn::make('id')
                     ->label('Ordine')
                     ->formatStateUsing(fn (int $state) => '#'.str_pad((string) $state, 5, '0', STR_PAD_LEFT))
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->sortable(),
                 TextColumn::make('customer_name')
                     ->label('Cliente')
-                    ->searchable()
+                    ->description(fn ($record) => $record->customer_email)
+                    ->searchable(['customer_name', 'customer_email'])
                     ->sortable(),
-                TextColumn::make('customer_email')
-                    ->label('Email')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('items_count')
+                    ->label('Articoli')
+                    ->counts('items')
+                    ->badge()
+                    ->color('gray')
+                    ->alignCenter(),
+                SelectColumn::make('status')
+                    ->label('Stato')
+                    ->options([
+                        'nuovo' => 'Nuovo',
+                        'in_lavorazione' => 'In lavorazione',
+                        'evaso' => 'Evaso',
+                        'annullato' => 'Annullato',
+                    ])
+                    ->selectablePlaceholder(false),
+                TextColumn::make('total')
+                    ->label('Totale')
+                    ->money('EUR')
+                    ->weight('medium')
+                    ->sortable()
+                    ->alignEnd(),
                 TextColumn::make('shippingRate.name')
                     ->label('Spedizione')
                     ->placeholder('—')
@@ -35,28 +55,8 @@ class OrdersTable
                     ->label('Sconto')
                     ->badge()
                     ->color('info')
-                    ->placeholder('—'),
-                TextColumn::make('status')
-                    ->label('Stato')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state) => match ($state) {
-                        'nuovo' => 'Nuovo',
-                        'in_lavorazione' => 'In lavorazione',
-                        'evaso' => 'Evaso',
-                        'annullato' => 'Annullato',
-                        default => $state,
-                    })
-                    ->color(fn (string $state) => match ($state) {
-                        'nuovo' => 'info',
-                        'in_lavorazione' => 'warning',
-                        'evaso' => 'success',
-                        'annullato' => 'danger',
-                        default => 'gray',
-                    }),
-                TextColumn::make('total')
-                    ->label('Totale')
-                    ->money('EUR')
-                    ->sortable(),
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label('Ricevuto il')
                     ->dateTime('d/m/Y H:i')
@@ -80,6 +80,9 @@ class OrdersTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->emptyStateHeading('Nessun ordine')
+            ->emptyStateDescription('Qui compariranno gli ordini inviati dai clienti dal sito.');
     }
 }

@@ -5,8 +5,8 @@ namespace App\Filament\Resources\Categories\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -20,18 +20,21 @@ class CategoriesTable
                     ->label('Nome')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
-                TextColumn::make('slug')
-                    ->label('Slug')
-                    ->color('gray'),
+                    ->weight('medium'),
                 TextColumn::make('products_count')
                     ->label('Prodotti')
                     ->counts('products')
                     ->badge()
-                    ->color('primary'),
-                IconColumn::make('is_active')
+                    ->color('primary')
+                    ->alignCenter(),
+                ToggleColumn::make('is_active')
                     ->label('Attiva')
-                    ->boolean(),
+                    ->alignCenter(),
+                TextColumn::make('slug')
+                    ->label('Slug')
+                    ->color('gray')
+                    ->size('sm')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label('Creata il')
                     ->dateTime('d/m/Y H:i')
@@ -50,6 +53,9 @@ class CategoriesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('name');
+            ->defaultSort('name')
+            ->striped()
+            ->emptyStateHeading('Nessuna categoria')
+            ->emptyStateDescription('Crea la prima categoria per iniziare a organizzare i prodotti.');
     }
 }

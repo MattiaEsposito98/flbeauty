@@ -1,7 +1,18 @@
-/* Nasconde i campi "scatta foto/video" su schermi da tablet/desktop in su (>=768px).
-   Restano visibili solo su smartphone, dove ha senso offrire lo scatto diretto. */
+/* Stili personalizzati del pannello admin F&L Beauty.
+   Caricato via Panel::assets(), non richiede build step. */
+
+/* Campi "scatta foto/registra video": hanno senso solo su smartphone,
+   dove il browser può aprire davvero la fotocamera. */
 @media (min-width: 768px) {
     .fl-mobile-only {
         display: none !important;
     }
+}
+
+/* Totale ordine in evidenza nel riepilogo laterale. */
+.fl-total {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #B76E79;
 }

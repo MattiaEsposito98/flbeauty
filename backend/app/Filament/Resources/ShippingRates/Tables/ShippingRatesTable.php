@@ -5,9 +5,11 @@ namespace App\Filament\Resources\ShippingRates\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TextInputColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class ShippingRatesTable
@@ -17,22 +19,23 @@ class ShippingRatesTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Nome')
+                    ->label('Destinazione')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('medium'),
                 TextColumn::make('type')
                     ->label('Tipo')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => $state === 'ritiro' ? 'Punto di ritiro' : 'Spedizione regionale')
+                    ->formatStateUsing(fn (string $state) => $state === 'ritiro' ? 'Punto di ritiro' : 'Spedizione')
                     ->color(fn (string $state) => $state === 'ritiro' ? 'info' : 'primary'),
-                TextColumn::make('price')
-                    ->label('Prezzo')
-                    ->money('EUR')
+                TextInputColumn::make('price')
+                    ->label('Prezzo (€)')
+                    ->type('number')
+                    ->rules(['required', 'numeric', 'min:0'])
                     ->sortable(),
-                IconColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('Attivo')
-                    ->boolean(),
+                    ->alignCenter(),
             ])
             ->filters([
                 SelectFilter::make('type')
@@ -41,6 +44,8 @@ class ShippingRatesTable
                         'regione' => 'Spedizione regionale',
                         'ritiro' => 'Punto di ritiro',
                     ]),
+                TernaryFilter::make('is_active')
+                    ->label('Attivo'),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -50,6 +55,10 @@ class ShippingRatesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('name');
+            ->defaultSort('name')
+            ->defaultPaginationPageOption(25)
+            ->striped()
+            ->emptyStateHeading('Nessun metodo di spedizione')
+            ->emptyStateDescription('Aggiungi le destinazioni e i relativi costi di spedizione.');
     }
 }

@@ -5,9 +5,9 @@ namespace App\Filament\Resources\Products\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -19,52 +19,48 @@ class ProductsTable
         return $table
             ->columns([
                 ImageColumn::make('cover_image')
-                    ->label('Immagine')
-                    ->square(),
+                    ->label('')
+                    ->square()
+                    ->size(48)
+                    ->defaultImageUrl(asset('images/logo-mark.png')),
                 TextColumn::make('name')
-                    ->label('Nome')
+                    ->label('Prodotto')
+                    ->description(fn ($record) => $record->category?->name)
                     ->searchable()
-                    ->sortable(),
-                TextColumn::make('category.name')
-                    ->label('Categoria')
-                    ->badge()
-                    ->color('info')
-                    ->placeholder('—')
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('medium'),
                 TextColumn::make('price')
                     ->label('Prezzo')
                     ->money('EUR')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignEnd(),
                 TextColumn::make('stock')
                     ->label('Disponibilità')
-                    ->numeric()
-                    ->sortable()
                     ->badge()
+                    ->alignCenter()
+                    ->formatStateUsing(fn (int $state) => $state === 0 ? 'Esaurito' : $state.' pz')
                     ->color(fn (int $state): string => match (true) {
                         $state === 0 => 'danger',
                         $state <= 5 => 'warning',
                         default => 'success',
-                    }),
-                IconColumn::make('is_active')
+                    })
+                    ->sortable(),
+                ToggleColumn::make('is_active')
                     ->label('Attivo')
-                    ->boolean(),
+                    ->alignCenter(),
                 TextColumn::make('created_at')
                     ->label('Creato il')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->label('Aggiornato il')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                TernaryFilter::make('is_active')
-                    ->label('Attivo'),
                 SelectFilter::make('category_id')
                     ->label('Categoria')
-                    ->relationship('category', 'name'),
+                    ->relationship('category', 'name')
+                    ->preload(),
+                TernaryFilter::make('is_active')
+                    ->label('Attivo'),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -74,6 +70,9 @@ class ProductsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->emptyStateHeading('Nessun prodotto')
+            ->emptyStateDescription('Carica il primo prodotto per popolare il catalogo.');
     }
 }

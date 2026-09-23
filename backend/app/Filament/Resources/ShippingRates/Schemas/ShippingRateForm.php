@@ -15,13 +15,14 @@ class ShippingRateForm
         return $schema
             ->components([
                 Section::make('Metodo di spedizione')
+                    ->description('Il costo verrà sommato al totale dell\'ordine quando il cliente sceglie questo metodo.')
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
                             ->label('Nome')
+                            ->placeholder('Es. Lombardia, oppure Punto di ritiro')
                             ->required()
-                            ->maxLength(255)
-                            ->helperText('Es. il nome della regione, oppure "Punto di ritiro"'),
+                            ->maxLength(255),
                         Select::make('type')
                             ->label('Tipo')
                             ->options([
@@ -39,7 +40,7 @@ class ShippingRateForm
                             ->minValue(0),
                         Toggle::make('is_active')
                             ->label('Attivo')
-                            ->helperText('Selezionabile dal cliente in fase di ordine')
+                            ->helperText('Selezionabile dal cliente in fase di ordine.')
                             ->default(true)
                             ->inline(false),
                     ]),
