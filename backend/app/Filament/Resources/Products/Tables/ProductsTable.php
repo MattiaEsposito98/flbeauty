@@ -20,6 +20,7 @@ class ProductsTable
             ->columns([
                 ImageColumn::make('cover_image')
                     ->label('')
+                    ->disk('public')
                     ->square()
                     ->size(48)
                     ->defaultImageUrl(asset('images/logo-mark.png')),

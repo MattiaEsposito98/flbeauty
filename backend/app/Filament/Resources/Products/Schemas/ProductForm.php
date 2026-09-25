@@ -63,6 +63,7 @@ class ProductForm
                             FileUpload::make('images')
                                 ->label('Immagini prodotto')
                                 ->helperText('La prima immagine sarà la copertina. Trascina per riordinare.')
+                                ->disk('public')
                                 ->image()
                                 ->imageEditor()
                                 ->multiple()
@@ -74,7 +75,10 @@ class ProductForm
                                 ->columnSpanFull(),
                             FileUpload::make('video')
                                 ->label('Video prodotto (facoltativo)')
+                                ->helperText('Formato MP4, MOV o WebM. Massimo 100 MB.')
+                                ->disk('public')
                                 ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
+                                ->maxSize(102400)
                                 ->directory('products/videos')
                                 ->visibility('public')
                                 ->columnSpanFull(),
@@ -84,6 +88,7 @@ class ProductForm
                                     FileUpload::make('camera_capture')
                                         ->label('📷 Scatta una foto')
                                         ->helperText('Si aggiunge alla galleria sopra.')
+                                        ->disk('public')
                                         ->image()
                                         ->imageEditor()
                                         ->extraInputAttributes(['capture' => 'environment'])
@@ -101,8 +106,10 @@ class ProductForm
                                         }),
                                     FileUpload::make('camera_capture_video')
                                         ->label('🎥 Registra un video')
-                                        ->helperText('Sostituisce il video sopra.')
+                                        ->helperText('Sostituisce il video sopra. Massimo 100 MB.')
+                                        ->disk('public')
                                         ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
+                                        ->maxSize(102400)
                                         ->extraInputAttributes(['capture' => 'environment'])
                                         ->directory('products/videos')
                                         ->visibility('public')
