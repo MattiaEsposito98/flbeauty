@@ -7,7 +7,7 @@ articoli, ordini e sconti.
 ## Struttura
 
 - `backend/` — API Laravel (Sanctum) + pannello admin Filament (`/admin`)
-- `frontend/` — app React (SPA) che consumerà le API del backend — da sviluppare
+- `frontend/` — app React (SPA, Vite) che consuma le API del backend
 
 ## Backend — avvio rapido
 
@@ -16,8 +16,22 @@ cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
-php artisan migrate
+php artisan migrate --seed
 php artisan serve
 ```
 
 Pannello admin: `http://localhost:8000/admin`
+
+## Frontend — avvio rapido
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+## Documentazione
+- [Email (setup locale, Comunicazioni, piano produzione)](docs/EMAIL.md)
+- [Hosting (piano scelto, architettura domini)](docs/HOSTING.md)
+- [Frontend (stack, registrazione, indirizzi, comuni)](docs/FRONTEND.md)

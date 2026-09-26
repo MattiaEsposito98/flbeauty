@@ -1,16 +1,38 @@
 <?php
 
+use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ComuneController;
+use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ShippingRateController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/comuni', ComuneController::class);
+
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware('signed')
+    ->name('verification.verify');
+Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+    ->middleware('throttle:6,1');
+
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{product:slug}', [ProductController::class, 'show']);
+Route::get('/shipping-rates', ShippingRateController::class);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        return $request->user()->load('addresses.comune');
     });
 
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::apiResource('addresses', AddressController::class)->except(['show']);
+    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
 });

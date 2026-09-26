@@ -63,10 +63,27 @@ class Order extends Model
             fn (OrderItem $item) => $item->quantity * $item->unit_price
         );
 
-        $total = $itemsTotal + (float) $this->shipping_cost;
+        $discountAmount = $this->calculateDiscountAmount($itemsTotal);
+
+        $total = max(0, $itemsTotal - $discountAmount) + (float) $this->shipping_cost;
 
         if ((float) $this->total !== $total) {
             $this->updateQuietly(['total' => $total]);
         }
+    }
+
+    private function calculateDiscountAmount(float $itemsTotal): float
+    {
+        $discount = $this->discount;
+
+        if (! $discount || ! $discount->is_active) {
+            return 0;
+        }
+
+        if ($discount->type === 'percentuale') {
+            return $itemsTotal * ((float) $discount->value / 100);
+        }
+
+        return min((float) $discount->value, $itemsTotal);
     }
 }
