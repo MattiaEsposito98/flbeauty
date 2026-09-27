@@ -35,7 +35,7 @@ class OrdersTable
                 SelectColumn::make('status')
                     ->label('Stato')
                     ->options([
-                        'nuovo' => 'Nuovo',
+                        'nuovo' => 'In attesa di pagamento',
                         'in_lavorazione' => 'In lavorazione',
                         'evaso' => 'Evaso',
                         'annullato' => 'Annullato',
@@ -66,7 +66,7 @@ class OrdersTable
                 SelectFilter::make('status')
                     ->label('Stato')
                     ->options([
-                        'nuovo' => 'Nuovo',
+                        'nuovo' => 'In attesa di pagamento',
                         'in_lavorazione' => 'In lavorazione',
                         'evaso' => 'Evaso',
                         'annullato' => 'Annullato',

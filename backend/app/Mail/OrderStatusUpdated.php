@@ -13,7 +13,7 @@ class OrderStatusUpdated extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public const STATUS_LABELS = [
-        'nuovo' => 'Nuovo',
+        'nuovo' => 'In attesa di pagamento',
         'in_lavorazione' => 'In lavorazione',
         'evaso' => 'Evaso',
         'annullato' => 'Annullato',

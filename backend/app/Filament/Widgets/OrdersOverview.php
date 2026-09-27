@@ -26,8 +26,8 @@ class OrdersOverview extends StatsOverviewWidget
         $prodottiAttivi = Product::where('is_active', true)->count();
 
         return [
-            Stat::make('Ordini da gestire', $nuovi)
-                ->description('Nuovi ordini in attesa')
+            Stat::make('In attesa di pagamento', $nuovi)
+                ->description('Ordini da incassare')
                 ->descriptionIcon(Heroicon::OutlinedArrowRight, 'after')
                 ->color($nuovi > 0 ? 'warning' : 'success')
                 ->url(OrderResource::getUrl('index')),

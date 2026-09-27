@@ -67,6 +67,9 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
+    // Riceve una email per ogni nuovo ordine dal sito.
+    'admin_order_email' => env('ADMIN_ORDER_EMAIL'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

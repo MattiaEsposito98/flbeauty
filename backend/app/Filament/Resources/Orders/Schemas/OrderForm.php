@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Schemas;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShippingRate;
 use Filament\Forms\Components\Placeholder;
@@ -49,6 +50,28 @@ class OrderForm
                                 ->helperText('Solo se l\'ordine arriva da un utente registrato.'),
                         ]),
 
+                    Section::make('Indirizzo di spedizione')
+                        ->compact()
+                        ->columns(6)
+                        ->schema([
+                            TextInput::make('shipping_address_line')
+                                ->label('Via e civico')
+                                ->maxLength(255)
+                                ->columnSpan(6),
+                            TextInput::make('shipping_postal_code')
+                                ->label('CAP')
+                                ->maxLength(10)
+                                ->columnSpan(2),
+                            TextInput::make('shipping_city')
+                                ->label('Comune')
+                                ->maxLength(255)
+                                ->columnSpan(3),
+                            TextInput::make('shipping_province')
+                                ->label('Prov.')
+                                ->maxLength(5)
+                                ->columnSpan(1),
+                        ]),
+
                     Section::make('Articoli ordinati')
                         ->compact()
                         ->schema([
@@ -91,29 +114,12 @@ class OrderForm
                                     ? Product::find($state['product_id'])?->name
                                     : null),
                         ]),
-                ])->columnSpan(['lg' => 2]),
 
-                Group::make([
-                    Section::make('Riepilogo')
+                    // Qui e non a destra: nella colonna laterale allungava la pagina
+                    // e spingeva i pulsanti in fondo.
+                    Section::make('Spedizione e tracking')
                         ->compact()
-                        ->schema([
-                            Placeholder::make('subtotal_preview')
-                                ->label('Subtotale articoli')
-                                ->content(fn (callable $get) => self::formatEuro(self::itemsSubtotal($get))),
-                            Placeholder::make('total_preview')
-                                ->label('Totale ordine')
-                                ->content(function (callable $get) {
-                                    $total = self::itemsSubtotal($get) + (float) ($get('shipping_cost') ?? 0);
-
-                                    return new HtmlString(
-                                        '<span class="fl-total">'.self::formatEuro($total).'</span>'
-                                    );
-                                })
-                                ->helperText('Articoli + spedizione. Ricalcolato al salvataggio.'),
-                        ]),
-
-                    Section::make('Spedizione')
-                        ->compact()
+                        ->columns(['default' => 1, 'md' => 2])
                         ->schema([
                             Select::make('shipping_rate_id')
                                 ->label('Metodo')
@@ -132,22 +138,53 @@ class OrderForm
                                 ->default(0)
                                 ->required()
                                 ->live(),
-                        ]),
+                            Select::make('carrier')
+                                ->label('Corriere')
+                                ->options(array_combine(Order::CARRIERS, Order::CARRIERS))
+                                ->placeholder('Nessuno')
+                                ->native(false)
+                                ->live()
+                                // Compila il link del corriere, senza sovrascrivere un link
+                                // inserito a mano (solo se vuoto o se è quello di un altro corriere).
+                                ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                    $current = $get('tracking_url');
 
+                                    if (blank($current) || in_array($current, Order::CARRIER_TRACKING_PAGES, true)) {
+                                        $set('tracking_url', Order::CARRIER_TRACKING_PAGES[$state] ?? null);
+                                    }
+                                })
+                                ->helperText('Con Poste Italiane o SDA il link di tracking si compila da solo.'),
+                            TextInput::make('tracking_number')
+                                ->label('Numero di tracking')
+                                ->maxLength(255)
+                                ->helperText('Visibile al cliente nella pagina dell\'ordine e inviato via email quando l\'ordine è evaso.'),
+                            TextInput::make('tracking_url')
+                                ->label('Link tracking')
+                                ->url()
+                                ->maxLength(2048)
+                                ->placeholder('https://...')
+                                ->helperText('Compilato in automatico per Poste/SDA; puoi sostituirlo con un link specifico.')
+                                ->columnSpanFull(),
+                        ]),
+                ])->columnSpan(['lg' => 2]),
+
+                Group::make([
+                    // In cima alla colonna perché è il campo che si cambia più spesso.
                     Section::make('Stato e note')
                         ->compact()
                         ->schema([
                             Select::make('status')
                                 ->label('Stato ordine')
                                 ->options([
-                                    'nuovo' => 'Nuovo',
-                                    'in_lavorazione' => 'In lavorazione',
-                                    'evaso' => 'Evaso',
+                                    'nuovo' => 'In attesa di pagamento',
+                                    'in_lavorazione' => 'In lavorazione · pagato',
+                                    'evaso' => 'Evaso · spedito',
                                     'annullato' => 'Annullato',
                                 ])
                                 ->default('nuovo')
                                 ->required()
-                                ->native(false),
+                                ->native(false)
+                                ->helperText('I pezzi restano scalati dal magazzino finché l\'ordine non è annullato: annullandolo tornano disponibili, riattivandolo vengono riscalati.'),
                             Select::make('discount_id')
                                 ->label('Codice sconto')
                                 ->relationship('discount', 'code')
@@ -157,6 +194,24 @@ class OrderForm
                             Textarea::make('notes')
                                 ->label('Note interne')
                                 ->rows(3),
+                        ]),
+
+                    Section::make('Riepilogo')
+                        ->compact()
+                        ->schema([
+                            Placeholder::make('subtotal_preview')
+                                ->label('Subtotale articoli')
+                                ->content(fn (callable $get) => self::formatEuro(self::itemsSubtotal($get))),
+                            Placeholder::make('total_preview')
+                                ->label('Totale ordine')
+                                ->content(function (callable $get) {
+                                    $total = self::itemsSubtotal($get) + (float) ($get('shipping_cost') ?? 0);
+
+                                    return new HtmlString(
+                                        '<span class="fl-total">'.self::formatEuro($total).'</span>'
+                                    );
+                                })
+                                ->helperText('Articoli + spedizione. Ricalcolato al salvataggio.'),
                         ]),
                 ])->columnSpan(['lg' => 1]),
             ]);

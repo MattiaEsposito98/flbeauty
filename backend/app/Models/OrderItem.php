@@ -25,10 +25,43 @@ class OrderItem extends Model
         ];
     }
 
+    /**
+     * Ogni riga di un ordine non annullato tiene riservati i suoi pezzi: creare,
+     * modificare o eliminare una riga (dal sito o dall'admin) aggiorna lo stock
+     * della sola differenza.
+     */
     protected static function booted(): void
     {
-        static::saved(fn (OrderItem $item) => $item->order?->recalculateTotal());
-        static::deleted(fn (OrderItem $item) => $item->order?->recalculateTotal());
+        static::created(function (OrderItem $item) {
+            if ($item->order?->reservesStock()) {
+                Product::whereKey($item->product_id)->decrement('stock', $item->quantity);
+            }
+
+            $item->order?->recalculateTotal();
+        });
+
+        static::updated(function (OrderItem $item) {
+            if ($item->order?->reservesStock()) {
+                if ($item->wasChanged('product_id')) {
+                    Product::whereKey($item->getOriginal('product_id'))
+                        ->increment('stock', $item->getOriginal('quantity'));
+                    Product::whereKey($item->product_id)->decrement('stock', $item->quantity);
+                } elseif ($item->wasChanged('quantity')) {
+                    $difference = $item->quantity - $item->getOriginal('quantity');
+                    Product::whereKey($item->product_id)->decrement('stock', $difference);
+                }
+            }
+
+            $item->order?->recalculateTotal();
+        });
+
+        static::deleted(function (OrderItem $item) {
+            if ($item->order?->reservesStock()) {
+                Product::whereKey($item->product_id)->increment('stock', $item->quantity);
+            }
+
+            $item->order?->recalculateTotal();
+        });
     }
 
     public function order(): BelongsTo

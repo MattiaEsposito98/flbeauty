@@ -10,9 +10,25 @@
     </p>
 
     @if($order->status === 'evaso')
-        <p>Il tuo ordine è pronto! Ti contatteremo a breve per il ritiro/consegna.</p>
+        @if($order->tracking_number)
+            <p>Il tuo ordine è stato spedito!</p>
+            <p style="margin: 0 0 16px;">
+                @if($order->carrier)<strong>Corriere:</strong> {{ $order->carrier }}<br>@endif
+                <strong>Numero di tracking:</strong> {{ $order->tracking_number }}
+            </p>
+            <p style="margin: 0 0 16px;">
+                <a href="{{ $order->effective_tracking_url ?: rtrim(config('app.frontend_url'), '/').'/ordini/'.$order->id }}" style="display:inline-block; background-color:#B76E79; color:#ffffff; padding:10px 18px; border-radius:6px; text-decoration:none; font-weight:bold;">
+                    Segui la spedizione
+                </a>
+            </p>
+            @if($order->tracking_needs_manual_code)
+                <p style="color:#8a8a8a; font-size:13px;">Nella pagina del corriere incolla il numero di tracking nel campo di ricerca.</p>
+            @endif
+        @else
+            <p>Il tuo ordine è pronto! Ti contatteremo a breve per il ritiro/consegna.</p>
+        @endif
     @elseif($order->status === 'in_lavorazione')
-        <p>Stiamo preparando il tuo ordine.</p>
+        <p>Abbiamo ricevuto il pagamento: stiamo preparando il tuo ordine.</p>
     @elseif($order->status === 'annullato')
         <p>Il tuo ordine è stato annullato. Se non te lo aspettavi, contattaci pure per chiarimenti.</p>
     @endif

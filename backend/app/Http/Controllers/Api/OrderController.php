@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\NewOrderForAdmin;
 use App\Mail\OrderConfirmation;
 use App\Models\Address;
 use App\Models\Discount;
@@ -39,7 +40,7 @@ class OrderController extends Controller
             'shipping_rate_id' => ['required', 'integer', 'exists:shipping_rates,id'],
             'discount_code' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
 
@@ -97,6 +98,10 @@ class OrderController extends Controller
                 'customer_name' => $address->recipient_name,
                 'customer_email' => $request->user()->email,
                 'customer_phone' => $address->phone,
+                'shipping_address_line' => $address->address_line,
+                'shipping_postal_code' => $address->postal_code,
+                'shipping_city' => $address->comune?->name,
+                'shipping_province' => $address->province,
                 'status' => 'nuovo',
             ]);
 
@@ -108,8 +113,6 @@ class OrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $product->price,
                 ]);
-
-                $product->decrement('stock', $item['quantity']);
             }
 
             $order->recalculateTotal();
@@ -120,6 +123,10 @@ class OrderController extends Controller
         $order->load(['items.product', 'shippingRate', 'discount']);
 
         Mail::to($order->customer_email)->send(new OrderConfirmation($order));
+
+        if (filled(config('app.admin_order_email'))) {
+            Mail::to(config('app.admin_order_email'))->send(new NewOrderForAdmin($order));
+        }
 
         return response()->json($order, 201);
     }

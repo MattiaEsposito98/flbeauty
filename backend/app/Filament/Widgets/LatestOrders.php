@@ -32,7 +32,7 @@ class LatestOrders extends TableWidget
                     ->label('Stato')
                     ->badge()
                     ->formatStateUsing(fn (string $state) => match ($state) {
-                        'nuovo' => 'Nuovo',
+                        'nuovo' => 'In attesa di pagamento',
                         'in_lavorazione' => 'In lavorazione',
                         'evaso' => 'Evaso',
                         'annullato' => 'Annullato',
