@@ -75,6 +75,10 @@ Gradienti pronti: `--grad-rose-gold` (decorativo/metallico), `--grad-rose-gold-t
 | `WishlistButton` | Cuoricino (tondo sulle card, `withLabel` nella pagina prodotto) |
 | `QuantityStepper` | Selettore quantità − / + (`size="sm"` nel carrello laterale) |
 | `CartDrawer` | Carrello laterale (si chiude con ×, click fuori o Esc) |
+| `CartToast` | Avviso in basso: "aggiunto al carrello" (verde) o limite di disponibilità (`warning`, arancione) |
+| `CartAdjustmentsNotice` | Riquadro con le quantità corrette automaticamente per disponibilità cambiata |
+| `ConfirmButton` | Pulsante con conferma interna per azioni distruttive (niente `confirm()` del browser) |
+| `PasswordField` | Campo password con lucchetto e occhiello mostra/nascondi |
 | `AuthCard` | Card centrata delle pagine login/registrazione/password |
 | `Alert` | Messaggi `success` / `error` / `info` con icona |
 | `EmptyState` | Stati vuoti con icona, titolo, testo e azione |
@@ -118,6 +122,25 @@ il catalogo), form a una colonna, pulsante WhatsApp solo icona.
 3. Titoli con Playfair (automatico su `h1–h3`), parola chiave in `<em>`
 4. Icone da `react-icons/lu`, con `aria-hidden` o `aria-label`
 5. Controllare la pagina anche a 375 px di larghezza
+
+## Area admin (Filament)
+Qui conta l'organizzazione più della grafica (colori del brand già impostati in
+`AdminPanelProvider`). Decisioni prese con l'utente:
+- **Menu in alto** (`topNavigation()`) invece della barra laterale, e contenuto a
+  **tutta larghezza** (`maxContentWidth(Width::Full)`): tutto lo schermo del PC è
+  usato per tabelle e form. Su tablet e mobile il menu diventa a scomparsa
+- **Salva/Annulla sempre visibili** in fondo allo schermo (`stickyFormActions()`)
+  e **notifiche in basso a destra**, sulla stessa riga dei pulsanti, così la
+  conferma "Salvato" si nota subito
+- Nei form, le sezioni che si cambiano più spesso vanno in cima alla colonna di
+  destra (es. "Stato e note" nell'ordine); la colonna laterale va tenuta corta,
+  le sezioni lunghe (es. "Spedizione e tracking") vanno a sinistra
+- **Pulsanti dei form allineati a destra** (`formActionsAlignment(Alignment::End)`)
+- **Form piccoli** (categorie, spedizioni, sconti, comunicazioni): pagina centrata
+  larga `Width::FourExtraLarge` e schema a una colonna (`->columns(1)`), così la
+  sezione occupa tutto il riquadro invece di metà
+- Menu su una riga: voci ravvicinate e, sotto i 1366 px, solo testo senza icone
+  (`public/css/admin-custom.css`)
 
 ## Nota di sviluppo (Windows)
 Con molte modifiche ravvicinate allo stesso file, il dev server Vite può continuare

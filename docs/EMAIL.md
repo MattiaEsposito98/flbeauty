@@ -31,10 +31,33 @@ ordine. L'invio parte subito dopo il salvataggio e resta uno storico consultabil
 Entrambe le mailable implementano `ShouldQueue`: gli invii non bloccano il pannello,
 finiscono in coda (tabella `jobs`) e vengono spediti dal **queue worker** (vedi sotto).
 
+### 3. Email all'admin per ogni nuovo ordine (sessione del 2026-09-27)
+A ogni ordine dal sito parte `App\Mail\NewOrderForAdmin` verso l'indirizzo in
+`ADMIN_ORDER_EMAIL` (`.env`, oggi `Flbeauty32@gmail.com`): cliente, telefono,
+indirizzo di spedizione, prodotti con quantità e prezzi, sconto, spedizione,
+totale e pulsante "Apri l'ordine nel pannello". Il "Rispondi" dell'email va
+direttamente al cliente. Se la variabile è vuota l'email non parte.
+
+Riepilogo ordine condiviso tra email al cliente e all'admin:
+`resources/views/emails/partials/order-summary.blade.php`.
+
+L'email di cambio stato ora dice "In attesa di pagamento" per gli ordini nuovi e,
+quando l'ordine è evaso con un numero di tracking, mostra corriere, numero e
+"Segui la spedizione". Parte anche se il tracking viene inserito dopo aver già
+messo l'ordine in "Evaso" (`OrderObserver`).
+
 ## Come si testa in locale (nessun account esterno, nessun dominio)
 
 Le email non vengono davvero spedite su internet: vengono catturate da **Mailpit**, un
 finto server SMTP che gira sul PC e mostra le email ricevute in una webmail locale.
+
+**Modo più semplice**: `tools/start-dev.bat` (doppio click) avvia tutto insieme —
+backend, sito React, Mailpit e worker delle code — e apre nel browser il sito e la
+casella di Mailpit. Le email arrivano **solo su Mailpit** finché nel `.env` c'è
+`MAIL_HOST=127.0.0.1` / `MAIL_PORT=1025`: per riceverle davvero serve un SMTP reale
+(Brevo, vedi sotto).
+
+In alternativa, solo la parte email:
 
 1. Avvia `tools/start-dev-mail.bat` (doppio click) — apre due finestre:
    - **Mailpit**: cattura le email, interfaccia su http://127.0.0.1:8025

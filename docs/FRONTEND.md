@@ -357,7 +357,105 @@ pagina prodotto, carrello laterale (apertura all'aggiunta, chiusura con Esc),
 pagina carrello con stepper, checkout con tariffa suggerita, login, registrazione,
 account con aggiunta indirizzo.
 
+## Acquisto più rapido e limiti di stock (nuovo, sessione del 2026-09-27)
+Decisioni prese con l'utente per rendere l'aggiunta al carrello meno macchinosa:
+- **Aggiunta dal catalogo**: ogni card ha un pulsante "Aggiungi"; se il prodotto è
+  già nel carrello diventa uno stepper − N + sulla card stessa (a 0 il prodotto
+  esce dal carrello). Il click sul resto della card apre sempre i dettagli
+- **Avviso invece del pannello**: dal catalogo non si apre il carrello laterale
+  (interromperebbe chi aggiunge più prodotti), compare un avviso in basso
+  (`CartToast`, 3,5 s, con "Vedi carrello"). Dalla pagina prodotto il pannello si
+  apre come prima (`addItem(product, qty, { openDrawer: false })` per l'avviso)
+- **Pannello laterale**: aggiunti "Continua lo shopping" (chiude il pannello; da una
+  pagina prodotto riporta al catalogo) e "Svuota carrello"
+- **Svuota carrello** anche nella pagina carrello; conferma nel pulsante stesso
+  (`ConfirmButton`: primo click "Sicuro? Svuota", si annulla dopo 3 s) invece del
+  popup del browser
+- **Scorte**: sopra 5 pezzi si mostra solo "Disponibile", da 5 in giù "Ultimi N
+  pezzi" (card e pagina prodotto). Soglia in `LOW_STOCK_THRESHOLD`
+  (`src/utils/format.js`), il numero esatto del magazzino non viene esposto
+- **Bug corretto**: si potevano mettere nel carrello più pezzi dello stock
+  (l'errore usciva solo alla conferma dell'ordine). Ora `addItem`/`updateQuantity`
+  si fermano allo stock, la pagina prodotto limita la quantità ai pezzi non ancora
+  nel carrello ("Hai già nel carrello tutti i pezzi disponibili") e anche
+  `CartController` (store/update) tronca la quantità allo stock lato server
+
+### Avvisi quando la disponibilità limita il carrello
+Richiesta dell'utente dopo un ordine in cui 50 pezzi erano stati ridotti a 26 in
+silenzio: ora il cliente viene sempre avvisato e conferma con le quantità nuove.
+- **Limite scattato mentre si aggiunge/modifica**: avviso arancione "Disponibili solo
+  N pezzi di …" (`CartToast` con `type: 'warning'`), sia quando il limite lo applica
+  il client sia quando è il server a troncare (`checkServerLimit` confronta la
+  quantità salvata con quella richiesta)
+- **Ricontrollo all'apertura** di carrello, pannello laterale e checkout
+  (`syncAvailability()` in `CartContext`): legge stock e prezzi aggiornati da
+  `GET /api/products/availability?ids=…` (pubblico, funziona anche per gli ospiti;
+  i prodotti disattivati non vengono restituiti e sono trattati come esauriti),
+  riduce le quantità oltre lo stock e rimuove gli esauriti, e mostra
+  `CartAdjustmentsNotice` ("ne restano 26 (ne avevi 50)" / "esaurito, rimosso")
+- **Stock cambiato proprio al click su "Conferma ordine"**: se l'API rifiuta per
+  disponibilità, il checkout riallinea il carrello, mostra le modifiche e chiede di
+  confermare di nuovo (l'ordine non parte con quantità diverse da quelle viste)
+
+Testato dal vivo da ospite con un carrello "vecchio" (40 pezzi con 32 disponibili,
+un prodotto nel frattempo esaurito): quantità ridotta a 32, esaurito rimosso,
+riquadro con l'elenco delle modifiche.
+
+Testato dal vivo: aggiunta dalla card (avviso, nessun pannello, badge aggiornato),
+stepper fermo a 5 su un prodotto con stock 5, messaggio nella pagina prodotto,
+svuotamento con conferma, "Continua lo shopping" dalla pagina prodotto → catalogo,
+layout della card a 375 px.
+
+## Flusso ordini senza pagamento online (nuovo, sessione del 2026-09-27)
+Il pagamento avviene fuori dal sito (Postepay, istruzioni da definire): per l'admin
+un ordine è davvero confermato solo quando arrivano i soldi.
+
+| Stato (admin) | Cliente vede | Significato | Stock |
+|---|---|---|---|
+| Nuovo | In attesa di pagamento | Ordine ricevuto, pagamento non ancora arrivato | Scalato alla conferma (riservato) |
+| In lavorazione | In lavorazione | Pagato, in preparazione | Resta scalato |
+| Evaso | Evaso | Spedito: ordine concluso | Resta scalato |
+| Annullato | Annullato | Non pagato / non valido | Torna disponibile |
+
+Regole di stock centralizzate nei modelli (valgono per sito e admin allo stesso
+modo): `OrderItem` scala/restituisce la differenza quando una riga viene creata,
+modificata o eliminata; `Order` restituisce tutto quando passa ad "annullato",
+riscala quando un annullato viene riattivato e restituisce tutto se l'ordine viene
+eliminato. `OrderController` non scala più lo stock a mano (lo fa `OrderItem`).
+Nell'admin il salvataggio viene bloccato con un avviso se servirebbero più pezzi
+di quelli in magazzino (`ChecksOrderStock`). Nota: gli ordini annullati **prima**
+di questa modifica non avevano restituito lo stock; il sistema non lo ricalcola a
+ritroso.
+
+Altre novità:
+- **Indirizzo di spedizione salvato nell'ordine** (bug: prima non veniva salvato
+  affatto, l'admin non sapeva dove spedire). È una copia (`shipping_address_line`,
+  `shipping_postal_code`, `shipping_city`, `shipping_province`), modificabile
+  dall'admin; gli ordini precedenti restano senza indirizzo
+- **Tracking**: campi `carrier` (con suggerimenti), `tracking_number`,
+  `tracking_url` nell'ordine admin; il cliente li vede nella pagina dell'ordine
+  ("La tua spedizione") e li riceve via email
+- **Link di tracking automatico**: con corriere "Poste Italiane" o "SDA" e link
+  vuoto si usa la pagina di ricerca Poste (`Order::CARRIER_TRACKING_PAGES`,
+  esposto come `effective_tracking_url`). Quella pagina non riceve il codice
+  nell'URL, quindi sul sito c'è il pulsante "Copia" accanto al numero e un
+  suggerimento a incollarlo; un link inserito a mano dall'admin ha la precedenza
+- **Riepilogo su WhatsApp** nella pagina ordine: "Invia su WhatsApp" apre la chat
+  con il messaggio già scritto (prodotti, subtotale, sconto, spedizione, totale,
+  nome, indirizzo, telefono, email). Testo in `src/utils/orderSummary.js`
+- La pagina ordine mostra ora anche subtotale, importo dello sconto e indirizzo
+- `items.*.product_id` deve essere `distinct` nella richiesta d'ordine (prima due
+  righe dello stesso prodotto aggiravano il controllo di disponibilità)
+
+Testato: logica di stock con creazione/modifica/annullo/riattivazione/cambio
+prodotto/eliminazione in una transazione annullata (tutti i valori attesi); ordine
+di prova reale via API (indirizzo salvato, totale corretto, stock scalato una sola
+volta, email admin e cliente in coda, pagina ordine con tracking e messaggio
+WhatsApp), poi eliminato con stock restituito.
+
 ## Cosa manca ancora (prossimi passi)
+- Istruzioni di pagamento Postepay da mostrare dopo l'ordine (rimandato
+  dall'utente)
 - Pagina di modifica dati account (nome/email/password)
 - Pagine legali (privacy policy, cookie policy) da collegare nel footer —
   obbligatorie per il GDPR prima di andare online
