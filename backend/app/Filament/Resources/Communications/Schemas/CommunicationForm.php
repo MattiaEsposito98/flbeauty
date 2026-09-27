@@ -13,6 +13,7 @@ class CommunicationForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 Section::make('Nuova comunicazione')
                     ->description(fn () => 'Verrà inviata via email a '.Communication::recipientEmails()->count().' destinatari (clienti registrati e clienti che hanno effettuato un ordine). L\'invio parte subito dopo il salvataggio.')

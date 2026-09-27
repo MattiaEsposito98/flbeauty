@@ -8,7 +8,11 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Notifications\Livewire\Notifications;
+use Filament\Pages\BasePage;
 use Filament\Pages\Dashboard;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\VerticalAlignment;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
@@ -36,8 +40,18 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon.png'))
             ->defaultAvatarProvider(PinkAvatarProvider::class)
             ->defaultThemeMode(ThemeMode::Light)
-            ->maxContentWidth(Width::ScreenTwoExtraLarge)
-            ->sidebarCollapsibleOnDesktop()
+            // Menu in alto e contenuto a tutta larghezza: l'area admin sfrutta
+            // tutto lo schermo del PC (su tablet/mobile il menu diventa a scomparsa).
+            ->topNavigation()
+            ->maxContentWidth(Width::Full)
+            ->bootUsing(function () {
+                // Salva/Annulla restano sempre visibili in fondo allo schermo, e la
+                // conferma del salvataggio compare lì vicino invece che in alto a destra.
+                BasePage::stickyFormActions();
+                BasePage::formActionsAlignment(Alignment::End);
+                Notifications::alignment(Alignment::End);
+                Notifications::verticalAlignment(VerticalAlignment::End);
+            })
             ->colors([
                 'primary' => Color::hex('#B76E79'),
                 'danger' => Color::Rose,

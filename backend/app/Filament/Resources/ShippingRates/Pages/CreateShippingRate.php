@@ -15,6 +15,11 @@ class CreateShippingRate extends CreateRecord
 
     protected Width|string|null $maxContentWidth = Width::FourExtraLarge;
 
+    public function getTitle(): string
+    {
+        return 'Nuovo metodo di spedizione';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

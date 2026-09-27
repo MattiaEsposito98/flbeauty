@@ -7,12 +7,20 @@ use App\Mail\BroadcastCommunication;
 use App\Models\Communication;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
 
 class CreateCommunication extends CreateRecord
 {
     protected static string $resource = CommunicationResource::class;
+
+    protected Width|string|null $maxContentWidth = Width::FourExtraLarge;
+
+    public function getTitle(): string
+    {
+        return 'Nuova comunicazione';
+    }
 
     protected function handleRecordCreation(array $data): Model
     {

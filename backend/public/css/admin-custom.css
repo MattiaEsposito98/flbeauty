@@ -9,6 +9,18 @@
     }
 }
 
+/* Menu in alto su una sola riga: voci più ravvicinate e, sugli schermi
+   desktop più stretti, solo testo senza icone. */
+.fi-topbar-nav-groups {
+    column-gap: 0.25rem;
+}
+
+@media (max-width: 1365px) {
+    .fi-topbar-nav-groups .fi-topbar-item-icon {
+        display: none;
+    }
+}
+
 /* Totale ordine in evidenza nel riepilogo laterale. */
 .fl-total {
     font-size: 1.5rem;

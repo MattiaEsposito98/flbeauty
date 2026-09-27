@@ -16,6 +16,11 @@ class EditShippingRate extends EditRecord
 
     protected Width|string|null $maxContentWidth = Width::FourExtraLarge;
 
+    public function getTitle(): string
+    {
+        return 'Modifica metodo di spedizione';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

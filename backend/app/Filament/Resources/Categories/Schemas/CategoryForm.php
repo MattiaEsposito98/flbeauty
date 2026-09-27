@@ -15,6 +15,7 @@ class CategoryForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 Section::make('Dati categoria')
                     ->description('Le categorie servono a raggruppare i prodotti nel negozio.')

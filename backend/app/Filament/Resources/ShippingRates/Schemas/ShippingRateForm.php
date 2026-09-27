@@ -13,6 +13,7 @@ class ShippingRateForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 Section::make('Metodo di spedizione')
                     ->description('Il costo verrà sommato al totale dell\'ordine quando il cliente sceglie questo metodo.')
