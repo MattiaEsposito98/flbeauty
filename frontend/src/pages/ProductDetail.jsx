@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { FaWhatsapp } from 'react-icons/fa6'
 import {
   LuChevronRight,
+  LuCircleAlert,
   LuCircleCheck,
   LuCircleX,
   LuSearchX,
@@ -18,7 +19,7 @@ import QuantityStepper from '../components/QuantityStepper'
 import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import { WHATSAPP_URL } from '../config/contacts'
-import { formatPrice } from '../utils/format'
+import { formatPrice, isLowStock, lowStockLabel } from '../utils/format'
 
 export default function ProductDetail() {
   const { slug } = useParams()
@@ -60,6 +61,12 @@ export default function ProductDetail() {
 
   const images = product.images ?? []
   const quantityInCart = getQuantityInCart(product.id)
+  const remaining = Math.max(0, product.stock - quantityInCart)
+
+  async function handleAdd() {
+    await addItem(product, Math.min(quantity, remaining))
+    setQuantity(1)
+  }
 
   return (
     <div className="page product-page">
@@ -106,9 +113,15 @@ export default function ProductDetail() {
           {product.description && <p className="product-description">{product.description}</p>}
 
           {product.in_stock ? (
-            <p className="stock-status in-stock">
-              <LuCircleCheck aria-hidden="true" /> Disponibile
-            </p>
+            isLowStock(product.stock) ? (
+              <p className="stock-status low-stock-status">
+                <LuCircleAlert aria-hidden="true" /> {lowStockLabel(product.stock)}
+              </p>
+            ) : (
+              <p className="stock-status in-stock">
+                <LuCircleCheck aria-hidden="true" /> Disponibile
+              </p>
+            )
           ) : (
             <p className="stock-status out-of-stock">
               <LuCircleX aria-hidden="true" /> Prodotto esaurito
@@ -121,15 +134,18 @@ export default function ProductDetail() {
             </p>
           )}
 
-          {product.in_stock && (
-            <div className="purchase-row">
-              <QuantityStepper value={quantity} max={product.stock} onChange={setQuantity} />
-              <button type="button" className="btn btn-primary btn-lg" onClick={() => addItem(product, quantity)}>
-                <LuShoppingBag aria-hidden="true" />
-                Aggiungi al carrello
-              </button>
-            </div>
-          )}
+          {product.in_stock &&
+            (remaining > 0 ? (
+              <div className="purchase-row">
+                <QuantityStepper value={Math.min(quantity, remaining)} max={remaining} onChange={setQuantity} />
+                <button type="button" className="btn btn-primary btn-lg" onClick={handleAdd}>
+                  <LuShoppingBag aria-hidden="true" />
+                  Aggiungi al carrello
+                </button>
+              </div>
+            ) : (
+              <p className="hint max-reached">Hai già nel carrello tutti i pezzi disponibili.</p>
+            ))}
 
           <WishlistButton product={product} withLabel />
 

@@ -1,21 +1,37 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { LuHeartHandshake, LuReceipt } from 'react-icons/lu'
+import { FaWhatsapp } from 'react-icons/fa6'
+import { LuCheck, LuCopy, LuExternalLink, LuHeartHandshake, LuMapPin, LuReceipt, LuTruck } from 'react-icons/lu'
 import client from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import Spinner from '../components/Spinner'
+import { whatsappUrl } from '../config/contacts'
 import { ORDER_STATUS_LABELS, formatOrderNumber, formatPrice } from '../utils/format'
+import { formatShippingAddress, orderAmounts, orderWhatsAppText } from '../utils/orderSummary'
 
 export default function OrderDetail() {
   const { id } = useParams()
   const location = useLocation()
+  const { user } = useAuth()
   const justPlaced = location.state?.justPlaced === true
   const [order, setOrder] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     client.get(`/orders/${id}`).then(({ data }) => setOrder(data))
   }, [id])
 
+  async function copyTracking() {
+    await navigator.clipboard.writeText(order.tracking_number)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   if (!order) return <Spinner />
+
+  const { subtotal, shipping, discount, total } = orderAmounts(order)
+  const address = formatShippingAddress(order)
+  const cancelled = order.status === 'annullato'
 
   return (
     <div className="page order-page">
@@ -37,6 +53,72 @@ export default function OrderDetail() {
               })}.`}
         </p>
       </header>
+
+      {!cancelled && (
+        <section className="card whatsapp-card">
+          <span className="icon-circle" aria-hidden="true">
+            <FaWhatsapp />
+          </span>
+          <div className="whatsapp-card-text">
+            <h2>Vuoi mandarci il riepilogo su WhatsApp?</h2>
+            <p className="hint">
+              Si apre WhatsApp con il messaggio già pronto: prodotti, totale, spedizione e i tuoi dati. Ti basta
+              premere invio.
+            </p>
+          </div>
+          <a
+            href={whatsappUrl(orderWhatsAppText(order, user))}
+            className="btn btn-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FaWhatsapp aria-hidden="true" /> Invia su WhatsApp
+          </a>
+        </section>
+      )}
+
+      {order.tracking_number && (
+        <section className="card tracking-card">
+          <h2 className="card-title">
+            <LuTruck aria-hidden="true" /> La tua spedizione
+          </h2>
+          <div className="tracking-details">
+            {order.carrier && (
+              <div>
+                <span className="muted">Corriere</span>
+                <strong>{order.carrier}</strong>
+              </div>
+            )}
+            <div>
+              <span className="muted">Numero di tracking</span>
+              <span className="tracking-number-row">
+                <strong className="tracking-number">{order.tracking_number}</strong>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={copyTracking}>
+                  {copied ? <LuCheck aria-hidden="true" /> : <LuCopy aria-hidden="true" />}
+                  {copied ? 'Copiato' : 'Copia'}
+                </button>
+              </span>
+            </div>
+          </div>
+          {order.effective_tracking_url && (
+            <>
+              <a
+                href={order.effective_tracking_url}
+                className="btn btn-outline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Segui la spedizione <LuExternalLink aria-hidden="true" />
+              </a>
+              {order.tracking_needs_manual_code && (
+                <p className="hint tracking-hint">
+                  Nella pagina del corriere incolla il numero di tracking nel campo di ricerca.
+                </p>
+              )}
+            </>
+          )}
+        </section>
+      )}
 
       <section className="card">
         <div className="card-header">
@@ -60,23 +142,38 @@ export default function OrderDetail() {
         </ul>
 
         <div className="summary-lines">
-          {order.shipping_rate && (
-            <div className="summary-row">
-              <span>Spedizione · {order.shipping_rate.name}</span>
-              <span>{formatPrice(order.shipping_rate.price)}</span>
-            </div>
-          )}
+          <div className="summary-row">
+            <span>Subtotale</span>
+            <span>{formatPrice(subtotal)}</span>
+          </div>
           {order.discount && (
             <div className="summary-row">
-              <span>Codice sconto</span>
-              <span>{order.discount.code}</span>
+              <span>Sconto · {order.discount.code}</span>
+              <span>−{formatPrice(discount)}</span>
             </div>
           )}
+          <div className="summary-row">
+            <span>Spedizione{order.shipping_rate ? ` · ${order.shipping_rate.name}` : ''}</span>
+            <span>{formatPrice(shipping)}</span>
+          </div>
           <div className="summary-row summary-total">
             <span>Totale</span>
-            <strong>{formatPrice(order.total)}</strong>
+            <strong>{formatPrice(total)}</strong>
           </div>
         </div>
+
+        {address && (
+          <div className="order-address">
+            <LuMapPin aria-hidden="true" />
+            <div>
+              <strong>Spedizione a {order.customer_name}</strong>
+              <p className="muted">
+                {address}
+                {order.customer_phone && ` · Tel. ${order.customer_phone}`}
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="order-actions">

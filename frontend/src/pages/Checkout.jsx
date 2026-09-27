@@ -4,12 +4,13 @@ import { LuMapPin, LuShoppingBag, LuTicket, LuTruck } from 'react-icons/lu'
 import client from '../api/client'
 import { useCart } from '../context/CartContext'
 import Alert from '../components/Alert'
+import CartAdjustmentsNotice from '../components/CartAdjustmentsNotice'
 import EmptyState from '../components/EmptyState'
 import Spinner from '../components/Spinner'
 import { formatPrice } from '../utils/format'
 
 export default function Checkout() {
-  const { items, loading: cartLoading, total, clearCart } = useCart()
+  const { items, loading: cartLoading, total, clearCart, syncAvailability } = useCart()
   const navigate = useNavigate()
 
   const [addresses, setAddresses] = useState([])
@@ -33,6 +34,10 @@ export default function Checkout() {
       setShippingRates(data)
     })
   }, [])
+
+  useEffect(() => {
+    if (!cartLoading) syncAvailability()
+  }, [cartLoading])
 
   // Suggerisce automaticamente la tariffa della regione dell'indirizzo scelto
   // (le tariffe sono definite per regione in admin); l'utente può comunque
@@ -68,6 +73,17 @@ export default function Checkout() {
       navigate(`/ordini/${data.id}`, { state: { justPlaced: true } })
     } catch (err) {
       const errors = err.response?.data?.errors
+
+      // Stock cambiato tra l'apertura del checkout e la conferma: riallineiamo
+      // il carrello e facciamo riconfermare con le quantità aggiornate.
+      if (errors?.items) {
+        const changes = await syncAvailability()
+        if (changes.length > 0) {
+          setError('Le disponibilità sono cambiate: controlla il riepilogo aggiornato e conferma di nuovo.')
+          return
+        }
+      }
+
       setError(errors ? Object.values(errors).flat().join(' ') : "Errore durante l'ordine.")
     } finally {
       setSubmitting(false)
@@ -79,6 +95,7 @@ export default function Checkout() {
   if (items.length === 0) {
     return (
       <div className="page">
+        <CartAdjustmentsNotice />
         <EmptyState
           icon={LuShoppingBag}
           title="Il carrello è vuoto"
@@ -226,6 +243,7 @@ export default function Checkout() {
             </div>
           </div>
 
+          <CartAdjustmentsNotice />
           {error && <Alert type="error">{error}</Alert>}
 
           <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting}>

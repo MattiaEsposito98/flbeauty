@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartContext'
 import { WishlistProvider } from './context/WishlistContext'
 import Navbar from './components/Navbar'
 import CartDrawer from './components/CartDrawer'
+import CartToast from './components/CartToast'
 import Footer from './components/Footer'
 import WhatsAppButton from './components/WhatsAppButton'
 import Spinner from './components/Spinner'
@@ -94,6 +95,7 @@ function AppRoutes() {
       </main>
       <Footer />
       <WhatsAppButton />
+      <CartToast />
     </>
   )
 }

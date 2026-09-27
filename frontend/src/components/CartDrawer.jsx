@@ -1,17 +1,34 @@
 import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { LuShoppingBag, LuTrash2, LuX } from 'react-icons/lu'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { LuArrowLeft, LuShoppingBag, LuTrash2, LuX } from 'react-icons/lu'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/format'
+import CartAdjustmentsNotice from './CartAdjustmentsNotice'
+import ConfirmButton from './ConfirmButton'
 import EmptyState from './EmptyState'
 import ProductImage from './ProductImage'
 import QuantityStepper from './QuantityStepper'
 
 export default function CartDrawer() {
-  const { items, updateQuantity, removeItem, total, count, drawerOpen, closeDrawer } = useCart()
+  const {
+    items,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    total,
+    count,
+    drawerOpen,
+    closeDrawer,
+    syncAvailability,
+  } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    if (drawerOpen) syncAvailability()
+  }, [drawerOpen])
 
   useEffect(() => {
     if (!drawerOpen) return
@@ -36,6 +53,12 @@ export default function CartDrawer() {
     navigate(user ? '/checkout' : '/login?redirect=/checkout')
   }
 
+  // Dal catalogo si resta dove si è; da una pagina prodotto si torna al catalogo.
+  function continueShopping() {
+    closeDrawer()
+    if (pathname.startsWith('/prodotti/')) navigate('/')
+  }
+
   return (
     <div className="drawer-backdrop" onClick={closeDrawer}>
       <aside
@@ -58,6 +81,7 @@ export default function CartDrawer() {
 
         {items.length === 0 ? (
           <div className="drawer-body">
+            <CartAdjustmentsNotice />
             <EmptyState
               icon={LuShoppingBag}
               title="Il tuo carrello è vuoto"
@@ -73,6 +97,16 @@ export default function CartDrawer() {
         ) : (
           <>
             <div className="drawer-body">
+              <CartAdjustmentsNotice />
+              <div className="list-toolbar">
+                <ConfirmButton
+                  className="btn btn-ghost btn-sm btn-ghost-danger"
+                  confirmLabel="Sicuro? Svuota"
+                  onConfirm={clearCart}
+                >
+                  <LuTrash2 aria-hidden="true" /> Svuota carrello
+                </ConfirmButton>
+              </div>
               <ul className="drawer-items">
                 {items.map((item) => (
                   <li key={item.product.id} className="drawer-item">
@@ -118,9 +152,14 @@ export default function CartDrawer() {
               <button type="button" className="btn btn-primary btn-block btn-lg" onClick={goToCheckout}>
                 Procedi all'ordine
               </button>
-              <Link to="/carrello" className="btn btn-outline btn-block" onClick={closeDrawer}>
-                Vedi il carrello
-              </Link>
+              <div className="drawer-secondary-actions">
+                <button type="button" className="btn btn-outline" onClick={continueShopping}>
+                  <LuArrowLeft aria-hidden="true" /> Continua lo shopping
+                </button>
+                <Link to="/carrello" className="btn btn-outline" onClick={closeDrawer}>
+                  Vedi il carrello
+                </Link>
+              </div>
             </footer>
           </>
         )}

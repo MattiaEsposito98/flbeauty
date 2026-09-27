@@ -1,8 +1,9 @@
-import { LuCircleAlert, LuCircleCheck, LuInfo } from 'react-icons/lu'
+import { LuCircleAlert, LuCircleCheck, LuInfo, LuTriangleAlert } from 'react-icons/lu'
 
 const ICONS = {
   success: LuCircleCheck,
   error: LuCircleAlert,
+  warning: LuTriangleAlert,
   info: LuInfo,
 }
 

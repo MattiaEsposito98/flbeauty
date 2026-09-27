@@ -1,7 +1,10 @@
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { LuArrowLeft, LuShoppingBag, LuTrash2 } from 'react-icons/lu'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import CartAdjustmentsNotice from '../components/CartAdjustmentsNotice'
+import ConfirmButton from '../components/ConfirmButton'
 import EmptyState from '../components/EmptyState'
 import ProductImage from '../components/ProductImage'
 import QuantityStepper from '../components/QuantityStepper'
@@ -9,15 +12,20 @@ import Spinner from '../components/Spinner'
 import { formatPrice } from '../utils/format'
 
 export default function Cart() {
-  const { items, loading, updateQuantity, removeItem, total, count } = useCart()
+  const { items, loading, updateQuantity, removeItem, clearCart, total, count, syncAvailability } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading) syncAvailability()
+  }, [loading])
 
   if (loading) return <Spinner />
 
   if (items.length === 0) {
     return (
       <div className="page">
+        <CartAdjustmentsNotice />
         <EmptyState
           icon={LuShoppingBag}
           title="Il tuo carrello è vuoto"
@@ -49,7 +57,19 @@ export default function Cart() {
         </p>
       </header>
 
+      <CartAdjustmentsNotice />
+
       <div className="cart-layout">
+        <div>
+        <div className="list-toolbar">
+          <ConfirmButton
+            className="btn btn-ghost btn-sm btn-ghost-danger"
+            confirmLabel="Sicuro? Svuota"
+            onConfirm={clearCart}
+          >
+            <LuTrash2 aria-hidden="true" /> Svuota carrello
+          </ConfirmButton>
+        </div>
         <ul className="cart-items">
           {items.map((item) => (
             <li key={item.product.id} className="cart-item">
@@ -79,6 +99,7 @@ export default function Cart() {
             </li>
           ))}
         </ul>
+        </div>
 
         <aside className="card summary-card">
           <h2>Riepilogo</h2>

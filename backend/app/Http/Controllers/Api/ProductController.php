@@ -31,6 +31,28 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
+    /**
+     * Dati aggiornati (stock, prezzo) dei prodotti nel carrello, per
+     * ricontrollare la disponibilità prima dell'ordine. I prodotti non più
+     * attivi non vengono restituiti: il client li tratta come esauriti.
+     */
+    public function availability(Request $request)
+    {
+        $ids = collect(explode(',', (string) $request->query('ids')))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->take(100);
+
+        $products = Product::query()
+            ->with('category')
+            ->where('is_active', true)
+            ->whereIn('id', $ids)
+            ->get();
+
+        return ProductResource::collection($products);
+    }
+
     public function show(Product $product)
     {
         abort_unless($product->is_active, 404);

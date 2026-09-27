@@ -25,9 +25,14 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        $item = $request->user()->cartItems()->firstOrNew(['product_id' => $data['product_id']]);
-        $item->quantity = ($item->exists ? $item->quantity : 0) + $data['quantity'];
-        $item->save();
+        $product = Product::findOrFail($data['product_id']);
+
+        $item = $request->user()->cartItems()->firstOrNew(['product_id' => $product->id]);
+        $item->quantity = min(($item->exists ? $item->quantity : 0) + $data['quantity'], $product->stock);
+
+        if ($item->quantity > 0) {
+            $item->save();
+        }
 
         return $this->respondWithItems($request);
     }
@@ -42,12 +47,14 @@ class CartController extends Controller
             'quantity' => ['required', 'integer'],
         ]);
 
-        if ($data['quantity'] <= 0) {
+        $quantity = min($data['quantity'], $product->stock);
+
+        if ($quantity <= 0) {
             $request->user()->cartItems()->where('product_id', $product->id)->delete();
         } else {
             $request->user()->cartItems()->updateOrCreate(
                 ['product_id' => $product->id],
-                ['quantity' => $data['quantity']]
+                ['quantity' => $quantity]
             );
         }
 

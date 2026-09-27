@@ -31,6 +31,7 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset'])
 
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/availability', [ProductController::class, 'availability']);
 Route::get('/products/{product:slug}', [ProductController::class, 'show']);
 Route::get('/shipping-rates', ShippingRateController::class);
 

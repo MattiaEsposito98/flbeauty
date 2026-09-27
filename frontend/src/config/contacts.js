@@ -1,7 +1,12 @@
+const WHATSAPP_NUMBER = '393517459482'
+
 export const WHATSAPP_DISPLAY = '351 745 9482'
-export const WHATSAPP_URL = `https://wa.me/393517459482?text=${encodeURIComponent(
-  'Ciao F&L Beauty! Vorrei qualche informazione.'
-)}`
+
+export function whatsappUrl(text) {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`
+}
+
+export const WHATSAPP_URL = whatsappUrl('Ciao F&L Beauty! Vorrei qualche informazione.')
 
 export const EMAIL = 'Flbeauty32@gmail.com'
 
