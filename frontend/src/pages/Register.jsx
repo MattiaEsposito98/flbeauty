@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { LuMapPin, LuUser } from 'react-icons/lu'
 import { useAuth } from '../context/AuthContext'
+import Alert from '../components/Alert'
+import AuthCard from '../components/AuthCard'
+import PasswordField from '../components/PasswordField'
 import ComuneAutocomplete from '../components/ComuneAutocomplete'
 import PostalCodeField from '../components/PostalCodeField'
 
@@ -65,75 +69,128 @@ export default function Register() {
 
   if (registered) {
     return (
-      <div className="page page-register">
-        <h1>Controlla la tua email</h1>
-        <p>
-          Ti abbiamo inviato un'email all'indirizzo <strong>{form.email}</strong> con un link
-          per verificare il tuo account. Aprilo per poter accedere.
-        </p>
-        <p>
-          <Link to="/login">Vai al login</Link>
-        </p>
-      </div>
+      <AuthCard title="Controlla la tua email" subtitle="Manca solo un ultimo passaggio!">
+        <Alert type="success">
+          Ti abbiamo inviato un'email all'indirizzo <strong>{form.email}</strong> con un link per
+          verificare il tuo account. Aprilo per poter accedere.
+        </Alert>
+        <Link to="/login" className="btn btn-primary btn-block btn-lg">
+          Vai al login
+        </Link>
+      </AuthCard>
     )
   }
 
   return (
-    <div className="page page-register">
-      <h1>Crea il tuo account</h1>
+    <AuthCard
+      wide
+      title="Crea il tuo account"
+      subtitle="Registrati per ordinare i tuoi prodotti e salvare i tuoi preferiti."
+      footer={
+        <>
+          Hai già un account? <Link to="/login">Accedi</Link>
+        </>
+      }
+    >
       <form onSubmit={handleSubmit}>
-        <section>
-          <h2>I tuoi dati</h2>
-          <div className="field">
-            <label>Nome e cognome *</label>
-            <input name="name" value={form.name} onChange={handleChange} required />
-          </div>
-          <div className="field">
-            <label>Username *</label>
-            <input name="username" value={form.username} onChange={handleChange} required />
-            {fieldError('username') && <p className="error">{fieldError('username')}</p>}
-          </div>
-          <div className="field">
-            <label>Email *</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} required />
-            {fieldError('email') && <p className="error">{fieldError('email')}</p>}
-          </div>
-          <div className="field">
-            <label>Password *</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange} required />
-          </div>
-          <div className="field">
-            <label>Conferma password *</label>
-            <input
-              type="password"
-              name="password_confirmation"
-              value={form.password_confirmation}
-              onChange={handleChange}
+        <section className="form-section">
+          <h2 className="form-section-title">
+            <LuUser aria-hidden="true" /> I tuoi dati
+          </h2>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="register-name">Nome e cognome *</label>
+              <input
+                id="register-name"
+                name="name"
+                autoComplete="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="register-username">Username *</label>
+              <input
+                id="register-username"
+                name="username"
+                autoComplete="username"
+                value={form.username}
+                onChange={handleChange}
+                required
+              />
+              {fieldError('username') && <p className="error">{fieldError('username')}</p>}
+            </div>
+            <div className="field span-2">
+              <label htmlFor="register-email">Email *</label>
+              <input
+                id="register-email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+              {fieldError('email') && <p className="error">{fieldError('email')}</p>}
+            </div>
+            <PasswordField
+              id="register-password"
+              label="Password *"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              autoComplete="new-password"
               required
             />
+            <PasswordField
+              id="register-password-confirmation"
+              label="Conferma password *"
+              value={form.password_confirmation}
+              onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
+              autoComplete="new-password"
+              required
+            />
+            {fieldError('password') && <p className="error span-2">{fieldError('password')}</p>}
           </div>
         </section>
 
-        <section>
-          <h2>Indirizzo di spedizione</h2>
+        <section className="form-section">
+          <h2 className="form-section-title">
+            <LuMapPin aria-hidden="true" /> Indirizzo di spedizione
+          </h2>
           <p className="hint">
-            Questo sarà il tuo indirizzo principale per le spedizioni. Potrai aggiungerne altri
-            in seguito dal tuo account.
+            Questo sarà il tuo indirizzo principale per le spedizioni. Potrai aggiungerne altri in
+            seguito dal tuo account.
           </p>
 
-          <div className="field">
-            <label>Telefono *</label>
-            <input name="phone" value={form.phone} onChange={handleChange} required />
-          </div>
-          <div className="field">
-            <label>Via e civico *</label>
-            <input name="address_line" value={form.address_line} onChange={handleChange} required />
-          </div>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="register-phone">Telefono *</label>
+              <input
+                id="register-phone"
+                type="tel"
+                name="phone"
+                autoComplete="tel"
+                value={form.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="register-address">Via e civico *</label>
+              <input
+                id="register-address"
+                name="address_line"
+                autoComplete="street-address"
+                value={form.address_line}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <ComuneAutocomplete value={comune} onSelect={setComune} required />
-          {fieldError('address.comune_id') && <p className="error">Seleziona un comune valido.</p>}
+            <ComuneAutocomplete value={comune} onSelect={setComune} required />
+            {fieldError('address.comune_id') && <p className="error span-2">Seleziona un comune valido.</p>}
 
-          <div className="field-row">
             <PostalCodeField
               comune={comune}
               value={form.postal_code}
@@ -143,16 +200,18 @@ export default function Register() {
               <label>Provincia</label>
               <input value={comune?.province ?? ''} disabled placeholder="Derivata dal comune" />
             </div>
+            {fieldError('address.postal_code') && (
+              <p className="error span-2">{fieldError('address.postal_code')}</p>
+            )}
           </div>
-          {fieldError('address.postal_code') && <p className="error">{fieldError('address.postal_code')}</p>}
         </section>
 
-        {errors.generic && <p className="error">{errors.generic[0]}</p>}
+        {errors.generic && <Alert type="error">{errors.generic[0]}</Alert>}
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Creazione account...' : 'Registrati'}
+        <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting}>
+          {submitting ? 'Creazione account...' : 'Crea il mio account'}
         </button>
       </form>
-    </div>
+    </AuthCard>
   )
 }

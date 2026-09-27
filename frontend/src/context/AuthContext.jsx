@@ -39,6 +39,16 @@ export function AuthProvider({ children }) {
     return data
   }
 
+  async function forgotPassword(email) {
+    const { data } = await client.post('/forgot-password', { email })
+    return data
+  }
+
+  async function resetPassword(payload) {
+    const { data } = await client.post('/reset-password', payload)
+    return data
+  }
+
   async function logout() {
     await client.post('/logout').catch(() => {})
     localStorage.removeItem('token')
@@ -52,7 +62,17 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, refreshUser, resendVerificationEmail }}
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        refreshUser,
+        resendVerificationEmail,
+        forgotPassword,
+        resetPassword,
+      }}
     >
       {children}
     </AuthContext.Provider>

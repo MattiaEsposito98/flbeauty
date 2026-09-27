@@ -44,26 +44,50 @@ export default function AddressForm({ initial, onSubmit, onCancel }) {
 
   return (
     <form className="address-form" onSubmit={handleSubmit}>
-      <div className="field">
-        <label>Nome indirizzo (es. Casa, Ufficio)</label>
-        <input name="label" value={form.label ?? ''} onChange={handleChange} />
-      </div>
-      <div className="field">
-        <label>Destinatario *</label>
-        <input name="recipient_name" value={form.recipient_name} onChange={handleChange} required />
-      </div>
-      <div className="field">
-        <label>Telefono</label>
-        <input name="phone" value={form.phone ?? ''} onChange={handleChange} />
-      </div>
-      <div className="field">
-        <label>Via e civico *</label>
-        <input name="address_line" value={form.address_line} onChange={handleChange} required />
-      </div>
+      <div className="form-grid">
+        <div className="field">
+          <label htmlFor="address-label">Nome indirizzo</label>
+          <input
+            id="address-label"
+            name="label"
+            value={form.label ?? ''}
+            onChange={handleChange}
+            placeholder="Es. Casa, Ufficio"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="address-recipient">Destinatario *</label>
+          <input
+            id="address-recipient"
+            name="recipient_name"
+            value={form.recipient_name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="address-phone">Telefono</label>
+          <input
+            id="address-phone"
+            type="tel"
+            name="phone"
+            value={form.phone ?? ''}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="address-line">Via e civico *</label>
+          <input
+            id="address-line"
+            name="address_line"
+            value={form.address_line}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-      <ComuneAutocomplete value={comune} onSelect={setComune} required />
+        <ComuneAutocomplete value={comune} onSelect={setComune} required />
 
-      <div className="field-row">
         <PostalCodeField
           comune={comune}
           value={form.postal_code}
@@ -73,19 +97,19 @@ export default function AddressForm({ initial, onSubmit, onCancel }) {
           <label>Provincia</label>
           <input value={comune?.province ?? ''} disabled placeholder="Derivata dal comune" />
         </div>
+
+        <label className="checkbox span-2">
+          <input type="checkbox" name="is_default" checked={form.is_default} onChange={handleChange} />
+          Imposta come indirizzo principale
+        </label>
       </div>
 
-      <label className="checkbox">
-        <input type="checkbox" name="is_default" checked={form.is_default} onChange={handleChange} />
-        Imposta come indirizzo principale
-      </label>
-
-      <div className="actions">
-        <button type="submit" disabled={submitting}>
+      <div className="form-actions">
+        <button type="submit" className="btn btn-primary" disabled={submitting}>
           {submitting ? 'Salvataggio...' : 'Salva indirizzo'}
         </button>
         {onCancel && (
-          <button type="button" onClick={onCancel} className="secondary">
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>
             Annulla
           </button>
         )}

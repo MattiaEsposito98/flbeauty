@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { LuMapPin, LuShoppingBag, LuTicket, LuTruck } from 'react-icons/lu'
 import client from '../api/client'
 import { useCart } from '../context/CartContext'
+import Alert from '../components/Alert'
+import EmptyState from '../components/EmptyState'
+import Spinner from '../components/Spinner'
+import { formatPrice } from '../utils/format'
 
 export default function Checkout() {
-  const { items, total, clearCart } = useCart()
+  const { items, loading: cartLoading, total, clearCart } = useCart()
   const navigate = useNavigate()
 
   const [addresses, setAddresses] = useState([])
+  const [addressesLoaded, setAddressesLoaded] = useState(false)
   const [shippingRates, setShippingRates] = useState([])
   const [addressId, setAddressId] = useState('')
   const [shippingRateId, setShippingRateId] = useState('')
@@ -21,6 +27,7 @@ export default function Checkout() {
       setAddresses(data)
       const defaultAddress = data.find((a) => a.is_default) ?? data[0]
       if (defaultAddress) setAddressId(String(defaultAddress.id))
+      setAddressesLoaded(true)
     })
     client.get('/shipping-rates').then(({ data }) => {
       setShippingRates(data)
@@ -58,7 +65,7 @@ export default function Checkout() {
         items: items.map((item) => ({ product_id: item.product.id, quantity: item.quantity })),
       })
       clearCart()
-      navigate(`/ordini/${data.id}`)
+      navigate(`/ordini/${data.id}`, { state: { justPlaced: true } })
     } catch (err) {
       const errors = err.response?.data?.errors
       setError(errors ? Object.values(errors).flat().join(' ') : "Errore durante l'ordine.")
@@ -67,69 +74,164 @@ export default function Checkout() {
     }
   }
 
+  if (cartLoading) return <Spinner />
+
   if (items.length === 0) {
-    return <p>Il carrello è vuoto.</p>
+    return (
+      <div className="page">
+        <EmptyState
+          icon={LuShoppingBag}
+          title="Il carrello è vuoto"
+          action={
+            <Link to="/" className="btn btn-primary">
+              Scopri i prodotti
+            </Link>
+          }
+        >
+          Aggiungi qualche prodotto prima di completare l'ordine.
+        </EmptyState>
+      </div>
+    )
+  }
+
+  if (!addressesLoaded) {
+    return <Spinner label="Caricamento indirizzi..." />
   }
 
   if (addresses.length === 0) {
-    return <p>Caricamento indirizzi...</p>
+    return (
+      <div className="page">
+        <EmptyState
+          icon={LuMapPin}
+          title="Manca un indirizzo di spedizione"
+          action={
+            <Link to="/account" className="btn btn-primary">
+              Aggiungi un indirizzo
+            </Link>
+          }
+        >
+          Per completare l'ordine aggiungi prima un indirizzo di spedizione dal tuo account.
+        </EmptyState>
+      </div>
+    )
   }
 
   return (
-    <div className="page page-checkout">
-      <h1>Completa l'ordine</h1>
+    <div className="page checkout-page">
+      <header className="page-header">
+        <span className="eyebrow">Checkout</span>
+        <h1>
+          Completa il tuo <em>ordine</em>
+        </h1>
+        <p className="page-subtitle">
+          Controlla i dati di spedizione e conferma: ti invieremo una email di riepilogo.
+        </p>
+      </header>
 
-      <form onSubmit={handleSubmit}>
-        <div className="field">
-          <label>Indirizzo di spedizione *</label>
-          <select value={addressId} onChange={(e) => setAddressId(e.target.value)} required>
-            {addresses.map((address) => (
-              <option key={address.id} value={address.id}>
-                {address.label || 'Indirizzo'} — {address.address_line}, {address.comune?.name}
-                {address.is_default ? ' (principale)' : ''}
-              </option>
+      <form className="checkout-layout" onSubmit={handleSubmit}>
+        <div className="checkout-sections">
+          <section className="card">
+            <h2 className="card-title">
+              <LuMapPin aria-hidden="true" /> Indirizzo di spedizione
+            </h2>
+            <div className="field">
+              <label htmlFor="checkout-address">Spedisci a *</label>
+              <select
+                id="checkout-address"
+                value={addressId}
+                onChange={(e) => setAddressId(e.target.value)}
+                required
+              >
+                {addresses.map((address) => (
+                  <option key={address.id} value={address.id}>
+                    {address.label || 'Indirizzo'} — {address.address_line}, {address.comune?.name}
+                    {address.is_default ? ' (principale)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Link to="/account" className="text-link">
+              Gestisci i tuoi indirizzi
+            </Link>
+          </section>
+
+          <section className="card">
+            <h2 className="card-title">
+              <LuTruck aria-hidden="true" /> Spedizione
+            </h2>
+            <div className="field">
+              <label htmlFor="checkout-shipping">Metodo di spedizione *</label>
+              <select
+                id="checkout-shipping"
+                value={shippingRateId}
+                onChange={(e) => {
+                  setShippingRateId(e.target.value)
+                  setShippingAutoSuggested(false)
+                }}
+                required
+              >
+                {shippingRates.map((rate) => (
+                  <option key={rate.id} value={rate.id}>
+                    {rate.name} — {formatPrice(rate.price)}
+                  </option>
+                ))}
+              </select>
+              {shippingAutoSuggested && (
+                <p className="hint">Tariffa suggerita in base alla regione del tuo indirizzo. Puoi cambiarla.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="card">
+            <h2 className="card-title">
+              <LuTicket aria-hidden="true" /> Codice sconto
+            </h2>
+            <div className="field">
+              <label htmlFor="checkout-discount">Hai un codice sconto?</label>
+              <input
+                id="checkout-discount"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                placeholder="Inserisci il codice"
+              />
+              <p className="hint">Se valido, lo sconto verrà applicato e mostrato nel riepilogo finale.</p>
+            </div>
+          </section>
+        </div>
+
+        <aside className="card summary-card">
+          <h2>Riepilogo ordine</h2>
+          <ul className="summary-items">
+            {items.map((item) => (
+              <li key={item.product.id}>
+                <span>
+                  {item.product.name} <span className="muted">× {item.quantity}</span>
+                </span>
+                <span>{formatPrice(item.product.price * item.quantity)}</span>
+              </li>
             ))}
-          </select>
-        </div>
+          </ul>
+          <div className="summary-lines">
+            <div className="summary-row">
+              <span>Subtotale</span>
+              <span>{formatPrice(total)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Spedizione</span>
+              <span>{shippingRate ? formatPrice(shippingRate.price) : '—'}</span>
+            </div>
+            <div className="summary-row summary-total">
+              <span>Totale</span>
+              <strong>{formatPrice(grandTotal)}</strong>
+            </div>
+          </div>
 
-        <div className="field">
-          <label>Spedizione *</label>
-          <select
-            value={shippingRateId}
-            onChange={(e) => {
-              setShippingRateId(e.target.value)
-              setShippingAutoSuggested(false)
-            }}
-            required
-          >
-            {shippingRates.map((rate) => (
-              <option key={rate.id} value={rate.id}>
-                {rate.name} — &euro;{Number(rate.price).toFixed(2)}
-              </option>
-            ))}
-          </select>
-          {shippingAutoSuggested && (
-            <p className="hint">Tariffa suggerita in base alla regione del tuo indirizzo. Puoi cambiarla.</p>
-          )}
-        </div>
+          {error && <Alert type="error">{error}</Alert>}
 
-        <div className="field">
-          <label>Codice sconto</label>
-          <input value={discountCode} onChange={(e) => setDiscountCode(e.target.value)} />
-          <p className="hint">Se inserito, lo sconto verrà applicato e mostrato nel riepilogo finale.</p>
-        </div>
-
-        <div className="checkout-summary">
-          <p>Subtotale: &euro;{total.toFixed(2)}</p>
-          <p>Spedizione: &euro;{shippingRate ? Number(shippingRate.price).toFixed(2) : '0.00'}</p>
-          <p className="cart-total">Totale: &euro;{grandTotal.toFixed(2)}</p>
-        </div>
-
-        {error && <p className="error">{error}</p>}
-
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Invio ordine...' : 'Conferma ordine'}
-        </button>
+          <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting}>
+            {submitting ? 'Invio ordine...' : 'Conferma ordine'}
+          </button>
+        </aside>
       </form>
     </div>
   )

@@ -1,6 +1,10 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { LuMail } from 'react-icons/lu'
 import { useAuth } from '../context/AuthContext'
+import Alert from '../components/Alert'
+import AuthCard from '../components/AuthCard'
+import PasswordField from '../components/PasswordField'
 
 const UNVERIFIED_HINT = 'Devi verificare la tua email prima di accedere'
 
@@ -15,6 +19,7 @@ export default function Login() {
   const [resendStatus, setResendStatus] = useState(null)
 
   const justVerified = searchParams.get('verified') === '1'
+  const justReset = searchParams.get('reset') === '1'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -33,7 +38,7 @@ export default function Login() {
   }
 
   async function handleResend() {
-    setResendStatus('invio...')
+    setResendStatus('Invio in corso...')
     const { message } = await resendVerificationEmail(email)
     setResendStatus(message)
   }
@@ -41,36 +46,65 @@ export default function Login() {
   const showResend = error?.includes(UNVERIFIED_HINT)
 
   return (
-    <div className="page page-login">
-      <h1>Accedi</h1>
-
-      {justVerified && <p className="hint">Email verificata! Ora puoi accedere.</p>}
+    <AuthCard
+      title="Accedi"
+      subtitle="Che bello rivederti! Entra nel tuo account F&L Beauty."
+      footer={
+        <>
+          Non hai ancora un account? <Link to="/register">Registrati</Link>
+        </>
+      }
+    >
+      {justVerified && <Alert type="success">Email verificata! Ora puoi accedere.</Alert>}
+      {justReset && <Alert type="success">Password reimpostata! Ora puoi accedere.</Alert>}
 
       <form onSubmit={handleSubmit}>
         <div className="field">
-          <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label htmlFor="login-email">Email</label>
+          <div className="input-icon">
+            <LuMail aria-hidden="true" />
+            <input
+              id="login-email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
         </div>
-        <div className="field">
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <p className="error">{error}</p>}
-        {showResend && (
-          <p className="hint">
-            Non hai ricevuto l'email? <a onClick={handleResend}>Invia di nuovo</a>
-          </p>
+        <PasswordField
+          id="login-password"
+          label="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          required
+        />
+
+        <Link to="/password-dimenticata" className="auth-inline-link">
+          Password dimenticata?
+        </Link>
+
+        {error && (
+          <Alert type="error">
+            <p>{error}</p>
+            {showResend && (
+              <p>
+                Non hai ricevuto l'email?{' '}
+                <button type="button" className="link-button" onClick={handleResend}>
+                  Invia di nuovo
+                </button>
+              </p>
+            )}
+          </Alert>
         )}
-        {resendStatus && <p className="hint">{resendStatus}</p>}
-        <button type="submit" disabled={submitting}>
+        {resendStatus && <Alert type="info">{resendStatus}</Alert>}
+
+        <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting}>
           {submitting ? 'Accesso...' : 'Accedi'}
         </button>
       </form>
-    </div>
+    </AuthCard>
   )
 }
