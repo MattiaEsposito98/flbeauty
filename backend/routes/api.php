@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ComuneController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ShippingRateController;
 use Illuminate\Http\Request;
@@ -19,6 +20,11 @@ Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 've
     ->middleware('signed')
     ->name('verification.verify');
 Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+    ->middleware('throttle:6,1');
+
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+    ->middleware('throttle:6,1');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])
     ->middleware('throttle:6,1');
 
 Route::get('/categories', [CategoryController::class, 'index']);
