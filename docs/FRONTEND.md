@@ -1,6 +1,6 @@
 # Frontend — stato e decisioni
 
-Ultimo aggiornamento: 2026-09-26
+Ultimo aggiornamento: 2026-09-27
 
 ## Stack
 - **React puro** (no Next.js, deciso con l'utente) scaffoldato con **Vite**
@@ -179,5 +179,187 @@ stock viene decrementato dentro la stessa transazione che crea l'ordine, con
 `lockForUpdate()` sui prodotti per evitare che due checkout simultanei vendano più
 pezzi di quelli disponibili.
 
+## Recupero password (nuovo, sessione del 2026-09-27)
+Flusso standard "password dimenticata", separato dalla verifica email:
+
+- `POST /api/forgot-password` (pubblica, `email`): risposta sempre generica per
+  non rivelare se l'indirizzo è registrato. Usa il `PasswordBroker` nativo di
+  Laravel (`password_reset_tokens`, già presente dalle migration di default).
+- `POST /api/reset-password` (pubblica, `token`/`email`/`password`/
+  `password_confirmation`): se il token è valido aggiorna la password, altrimenti
+  errore 422 (link scaduto/non valido).
+- Email personalizzata (stesso pattern di `VerifyEmail`, vedi
+  `AppServiceProvider::boot()`): `ResetPassword::createUrlUsing()` genera un link
+  diretto al **frontend** (`{FRONTEND_URL}/reimposta-password?token=...&email=...`),
+  non un redirect via backend come per la verifica email — qui è la SPA React a
+  raccogliere la nuova password e chiamare l'API, non serve una rotta firmata lato
+  Laravel.
+- Frontend: `src/pages/ForgotPassword.jsx` (richiesta link), `src/pages/
+  ResetPassword.jsx` (legge `token`/`email` dalla query string, imposta la nuova
+  password, poi redirect a `/login?reset=1` con banner di conferma). Link "Password
+  dimenticata?" aggiunto in `Login.jsx`.
+
+Testato dal vivo: richiesta dalla SPA → email ricevuta su Mailpit → click sul link
+→ nuova password impostata → redirect a login con banner.
+
+## Ricerca prodotti (nuovo, sessione del 2026-09-27)
+Il backend supportava già `GET /api/products?search=...` ma cercava solo nel
+`name` e il frontend non aveva alcun campo di ricerca (solo filtro categoria).
+
+- Backend (`ProductController::index`): il parametro `search` ora cerca anche in
+  `description`, non solo in `name`.
+- Frontend (`Catalog.jsx`): aggiunta una barra di ricerca testuale, sincronizzata
+  con il query param `?q=` (debounce di 400ms per non chiamare l'API ad ogni
+  tasto premuto), combinabile col filtro categoria — cambiare categoria non
+  cancella più il testo cercato. Testato dal vivo: ricerca "lenzuolo" → mostra
+  solo "Lenzuolo bianco".
+
+## Paginazione catalogo (nuovo, sessione del 2026-09-27)
+Il backend pagina già server-side a 12 prodotti (`Product::paginate(12)` in
+`ProductController::index`) — corretto per le performance: anche con un catalogo
+grande, il payload resta piccolo e la query resta veloce indipendentemente dal
+numero totale di prodotti. Il gap era solo lato frontend, che leggeva `data.data`
+ignorando `data.meta` (paginazione mai raggiungibile oltre la prima pagina).
+
+- `Catalog.jsx` ora legge anche `data.meta` (`current_page`/`last_page`) e
+  sincronizza la pagina corrente con il query param `?page=`
+- Pulsanti "Precedente"/"Successiva" + indicatore "Pagina X di Y", visibili solo
+  se `last_page > 1`
+- Cambiare categoria o cercare un prodotto resetta sempre alla pagina 1 (il
+  parametro `page` viene rimosso dall'URL)
+- Testato dal vivo: 14 prodotti totali → pagina 1 mostra 12 prodotti + link
+  "Successiva" → pagina 2 mostra i restanti 2 con "Successiva" disabilitato →
+  cambiare categoria da pagina 2 riporta a pagina 1 con l'URL pulito
+
+## Indice full-text sulla ricerca prodotti (nuovo, sessione del 2026-09-27)
+La ricerca usava `LIKE '%...%'` su `name`/`description` (nessun indice, scan
+completo della tabella). Aggiunto in anticipo un indice **FULLTEXT** MySQL così
+la ricerca resta veloce anche quando il catalogo crescerà molto, senza dover
+rifare questo lavoro più avanti.
+
+- Migration: `add_fulltext_index_to_products_table` — `FULLTEXT(name, description)`
+- `ProductController::index()`: la query di ricerca ora usa `whereFullText()` in
+  modalità *boolean*, con ogni parola trasformata in un prefisso obbligatorio
+  (`+parola*`) per restare il più vicino possibile al comportamento precedente
+  (ricerca "a partire da", non serve digitare la parola per intero)
+- **Trade-off accettato**: FULLTEXT indicizza parole intere, quindi matcha
+  parola-intera e prefissi (`lenz` → "Lenzuolo"), ma **non** sottostringhe a metà
+  parola (`zuolo` non matcha più "Lenzuolo") — limite intrinseco di MySQL
+  FULLTEXT, non risolvibile senza un indice trigram dedicato (non necessario ora)
+- Testato dal vivo: `lenzuolo` (parola intera) ✓, `lenz` (prefisso) ✓, `fantasma`
+  (nella descrizione) ✓, `zuolo` (suffisso) → nessun risultato, come atteso
+
+## Wishlist / preferiti (nuovo, sessione del 2026-09-27)
+Lista dei prodotti preferiti persistita **lato server** per utente (non
+`localStorage` come il carrello) — coerente con gli indirizzi, così i preferiti
+seguono l'utente su ogni dispositivo.
+
+- Tabella `wishlist_items` (`user_id`, `product_id`, unique su entrambe)
+- `WishlistController`: `GET /api/wishlist` (prodotti completi, non solo gli id
+  — serve sia per il cuoricino attivo/spento sia per la pagina Preferiti senza
+  una seconda chiamata), `POST/DELETE /api/wishlist/{product}` (idempotenti,
+  `firstOrCreate`/`delete` diretto)
+- Frontend: `WishlistContext` carica la lista al login (si svuota al logout),
+  `WishlistButton` (cuoricino ♡/♥) riusabile in `ProductCard` e `ProductDetail`
+  — se l'utente non è loggato, il click redirige al login (i preferiti sono solo
+  per utenti registrati, come il checkout)
+- Nuova pagina `/preferiti` (protetta), link "Preferiti" in navbar solo per
+  utenti loggati
+
+## Mini-carrello a scomparsa + indicatore "già nel carrello" (nuovo, sessione del 2026-09-27)
+Decisione presa con l'utente: invece di dover aprire `/carrello` per capire cosa
+si ha già selezionato, un pannello laterale (stile Amazon) mostra il contenuto
+del carrello senza lasciare la pagina corrente.
+
+- `CartContext`: nuovo stato `drawerOpen` — si apre automaticamente ad ogni
+  `addItem()` e si può riaprire/chiudere manualmente; nuova funzione
+  `getQuantityInCart(productId)`
+- `CartDrawer.jsx`: pannello fisso a destra (overlay + sfondo scuro cliccabile
+  per chiudere, più pulsante "×"), quantità modificabile, totale, link al
+  carrello completo (`/carrello`, pagina esistente, invariata) e "Procedi
+  all'ordine". Montato una volta in `App.jsx`, visibile su qualunque pagina
+- Il pulsante "Carrello" in navbar ora apre il pannello invece di navigare
+- **Indicatore "già nel carrello"**: badge "Nel carrello (N)" su ogni
+  `ProductCard` nel catalogo e "Già nel carrello: N" nel dettaglio prodotto —
+  visibile senza dover aprire il carrello, come richiesto
+- Testato dal vivo: aggiunta prodotto dalla pagina dettaglio → pannello si apre
+  da solo → chiusura manuale → badge "Carrello (1)" resta visibile in navbar →
+  riapertura dal pulsante navbar
+
+## Carrello allineato al server per utenti loggati (nuovo, sessione del 2026-09-27)
+Prima il carrello viveva solo in `localStorage` (perso cambiando dispositivo).
+Allineato allo stesso pattern della wishlist: **per gli ospiti resta in
+localStorage** (nessun account a cui agganciarlo), **per gli utenti loggati vive
+sul server** (tabella `cart_items`, come `wishlist_items`) e li segue su ogni
+dispositivo.
+
+- Tabella `cart_items` (`user_id`, `product_id`, `quantity`, unique su
+  `user_id`+`product_id`)
+- `CartController`: `GET /api/cart` (lista con prodotto completo, stesso
+  approccio della wishlist), `POST /api/cart` (aggiunge/incrementa),
+  `PATCH /api/cart/{product}` (imposta quantità esatta, usato dall'input
+  numerico), `DELETE /api/cart/{product}` (rimuove una riga),
+  `DELETE /api/cart` (svuota tutto, usato dopo un ordine completato)
+- **Merge automatico al login**: se l'utente aveva un carrello da ospite in
+  `localStorage`, viene sommato a quello già salvato sull'account (una singola
+  volta per sessione di login, tracciata con un `ref` per evitare merge
+  duplicati se il componente si ri-renderizza), poi il carrello locale viene
+  svuotato e lo stato riflette sempre e solo il server
+- **Cambio di comportamento rispetto a prima**: il carrello non sopravvive più
+  al logout come faceva quando viveva solo in `localStorage` — dopo il logout
+  riparte vuoto (come carrello "ospite"), ma riappare intatto al login
+  successivo perché nel frattempo è salvato sull'account. È il trade-off
+  corretto per avere la persistenza multi-dispositivo
+- Nessuna modifica necessaria a `Cart.jsx`, `CartDrawer.jsx`, `ProductCard.jsx`,
+  `Checkout.jsx`: consumano tutti `items`/`addItem`/ecc. da `CartContext`, che
+  incapsula la differenza ospite/account
+- Testato dal vivo: aggiunto un prodotto da ospite → login → merge (badge
+  "Carrello (1)" in navbar) → logout → badge sparisce → login di nuovo →
+  "Carrello (1)" ricompare dal server
+
+## Restyling grafico completo (nuovo, sessione del 2026-09-27)
+Tema "boutique beauty" accogliente e femminile (pubblico ~90% femminile), con i
+colori dell'admin/logo. Regole, token e componenti sono documentati in
+[DESIGN.md](DESIGN.md) — da rispettare per ogni modifica futura.
+
+Novità visibili: barra annuncio + header sticky con icone e badge (preferiti,
+carrello), hero sul catalogo con ricerca integrata, card prodotto con link su tutta
+la card, pagina prodotto con galleria miniature e stepper quantità, carrello
+laterale e pagina carrello a due colonne, checkout a sezioni con riepilogo
+laterale, pagine di accesso su card con l'emblema del logo, account con avatar
+ottagonale, footer con contatti (WhatsApp 351 745 9482, Flbeauty32@gmail.com,
+TikTok @flbeauty e @flbeauty2) e pulsante WhatsApp flottante.
+
+Piccoli cambi di comportamento arrivati col restyling:
+- "Esci" non è più nell'header ma nella pagina account (nell'header resta l'icona
+  utente, che porta all'account o al login)
+- Il cuoricino in header è visibile anche agli ospiti: porta al login, e dopo
+  l'accesso si torna alla pagina richiesta (`ProtectedRoute` ora passa
+  `?redirect=`)
+- Cambiando pagina si riparte dall'alto (`ScrollToTop` in `App.jsx`); cambiando
+  pagina del catalogo si scorre all'inizio della griglia
+- `CartContext` espone `loading`: carrello e checkout mostrano un caricamento
+  finché il carrello dell'account non arriva dal server (prima compariva per un
+  istante "carrello vuoto")
+- **Bug corretto**: un utente senza indirizzi vedeva "Caricamento indirizzi..."
+  all'infinito nel checkout; ora vede un invito ad aggiungerne uno
+- **Bug corretto**: in registrazione gli errori sulla password (es. meno di 8
+  caratteri, conferma diversa) non venivano mostrati
+- Immagini prodotto mancanti o non raggiungibili mostrano il placeholder del brand
+  invece dell'icona "immagine rotta" (`ProductImage`). Nota: il prodotto "Lenzuolo
+  bianco" nel DB locale punta a file che non esistono più in `storage/` — va
+  ricaricata l'immagine dall'admin
+- Rimossi `public/favicon.svg` e `public/icons.svg` (residui del template Vite),
+  sostituiti dal favicon del brand; titolo pagina "F&L Beauty" e `lang="it"`
+
+Testato dal vivo a 1280 px e 375 px: catalogo, card con badge carrello/preferiti,
+pagina prodotto, carrello laterale (apertura all'aggiunta, chiusura con Esc),
+pagina carrello con stepper, checkout con tariffa suggerita, login, registrazione,
+account con aggiunta indirizzo.
+
 ## Cosa manca ancora (prossimi passi)
 - Pagina di modifica dati account (nome/email/password)
+- Pagine legali (privacy policy, cookie policy) da collegare nel footer —
+  obbligatorie per il GDPR prima di andare online
+- Verificare che i profili TikTok linkati nel footer (`@flbeauty`, `@flbeauty2`)
+  siano esattamente quelli giusti (`src/config/contacts.js`)

@@ -35,3 +35,4 @@ npm run dev
 - [Email (setup locale, Comunicazioni, piano produzione)](docs/EMAIL.md)
 - [Hosting (piano scelto, architettura domini)](docs/HOSTING.md)
 - [Frontend (stack, registrazione, indirizzi, comuni)](docs/FRONTEND.md)
+- [Design system (colori, font, icone, componenti del sito)](docs/DESIGN.md)

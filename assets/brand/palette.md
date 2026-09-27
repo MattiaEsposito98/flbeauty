@@ -9,4 +9,5 @@ Estratta dal logo `logo.png` (sfondo rosa cipria + cornice/testo rose-gold metal
 | Primary light | `#E6D2D2` | Sfondi sezione, card, hover leggero |
 | Blush background | `#F5E1E0` | Sfondo pagina, aree soft |
 
-Usata sia nel pannello admin (Filament) sia, in futuro, nel frontend pubblico, per coerenza visiva con il brand F&L Beauty.
+Usata sia nel pannello admin (Filament) sia nel frontend pubblico, per coerenza visiva con il brand F&L Beauty.
+Nel frontend la palette è estesa in una scala completa di token (`--rose-50` … `--rose-800`): vedi [docs/DESIGN.md](../../docs/DESIGN.md).
