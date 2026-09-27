@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ShippingRateController;
+use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,4 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('addresses', AddressController::class)->except(['show']);
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
+
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist/{product}', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{product}', [WishlistController::class, 'destroy']);
 });
