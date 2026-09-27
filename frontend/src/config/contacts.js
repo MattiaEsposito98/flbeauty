@@ -8,7 +8,7 @@ export function whatsappUrl(text) {
 
 export const WHATSAPP_URL = whatsappUrl('Ciao F&L Beauty! Vorrei qualche informazione.')
 
-export const EMAIL = 'Flbeauty32@gmail.com'
+export const EMAIL = 'flbeauty32@gmail.com'
 
 export const TIKTOK_PROFILES = [
   { handle: 'flbeauty', url: 'https://www.tiktok.com/@flbeauty' },
