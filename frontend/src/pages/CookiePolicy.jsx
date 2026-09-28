@@ -69,6 +69,10 @@ export default function CookiePolicy() {
               negli Stati Uniti, sulla base del Data Privacy Framework UE-USA.
             </p>
             <p>
+              Contiamo in forma anonima quante volte il banner viene mostrato, accettato o rifiutato
+              (solo i totali del giorno, nessun dato che ti identifica).
+            </p>
+            <p>
               Se rifiuti, Google Analytics non viene caricato e il sito funziona normalmente.{' '}
               <button type="button" className="link-button" onClick={openCookiePreferences}>
                 Cambia le tue preferenze cookie

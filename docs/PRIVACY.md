@@ -65,6 +65,10 @@ banner non compare finché non c'è Google Analytics.
   modifica, come prova del consenso. Si cambia solo con
   `User::setMarketingConsent()` (non è mass assignable)
 
+- `last_login_at`, `login_count` e tabella `user_logins`: storico accessi senza
+  IP, conservato 12 mesi, per le statistiche della voce "Utenti" dell'admin
+- Tabella `cookie_consent_stats`: solo totali giornalieri anonimi del banner
+
 ## API
 - `POST /api/register`: `privacy_accepted` obbligatorio (`accepted`),
   `marketing_consent` facoltativo

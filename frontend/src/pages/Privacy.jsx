@@ -27,7 +27,8 @@ export default function Privacy() {
         <ul>
           <li>
             <strong>Dati dell'account</strong>: nome e cognome, username, indirizzo email e password
-            (salvata solo in forma cifrata, nessuno può leggerla, nemmeno noi).
+            (salvata solo in forma cifrata, nessuno può leggerla, nemmeno noi), data e ora degli accessi
+            al tuo account.
           </li>
           <li>
             <strong>Dati di spedizione</strong>: indirizzi, comune, CAP, provincia e numero di telefono.
@@ -69,6 +70,11 @@ export default function Privacy() {
             6.1.f GDPR).
           </li>
           <li>
+            <strong>Statistiche interne</strong> sull'uso degli account (quanti clienti si registrano, da
+            quali città, quanto spesso accedono), per migliorare il negozio: nostro legittimo interesse
+            (art. 6.1.f GDPR). Queste statistiche le vediamo solo noi e non vengono condivise.
+          </li>
+          <li>
             <strong>Email promozionali</strong> (offerte, sconti, novità): solo se ci dai il consenso (art.
             6.1.a GDPR). Il consenso è facoltativo e puoi revocarlo in qualsiasi momento dal tuo account o
             con il link presente in ogni email promozionale, senza conseguenze sui tuoi ordini.
@@ -98,6 +104,7 @@ export default function Privacy() {
           <li>Dati dell'account: finché l'account resta attivo. Puoi chiederci di cancellarlo in ogni momento.</li>
           <li>Dati degli ordini e documenti fiscali: 10 anni, come previsto dalla legge.</li>
           <li>Consenso alle email promozionali: fino alla revoca.</li>
+          <li>Storico degli accessi al tuo account: 12 mesi.</li>
           <li>Dati tecnici di sicurezza (IP e orari delle richieste): al massimo 14 giorni.</li>
         </ul>
 

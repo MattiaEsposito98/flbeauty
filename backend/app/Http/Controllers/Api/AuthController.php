@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Concerns\ResolvesComuneForAddress;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserLogin;
 use App\Support\Throttle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -105,8 +106,10 @@ class AuthController extends Controller
             ]);
         }
 
+        UserLogin::record($user);
+
         return response()->json([
-            'user' => $user,
+            'user' => $user->fresh(),
             'token' => $user->createToken('api')->plainTextToken,
         ]);
     }

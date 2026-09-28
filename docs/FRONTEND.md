@@ -469,6 +469,71 @@ di prova reale via API (indirizzo salvato, totale corretto, stock scalato una so
 volta, email admin e cliente in coda, pagina ordine con tracking e messaggio
 WhatsApp), poi eliminato con stock restituito.
 
+## Messaggi di errore in italiano (nuovo, sessione del 2026-09-28)
+Prima il backend non aveva i file di lingua italiani: i clienti vedevano chiavi
+come `validation.unique` o `validation.required`. Ora ci sono:
+- `backend/lang/it/validation.php`: tutti i messaggi di Laravel tradotti, con
+  messaggi dedicati (`custom`) per username non valido o già in uso, email già
+  registrata, password che non coincidono, CAP di 5 cifre, carrello vuoto, e i nomi
+  leggibili dei campi (`attributes`: `address.phone` → "telefono", ecc.). Un
+  campo nuovo in una validazione va aggiunto in `attributes`
+- `lang/it/auth.php`, `passwords.php`, `pagination.php` e `lang/it.json` (il
+  suffisso "(e altri N errori)" del messaggio riassuntivo)
+- `lang/en` è la copia originale di Laravel pubblicata con `lang:publish`, fa da
+  riferimento per le chiavi
+- I messaggi scritti direttamente nei controller restano quelli (hanno la precedenza)
+
+Testato via API: campi mancanti, username con spazi/@, email non valida, password
+corta e diversa dalla conferma, CAP corto, username ed email già registrati: tutti
+in italiano.
+
+## Voce "Utenti" nell'admin (nuovo, sessione del 2026-09-28)
+Pagina `/admin/users` (menu "Utenti", dopo "Ordini"), in sola lettura: niente
+creazione, modifica o eliminazione dal pannello. Lo staff (`is_admin`) non compare.
+
+**Statistiche in cima alla pagina** (widget in
+`app/Filament/Resources/Users/Widgets/`, non in `app/Filament/Widgets`: quella
+cartella finisce in automatico nella Dashboard):
+- `UsersOverview`: utenti registrati (+ nuovi in 30 giorni), email verificate,
+  accessi negli ultimi 30 giorni e utenti diversi, quanti hanno ordinato, quanti
+  ricevono le offerte via email
+- `UserActivityChart`: grafico accessi e nuove registrazioni al giorno (7/30/90 giorni)
+- `TopCitiesChart`: le 10 città con più utenti (dall'indirizzo principale)
+- `CookieBannerStats`: banner cookie mostrato / accettato / rifiutato / ignorato
+  negli ultimi 30 giorni. Resta a zero finché Google Analytics non è attivo, perché
+  fino ad allora il banner non compare
+
+**Elenco** in ordine alfabetico: nome e username, email (copiabile), città e
+provincia, email verificata, offerte via email, numero di ordini, totale speso (ordini
+non annullati), accessi, ultimo accesso, data di registrazione. Ricerca per nome,
+username ed email; filtri per email verificata, consenso offerte, ha/non ha ordinato,
+città.
+
+**Scheda utente** (`ViewUser`): profilo, attività, privacy e consensi (con le date),
+indirizzi e ordini (con link all'ordine). Pulsante "Segna email come verificata" per
+chi non riceve l'email di verifica e chiede aiuto.
+
+**Nuovi dati raccolti per le statistiche:**
+- Accessi: `users.last_login_at`, `users.login_count` e tabella `user_logins`
+  (solo utente e data/ora, **niente IP**), scritti da `UserLogin::record()` a ogni
+  login riuscito dal sito (non dal pannello admin). Lo storico si cancella dopo 12
+  mesi (pulizia fatta ogni tanto durante i login, senza cron)
+- Banner cookie: tabella `cookie_consent_stats` con i soli totali del giorno,
+  alimentata da `POST /api/cookie-consent-stats` (`event`: `shown` /
+  `accepted` / `rejected`, massimo 20 al minuto per IP) chiamata da
+  `CookieBanner.jsx`. Nessun dato che identifica il visitatore
+- Privacy e cookie policy aggiornate (storico accessi 12 mesi, statistiche interne
+  per legittimo interesse, conteggi anonimi del banner)
+
+Nota: nella traduzione italiana di Filament manca il testo "Sì/No" delle icone
+nelle schede (`IconEntry`): nelle schede si usa un badge "Sì/No" al posto
+dell'icona.
+
+Test: `backend/tests/Feature/UserStatsTest.php` (accessi registrati solo se il
+login riesce, conteggi del banner, elenco in ordine alfabetico senza lo staff,
+scheda utente, caricamento di tutti i widget). Controllata anche dal vivo nel
+pannello con dati di prova, poi cancellati.
+
 ## Cosa manca ancora (prossimi passi)
 - Istruzioni di pagamento Postepay da mostrare dopo l'ordine (rimandato
   dall'utente)

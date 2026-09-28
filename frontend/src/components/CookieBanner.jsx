@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { LuCookie } from 'react-icons/lu'
 import {
@@ -7,6 +7,7 @@ import {
   enableAnalytics,
   onOpenCookiePreferences,
   readConsent,
+  recordBannerEvent,
   saveConsent,
   trackPageView,
 } from '../utils/cookieConsent'
@@ -20,7 +21,18 @@ export default function CookieBanner() {
   const [consent, setConsent] = useState(() => (analyticsAvailable ? readConsent() : null))
   const [open, setOpen] = useState(() => analyticsAvailable && !readConsent())
 
+  // Il ref evita di contare due volte la stessa apparizione (React in sviluppo
+  // esegue gli effetti due volte).
+  const shownCounted = useRef(false)
+
   useEffect(() => onOpenCookiePreferences(() => setOpen(true)), [])
+
+  useEffect(() => {
+    if (open && !shownCounted.current) {
+      shownCounted.current = true
+      recordBannerEvent('shown')
+    }
+  }, [open])
 
   useEffect(() => {
     if (consent?.analytics) enableAnalytics()
@@ -31,6 +43,8 @@ export default function CookieBanner() {
   }, [consent, location])
 
   function choose(analytics) {
+    recordBannerEvent(analytics ? 'accepted' : 'rejected')
+    shownCounted.current = false
     setConsent(saveConsent(analytics))
     if (!analytics) disableAnalytics()
     setOpen(false)

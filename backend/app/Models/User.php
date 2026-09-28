@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Notifications\QueuedResetPassword;
+use App\Notifications\QueuedVerifyEmail;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -52,6 +55,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'privacy_accepted_at' => 'datetime',
             'marketing_consent' => 'boolean',
             'marketing_consent_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
         ];
@@ -98,9 +102,36 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         ])->save();
     }
 
+    /**
+     * Email di verifica e di reset password passano dalla coda: se il server
+     * di posta non risponde, la richiesta del cliente non va in errore.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new QueuedVerifyEmail);
+    }
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new QueuedResetPassword($token));
+    }
+
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    /**
+     * Indirizzo principale: da qui viene la città mostrata nell'admin.
+     */
+    public function defaultAddress(): HasOne
+    {
+        return $this->hasOne(Address::class)->where('is_default', true);
+    }
+
+    public function logins(): HasMany
+    {
+        return $this->hasMany(UserLogin::class);
     }
 
     public function orders(): HasMany

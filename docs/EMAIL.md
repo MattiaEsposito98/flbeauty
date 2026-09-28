@@ -32,6 +32,15 @@ ordine. L'invio parte subito dopo il salvataggio e resta uno storico consultabil
 - Ogni destinatario riceve una email singola (nessun indirizzo email è visibile agli
   altri destinatari).
 
+> **Dal 2026-09-28** passano dalla coda anche l'email di **verifica** e quella di
+> **reimposta password** (`AppNotificationsQueuedVerifyEmail` e
+> `QueuedResetPassword`, usate da `User::sendEmailVerificationNotification()` e
+> `sendPasswordResetNotification()`). Prima partivano subito: se il server email non
+> rispondeva, la registrazione andava in errore anche se l'account era già stato
+> creato. Ora la registrazione riesce sempre e l'email viene inviata (con 3
+> tentativi a distanza di un minuto) appena il worker è attivo. **Senza queue worker
+> in produzione nessuna email parte**, nemmeno quella di verifica.
+
 Entrambe le mailable implementano `ShouldQueue`: gli invii non bloccano il pannello,
 finiscono in coda (tabella `jobs`) e vengono spediti dal **queue worker** (vedi sotto).
 

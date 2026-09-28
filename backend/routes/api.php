@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ComuneController;
+use App\Http\Controllers\Api\CookieConsentStatController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\MarketingConsentController;
 use App\Http\Controllers\Api\OrderController;
@@ -20,6 +21,8 @@ Route::post('/register', [AuthController::class, 'register'])
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware(['throttle:login', 'bot.guard']);
 Route::get('/comuni', ComuneController::class);
+Route::post('/cookie-consent-stats', [CookieConsentStatController::class, 'store'])
+    ->middleware('throttle:20,1');
 
 Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->middleware('signed')
