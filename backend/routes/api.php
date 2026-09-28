@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
@@ -52,6 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::patch('/user/marketing-consent', [MarketingConsentController::class, 'update']);
+    Route::put('/user/password', [AccountController::class, 'updatePassword'])->middleware('throttle:6,1');
+    Route::delete('/user', [AccountController::class, 'destroy'])->middleware('throttle:6,1');
 
     Route::apiResource('addresses', AddressController::class)->except(['show']);
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);

@@ -61,6 +61,20 @@ export function AuthProvider({ children }) {
     setUser(data)
   }
 
+  async function changePassword(payload) {
+    const { data } = await client.put('/user/password', payload)
+    return data
+  }
+
+  // Dopo l'eliminazione si ricarica la pagina di login da zero: così carrello,
+  // preferiti e utente ripartono puliti, e la pagina protetta dell'account non
+  // fa in tempo a rimandare al login normale (senza il messaggio di conferma).
+  async function deleteAccount(password) {
+    await client.delete('/user', { data: { password } })
+    localStorage.removeItem('token')
+    window.location.replace('/login?deleted=1')
+  }
+
   async function refreshUser() {
     const { data } = await client.get('/user')
     setUser(data)
@@ -76,6 +90,8 @@ export function AuthProvider({ children }) {
         logout,
         refreshUser,
         updateMarketingConsent,
+        changePassword,
+        deleteAccount,
         resendVerificationEmail,
         forgotPassword,
         resetPassword,

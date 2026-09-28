@@ -534,13 +534,33 @@ login riesce, conteggi del banner, elenco in ordine alfabetico senza lo staff,
 scheda utente, caricamento di tutti i widget). Controllata anche dal vivo nel
 pannello con dati di prova, poi cancellati.
 
+## Cambio password ed eliminazione account (nuovo, sessione del 2026-09-28)
+Decisione presa con l'utente: dal profilo si può cambiare **solo la password**;
+nome, username ed email non sono modificabili dal sito. In fondo alla pagina
+account c'è "Elimina account".
+
+- `PUT /api/user/password` (`AccountController::updatePassword`): password
+  attuale (`current_password:sanctum`), nuova password (min 8, confermata, diversa
+  dall'attuale). Chiude gli accessi sugli altri dispositivi, non quello in uso.
+  Frontend: `ChangePasswordCard.jsx`
+- `DELETE /api/user` (`AccountController::destroy`): serve la password. Cancella
+  account, indirizzi, carrello, preferiti, storico accessi (a cascata nel database),
+  token e richieste di reset. **Gli ordini restano** (obblighi fiscali, 10 anni) con
+  `user_id` a null: nome, email e indirizzo copiati nell'ordine restano visibili
+  all'admin. Gli account dello staff non si eliminano dal sito. Entrambe le rotte:
+  massimo 6 richieste al minuto
+- Frontend: `DeleteAccountCard.jsx` (password + doppio click con `ConfirmButton`,
+  che ora accetta `disabled`). Dopo l'eliminazione la pagina `/login?deleted=1` si
+  ricarica da zero: con un cambio di pagina normale React Router arriva dopo la
+  chiusura della sessione, e la pagina protetta rimandava al login senza messaggio
+- Test: `backend/tests/Feature/AccountTest.php`. Provato anche dal vivo (password
+  attuale sbagliata, cambio riuscito, eliminazione con password sbagliata e giusta)
+
 ## Cosa manca ancora (prossimi passi)
-- Istruzioni di pagamento Postepay da mostrare dopo l'ordine (rimandato
-  dall'utente)
-- Pagina di modifica dati account (nome/email/password)
+- Istruzioni di pagamento: **non vanno sul sito**, le manda l'admin su WhatsApp
+  (decisione presa con l'utente il 2026-09-28)
 - Far rileggere privacy e cookie policy (fatte il 2026-09-28, vedi
   [PRIVACY.md](PRIVACY.md))
-- Condizioni di vendita (recesso 14 giorni, resi, spedizioni) ed eliminazione
-  dell'account dal profilo
+- Condizioni di vendita (recesso 14 giorni, resi, spedizioni)
 - Verificare che i profili TikTok linkati nel footer (`@flbeauty`, `@flbeauty2`)
   siano esattamente quelli giusti (`src/config/contacts.js`)

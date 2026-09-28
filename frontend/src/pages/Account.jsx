@@ -15,6 +15,8 @@ import {
 import client from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import AddressForm from '../components/AddressForm'
+import ChangePasswordCard from '../components/ChangePasswordCard'
+import DeleteAccountCard from '../components/DeleteAccountCard'
 import Alert from '../components/Alert'
 import EmptyState from '../components/EmptyState'
 import Spinner from '../components/Spinner'
@@ -272,6 +274,10 @@ export default function Account() {
         </p>
         {consentMessage && <Alert type={consentMessage.type}>{consentMessage.text}</Alert>}
       </section>
+
+      <ChangePasswordCard />
+
+      <DeleteAccountCard />
     </div>
   )
 }

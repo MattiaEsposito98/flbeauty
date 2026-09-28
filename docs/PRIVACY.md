@@ -99,7 +99,7 @@ cambio di pagina (sito a pagina singola, `send_page_view: false` + evento manual
 - Nel `.env` di produzione `LOG_STACK=daily` (già in `.env.example`): i log
   contengono gli IP e l'informativa dichiara una conservazione di 14 giorni
 - Ancora da fare: **condizioni di vendita** (diritto di recesso 14 giorni, resi,
-  spedizioni) ed **eliminazione dell'account** dal profilo
+  spedizioni). L'eliminazione dell'account dal profilo c'è (vedi FRONTEND.md)
 
 ## Test
 - Automatici: `backend/tests/Feature/MarketingConsentTest.php`: destinatari per

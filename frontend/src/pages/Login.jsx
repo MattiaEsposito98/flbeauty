@@ -23,6 +23,7 @@ export default function Login() {
 
   const justVerified = searchParams.get('verified') === '1'
   const justReset = searchParams.get('reset') === '1'
+  const justDeleted = searchParams.get('deleted') === '1'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -64,6 +65,7 @@ export default function Login() {
     >
       {justVerified && <Alert type="success">Email verificata! Ora puoi accedere.</Alert>}
       {justReset && <Alert type="success">Password reimpostata! Ora puoi accedere.</Alert>}
+      {justDeleted && <Alert type="info">Il tuo account è stato eliminato. Ci dispiace vederti andare via!</Alert>}
 
       <form onSubmit={handleSubmit}>
         {trap}
