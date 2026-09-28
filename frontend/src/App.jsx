@@ -9,6 +9,7 @@ import CartToast from './components/CartToast'
 import Footer from './components/Footer'
 import WhatsAppButton from './components/WhatsAppButton'
 import Spinner from './components/Spinner'
+import CookieBanner from './components/CookieBanner'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
@@ -20,6 +21,9 @@ import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderDetail from './pages/OrderDetail'
 import Wishlist from './pages/Wishlist'
+import Privacy from './pages/Privacy'
+import CookiePolicy from './pages/CookiePolicy'
+import Unsubscribe from './pages/Unsubscribe'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -59,6 +63,9 @@ function AppRoutes() {
           <Route path="/catalogo" element={<Navigate to="/" replace />} />
           <Route path="/prodotti/:slug" element={<ProductDetail />} />
           <Route path="/carrello" element={<Cart />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/cookie" element={<CookiePolicy />} />
+          <Route path="/disiscrizione" element={<Unsubscribe />} />
           <Route
             path="/account"
             element={
@@ -96,6 +103,7 @@ function AppRoutes() {
       <Footer />
       <WhatsAppButton />
       <CartToast />
+      <CookieBanner />
     </>
   )
 }

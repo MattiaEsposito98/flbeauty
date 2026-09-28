@@ -22,8 +22,9 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
-  async function login(email, password) {
-    const { data } = await client.post('/login', { email, password })
+  // `identifier` può essere l'email o lo username.
+  async function login(identifier, password, botFields = {}) {
+    const { data } = await client.post('/login', { login: identifier, password, ...botFields })
     localStorage.setItem('token', data.token)
     setUser(data.user)
   }
@@ -34,13 +35,13 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  async function resendVerificationEmail(email) {
-    const { data } = await client.post('/email/verification-notification', { email })
+  async function resendVerificationEmail(identifier) {
+    const { data } = await client.post('/email/verification-notification', { login: identifier })
     return data
   }
 
-  async function forgotPassword(email) {
-    const { data } = await client.post('/forgot-password', { email })
+  async function forgotPassword(email, botFields = {}) {
+    const { data } = await client.post('/forgot-password', { email, ...botFields })
     return data
   }
 
@@ -53,6 +54,11 @@ export function AuthProvider({ children }) {
     await client.post('/logout').catch(() => {})
     localStorage.removeItem('token')
     setUser(null)
+  }
+
+  async function updateMarketingConsent(consent) {
+    const { data } = await client.patch('/user/marketing-consent', { marketing_consent: consent })
+    setUser(data)
   }
 
   async function refreshUser() {
@@ -69,6 +75,7 @@ export function AuthProvider({ children }) {
         register,
         logout,
         refreshUser,
+        updateMarketingConsent,
         resendVerificationEmail,
         forgotPassword,
         resetPassword,

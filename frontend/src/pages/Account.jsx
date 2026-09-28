@@ -8,12 +8,14 @@ import {
   LuPackage,
   LuPencil,
   LuPlus,
+  LuShieldCheck,
   LuStar,
   LuTrash2,
 } from 'react-icons/lu'
 import client from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import AddressForm from '../components/AddressForm'
+import Alert from '../components/Alert'
 import EmptyState from '../components/EmptyState'
 import Spinner from '../components/Spinner'
 import { ORDER_STATUS_LABELS, formatOrderNumber, formatPrice } from '../utils/format'
@@ -28,13 +30,15 @@ function initialsOf(name = '') {
 }
 
 export default function Account() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateMarketingConsent } = useAuth()
   const navigate = useNavigate()
   const [addresses, setAddresses] = useState([])
   const [orders, setOrders] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [consentSaving, setConsentSaving] = useState(false)
+  const [consentMessage, setConsentMessage] = useState(null)
 
   async function loadAddresses() {
     const { data } = await client.get('/addresses')
@@ -68,6 +72,25 @@ export default function Account() {
   async function handleSetDefault(address) {
     await client.put(`/addresses/${address.id}`, { ...address, comune_id: address.comune.id, is_default: true })
     await loadAddresses()
+  }
+
+  async function handleMarketingChange(e) {
+    const consent = e.target.checked
+    setConsentSaving(true)
+    setConsentMessage(null)
+    try {
+      await updateMarketingConsent(consent)
+      setConsentMessage({
+        type: 'success',
+        text: consent
+          ? 'Fatto! Riceverai le nostre offerte e novità via email.'
+          : 'Fatto! Non riceverai più email promozionali.',
+      })
+    } catch {
+      setConsentMessage({ type: 'error', text: 'Non è stato possibile salvare la preferenza. Riprova.' })
+    } finally {
+      setConsentSaving(false)
+    }
   }
 
   async function handleLogout() {
@@ -225,6 +248,29 @@ export default function Account() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="card">
+        <div className="card-header">
+          <h2 className="card-title">
+            <LuShieldCheck aria-hidden="true" /> Privacy e comunicazioni
+          </h2>
+        </div>
+        <label className="checkbox consent-checkbox">
+          <input
+            type="checkbox"
+            checked={Boolean(user?.marketing_consent)}
+            onChange={handleMarketingChange}
+            disabled={consentSaving}
+          />
+          <span>Voglio ricevere via email offerte, sconti e novità di F&amp;L Beauty</span>
+        </label>
+        <p className="hint">
+          Le email sui tuoi ordini e gli avvisi importanti sul tuo account ti arrivano comunque, anche
+          senza questo consenso. Come trattiamo i tuoi dati: <Link to="/privacy">privacy policy</Link>{' '}
+          e <Link to="/cookie">cookie policy</Link>.
+        </p>
+        {consentMessage && <Alert type={consentMessage.type}>{consentMessage.text}</Alert>}
       </section>
     </div>
   )

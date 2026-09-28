@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Communications\Pages;
 
 use App\Filament\Resources\Communications\CommunicationResource;
+use App\Http\Controllers\Api\MarketingConsentController;
 use App\Mail\BroadcastCommunication;
 use App\Models\Communication;
 use Filament\Notifications\Notification;
@@ -24,9 +25,10 @@ class CreateCommunication extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        $recipients = Communication::recipientEmails();
+        $recipients = Communication::recipients($data['type']);
 
         $record = Communication::create([
+            'type' => $data['type'],
             'subject' => $data['subject'],
             'body' => $data['body'],
             'recipients_count' => $recipients->count(),
@@ -34,8 +36,14 @@ class CreateCommunication extends CreateRecord
             'sent_at' => now(),
         ]);
 
-        foreach ($recipients as $email) {
-            Mail::to($email)->send(new BroadcastCommunication($record->subject, $record->body));
+        foreach ($recipients as $recipient) {
+            $unsubscribeUrls = $record->isMarketing()
+                ? MarketingConsentController::unsubscribeUrls($recipient['user'])
+                : null;
+
+            Mail::to($recipient['email'])->send(
+                new BroadcastCommunication($record->subject, $record->body, $unsubscribeUrls)
+            );
         }
 
         return $record;

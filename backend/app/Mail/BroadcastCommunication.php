@@ -6,23 +6,37 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Symfony\Component\Mime\Email;
 
 class BroadcastCommunication extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    /**
+     * @param  array{api: string, page: string}|null  $unsubscribeUrls  solo per le email promozionali
+     */
     public function __construct(
         public string $subjectLine,
         public string $bodyHtml,
+        public ?array $unsubscribeUrls = null,
     ) {}
 
     public function build(): self
     {
+        if ($this->unsubscribeUrls) {
+            // Pulsante "Annulla iscrizione" di Gmail/Outlook (disiscrizione in un clic).
+            $this->withSymfonyMessage(function (Email $message) {
+                $message->getHeaders()->addTextHeader('List-Unsubscribe', '<'.$this->unsubscribeUrls['api'].'>');
+                $message->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+            });
+        }
+
         return $this->subject($this->subjectLine)
             ->view('emails.broadcast')
             ->with([
                 'subject' => $this->subjectLine,
                 'body' => $this->bodyHtml,
+                'unsubscribeUrl' => $this->unsubscribeUrls['page'] ?? null,
             ]);
     }
 }

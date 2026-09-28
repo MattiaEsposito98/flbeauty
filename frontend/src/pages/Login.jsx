@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { LuMail } from 'react-icons/lu'
+import { LuUser } from 'react-icons/lu'
 import { useAuth } from '../context/AuthContext'
 import Alert from '../components/Alert'
 import AuthCard from '../components/AuthCard'
 import PasswordField from '../components/PasswordField'
+import { useBotTrap } from '../components/BotTrap'
+import { apiError } from '../utils/apiError'
 
 const UNVERIFIED_HINT = 'Devi verificare la tua email prima di accedere'
 
@@ -12,11 +14,12 @@ export default function Login() {
   const { login, resendVerificationEmail } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [resendStatus, setResendStatus] = useState(null)
+  const { trap, botFields } = useBotTrap()
 
   const justVerified = searchParams.get('verified') === '1'
   const justReset = searchParams.get('reset') === '1'
@@ -28,10 +31,10 @@ export default function Login() {
     setSubmitting(true)
 
     try {
-      await login(email, password)
+      await login(identifier, password, botFields())
       navigate(searchParams.get('redirect') || '/account')
     } catch (err) {
-      setError(err.response?.data?.errors?.email?.[0] ?? "Errore durante l'accesso.")
+      setError(apiError(err, 'login', "Errore durante l'accesso."))
     } finally {
       setSubmitting(false)
     }
@@ -39,8 +42,12 @@ export default function Login() {
 
   async function handleResend() {
     setResendStatus('Invio in corso...')
-    const { message } = await resendVerificationEmail(email)
-    setResendStatus(message)
+    try {
+      const { message } = await resendVerificationEmail(identifier)
+      setResendStatus(message)
+    } catch (err) {
+      setResendStatus(apiError(err, 'login', "Non è stato possibile inviare l'email. Riprova più tardi."))
+    }
   }
 
   const showResend = error?.includes(UNVERIFIED_HINT)
@@ -59,16 +66,19 @@ export default function Login() {
       {justReset && <Alert type="success">Password reimpostata! Ora puoi accedere.</Alert>}
 
       <form onSubmit={handleSubmit}>
+        {trap}
         <div className="field">
-          <label htmlFor="login-email">Email</label>
+          <label htmlFor="login-identifier">Email o username</label>
           <div className="input-icon">
-            <LuMail aria-hidden="true" />
+            <LuUser aria-hidden="true" />
             <input
-              id="login-email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="login-identifier"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
             />
           </div>

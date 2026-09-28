@@ -6,7 +6,10 @@ use App\Models\Order;
 use App\Observers\OrderObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Order::observe(OrderObserver::class);
+
+        // Limiti per IP sulle rotte di accesso. Il blocco per singolo account
+        // dopo troppe password sbagliate è invece in AuthController::login.
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
+        RateLimiter::for('register', fn (Request $request) => Limit::perHour(10)->by($request->ip()));
 
         VerifyEmail::toMailUsing(function ($notifiable, string $url) {
             return (new MailMessage)

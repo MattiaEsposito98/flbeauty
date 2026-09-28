@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Alert from '../components/Alert'
 import AuthCard from '../components/AuthCard'
 import PasswordField from '../components/PasswordField'
+import { apiError } from '../utils/apiError'
 
 export default function ResetPassword() {
   const { resetPassword } = useAuth()
@@ -31,7 +32,7 @@ export default function ResetPassword() {
       })
       navigate('/login?reset=1')
     } catch (err) {
-      setError(err.response?.data?.errors?.email?.[0] ?? 'Errore durante il reset della password.')
+      setError(apiError(err, 'email', 'Errore durante il reset della password.'))
     } finally {
       setSubmitting(false)
     }

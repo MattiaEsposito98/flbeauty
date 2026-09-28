@@ -202,6 +202,16 @@ button:disabled {
   text-underline-offset: 3px;
 }
 
+/* Campo trappola anti-bot (BotTrap.jsx): fuori schermo, non display:none,
+   così i bot lo considerano un campo normale e lo compilano */
+.bot-trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -2823,5 +2833,167 @@ input[type='checkbox'] {
   .search-field input {
     padding-top: 0.85rem;
     padding-bottom: 0.85rem;
+  }
+}
+
+/* ── Privacy, cookie e consensi ──────────────────── */
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 1.5rem;
+}
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 1.1rem;
+}
+
+.footer-legal a,
+.footer-legal button {
+  color: #d9c0bd;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-legal a:hover,
+.footer-legal button:hover {
+  color: #fff;
+}
+
+.consent-checkbox {
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+.consent-checkbox input {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.legal-page {
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+.legal-content {
+  line-height: 1.7;
+}
+
+.legal-content h2 {
+  margin: 2rem 0 0.6rem;
+  font-size: 1.3rem;
+}
+
+.legal-content h2:first-child {
+  margin-top: 0;
+}
+
+.legal-content ul {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 1.2rem;
+}
+
+.legal-content a {
+  color: var(--rose-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-content code {
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: var(--rose-100);
+  font-size: 0.88em;
+}
+
+.legal-table-wrap {
+  overflow-x: auto;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.93rem;
+}
+
+.legal-table th,
+.legal-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal-table th {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.cookie-banner {
+  position: fixed;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  max-width: 980px;
+  margin-inline: auto;
+  padding: 1.1rem 1.35rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: toast-in 0.35s var(--ease) both;
+}
+
+.cookie-banner-text h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.cookie-banner-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.cookie-banner-text a {
+  color: var(--rose-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.6rem;
+}
+
+@media (max-width: 720px) {
+  .cookie-banner {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .cookie-banner > .icon-circle {
+    display: none;
+  }
+
+  .cookie-banner-actions .btn {
+    flex: 1;
   }
 }

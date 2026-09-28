@@ -22,7 +22,11 @@
                     </tr>
                     <tr>
                         <td style="padding:20px 32px; background-color:#f6f1f0; color:#8a8a8a; font-size:12px;">
-                            Hai ricevuto questa email perché sei registrato su F&amp;L Beauty.
+                            @isset($footer)
+                                {{ $footer }}
+                            @else
+                                Hai ricevuto questa email perché sei registrato su F&amp;L Beauty.
+                            @endisset
                         </td>
                     </tr>
                 </table>

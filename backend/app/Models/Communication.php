@@ -11,7 +11,17 @@ class Communication extends Model
 {
     use HasFactory;
 
+    public const TYPE_MARKETING = 'marketing';
+
+    public const TYPE_SERVICE = 'servizio';
+
+    public const TYPES = [
+        self::TYPE_MARKETING => 'Promozionale (offerte, novità)',
+        self::TYPE_SERVICE => 'Di servizio (avvisi importanti)',
+    ];
+
     protected $fillable = [
+        'type',
         'subject',
         'body',
         'recipients_count',
@@ -32,26 +42,40 @@ class Communication extends Model
     }
 
     /**
-     * Indirizzi email destinatari: clienti registrati + clienti guest che hanno
-     * lasciato una email su un ordine, senza duplicati.
+     * Destinatari in base al tipo:
      *
-     * @return Collection<int, string>
+     * - promozionale: solo i clienti registrati che hanno dato il consenso
+     *   marketing (GDPR). Ognuno riceve il suo link per disiscriversi
+     * - di servizio: tutti i clienti registrati + chi ha lasciato una email su
+     *   un ordine. Solo per avvisi che riguardano account e ordini (es. modifica
+     *   delle condizioni, problemi con le spedizioni), mai per offerte
+     *
+     * @return Collection<int, array{email: string, user: User|null}>
      */
-    public static function recipientEmails(): Collection
+    public static function recipients(string $type): Collection
     {
-        $registered = User::query()
+        $users = User::query()
             ->where('is_admin', false)
             ->whereNotNull('email')
-            ->pluck('email');
+            ->when($type === self::TYPE_MARKETING, fn ($q) => $q->where('marketing_consent', true))
+            ->get()
+            ->map(fn (User $user) => ['email' => mb_strtolower(trim($user->email)), 'user' => $user]);
 
-        $guests = Order::query()
-            ->whereNotNull('customer_email')
-            ->distinct()
-            ->pluck('customer_email');
+        $guests = $type === self::TYPE_MARKETING
+            ? collect()
+            : Order::query()
+                ->whereNotNull('customer_email')
+                ->distinct()
+                ->pluck('customer_email')
+                ->map(fn (string $email) => ['email' => mb_strtolower(trim($email)), 'user' => null]);
 
-        return $registered->merge($guests)
-            ->map(fn (string $email) => mb_strtolower(trim($email)))
-            ->unique()
-            ->values();
+        // I clienti registrati vengono prima: in caso di doppione resta la voce
+        // con l'utente collegato.
+        return $users->merge($guests)->unique('email')->values();
+    }
+
+    public function isMarketing(): bool
+    {
+        return $this->type === self::TYPE_MARKETING;
     }
 }

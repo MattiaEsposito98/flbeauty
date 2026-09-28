@@ -35,6 +35,10 @@ class PasswordResetController extends Controller
 
         $status = Password::reset($data, function ($user, $password) {
             $user->forceFill(['password' => Hash::make($password)])->save();
+
+            // Chiude tutti gli accessi aperti: se qualcuno era entrato con la
+            // vecchia password, viene buttato fuori.
+            $user->tokens()->delete();
         });
 
         if ($status !== Password::PASSWORD_RESET) {

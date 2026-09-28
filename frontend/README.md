@@ -15,7 +15,8 @@ Richiede il backend avviato su `http://127.0.0.1:8000` (vedi `../backend/README.
 ## Cosa c'è oggi
 - Registrazione utente con username + indirizzo di spedizione principale obbligatorio
   (autocomplete comune collegato alla tabella `comuni` del backend)
-- Login / logout (token Sanctum salvato in `localStorage`), recupero password
+- Privacy e cookie policy, consenso marketing in registrazione e nel profilo
+- Login con email **o** username / logout (token Sanctum salvato in `localStorage`), recupero password
   ("password dimenticata")
 - Ricerca prodotti nel catalogo (nome + descrizione), combinabile col filtro categoria
 - Pagina account: elenco indirizzi, aggiunta, modifica, eliminazione, impostazione

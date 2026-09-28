@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // SQLite (usato dai test automatici) non supporta gli indici full-text.
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('products', function (Blueprint $table) {
             $table->fullText(['name', 'description']);
         });
@@ -21,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('products', function (Blueprint $table) {
             $table->dropFullText(['name', 'description']);
         });

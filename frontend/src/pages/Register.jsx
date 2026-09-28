@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { LuMapPin, LuUser } from 'react-icons/lu'
+import { LuMapPin, LuShieldCheck, LuUser } from 'react-icons/lu'
 import { useAuth } from '../context/AuthContext'
 import Alert from '../components/Alert'
 import AuthCard from '../components/AuthCard'
 import PasswordField from '../components/PasswordField'
+import { useBotTrap } from '../components/BotTrap'
+import { apiError } from '../utils/apiError'
 import ComuneAutocomplete from '../components/ComuneAutocomplete'
 import PostalCodeField from '../components/PostalCodeField'
 
@@ -17,6 +19,8 @@ const initialForm = {
   phone: '',
   address_line: '',
   postal_code: '',
+  privacy_accepted: false,
+  marketing_consent: false,
 }
 
 export default function Register() {
@@ -26,6 +30,7 @@ export default function Register() {
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [registered, setRegistered] = useState(false)
+  const { trap, botFields } = useBotTrap()
 
   useEffect(() => {
     const options = comune?.postal_codes ?? []
@@ -34,6 +39,10 @@ export default function Register() {
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  function handleCheckbox(e) {
+    setForm({ ...form, [e.target.name]: e.target.checked })
   }
 
   async function handleSubmit(e) {
@@ -54,10 +63,20 @@ export default function Register() {
           comune_id: comune?.id,
           postal_code: form.postal_code,
         },
+        privacy_accepted: form.privacy_accepted,
+        marketing_consent: form.marketing_consent,
+        ...botFields(),
       })
       setRegistered(true)
     } catch (err) {
-      setErrors(err.response?.data?.errors ?? { generic: ['Errore durante la registrazione.'] })
+      // Errori sui campi se ci sono, altrimenti un errore generale (anti-bot,
+      // troppi tentativi, errore imprevisto).
+      const fieldErrors = err.response?.data?.errors
+      setErrors(
+        fieldErrors && !fieldErrors.form
+          ? fieldErrors
+          : { generic: [apiError(err, 'form', 'Errore durante la registrazione.')] }
+      )
     } finally {
       setSubmitting(false)
     }
@@ -93,6 +112,7 @@ export default function Register() {
       }
     >
       <form onSubmit={handleSubmit}>
+        {trap}
         <section className="form-section">
           <h2 className="form-section-title">
             <LuUser aria-hidden="true" /> I tuoi dati
@@ -204,6 +224,41 @@ export default function Register() {
               <p className="error span-2">{fieldError('address.postal_code')}</p>
             )}
           </div>
+        </section>
+
+        <section className="form-section">
+          <h2 className="form-section-title">
+            <LuShieldCheck aria-hidden="true" /> Privacy
+          </h2>
+          <label className="checkbox consent-checkbox">
+            <input
+              type="checkbox"
+              name="privacy_accepted"
+              checked={form.privacy_accepted}
+              onChange={handleCheckbox}
+              required
+            />
+            <span>
+              Dichiaro di aver compiuto 14 anni e di aver letto l'
+              <Link to="/privacy" target="_blank">
+                informativa privacy
+              </Link>{' '}
+              *
+            </span>
+          </label>
+          {fieldError('privacy_accepted') && <p className="error">{fieldError('privacy_accepted')}</p>}
+          <label className="checkbox consent-checkbox">
+            <input
+              type="checkbox"
+              name="marketing_consent"
+              checked={form.marketing_consent}
+              onChange={handleCheckbox}
+            />
+            <span>
+              Voglio ricevere via email offerte, sconti e novità di F&amp;L Beauty (facoltativo, puoi
+              cambiare idea quando vuoi dal tuo account)
+            </span>
+          </label>
         </section>
 
         {errors.generic && <Alert type="error">{errors.generic[0]}</Alert>}

@@ -3,6 +3,7 @@ import { FaTiktok, FaWhatsapp } from 'react-icons/fa6'
 import { LuMail } from 'react-icons/lu'
 import Logo from './Logo'
 import { EMAIL, TIKTOK_PROFILES, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contacts'
+import { analyticsAvailable, openCookiePreferences } from '../utils/cookieConsent'
 
 export default function Footer() {
   return (
@@ -64,7 +65,16 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        © {new Date().getFullYear()} F&amp;L Beauty. Tutti i diritti riservati.
+        <span>© {new Date().getFullYear()} F&amp;L Beauty. Tutti i diritti riservati.</span>
+        <nav className="footer-legal" aria-label="Informazioni legali">
+          <Link to="/privacy">Privacy policy</Link>
+          <Link to="/cookie">Cookie policy</Link>
+          {analyticsAvailable && (
+            <button type="button" onClick={openCookiePreferences}>
+              Preferenze cookie
+            </button>
+          )}
+        </nav>
       </div>
     </footer>
   )

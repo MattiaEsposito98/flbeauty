@@ -15,6 +15,10 @@ pannello admin, il cliente riceve automaticamente una email di aggiornamento.
 - Parte solo se l'ordine ha un `customer_email` e lo stato è effettivamente cambiato.
 
 ### 2. Comunicazioni broadcast (offerte/novità)
+> **Aggiornato il 2026-09-28**: ora ci sono due tipi, *promozionale* (solo a chi ha
+> dato il consenso marketing, con link di disiscrizione) e *di servizio* (a tutti,
+> solo avvisi su account e ordini). Dettagli e regole in [PRIVACY.md](PRIVACY.md).
+
 Nuova voce di menu **Comunicazioni** nel pannello admin (`/admin/communications`).
 Permette di scrivere un oggetto + testo (editor ricco) e inviarlo via email a tutti i
 clienti: sia quelli registrati sia i clienti "guest" che hanno lasciato una email su un

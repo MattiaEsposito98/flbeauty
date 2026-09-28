@@ -50,7 +50,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Un accesso dal sito resta valido 30 giorni, poi va rifatto il login.
+    'expiration' => env('SANCTUM_EXPIRATION', 60 * 24 * 30),
 
     /*
     |--------------------------------------------------------------------------

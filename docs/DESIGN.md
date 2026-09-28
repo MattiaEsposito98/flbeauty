@@ -84,6 +84,7 @@ Gradienti pronti: `--grad-rose-gold` (decorativo/metallico), `--grad-rose-gold-t
 | `EmptyState` | Stati vuoti con icona, titolo, testo e azione |
 | `Spinner` | Caricamenti |
 | `OctagonOrnament` | Motivo decorativo del logo |
+| `CookieBanner` | Banner consenso cookie (solo con Google Analytics configurato), "Accetta" e "Rifiuta" con lo stesso stile |
 
 ## Classi CSS di riferimento
 - Bottoni: `.btn` + `.btn-primary` / `.btn-outline` / `.btn-ghost` /
@@ -98,6 +99,8 @@ Gradienti pronti: `--grad-rose-gold` (decorativo/metallico), `--grad-rose-gold-t
 - Testi: `.hint`, `.error`, `.muted`, `.text-link`, `.link-button`
 - Filtri e stati: `.pill` (+ `.active`), `.badge`, `.status-badge .status-<stato>`,
   `.in-cart-badge`
+- Pagine legali: `.legal-page`, `.legal-content` (testo lungo), `.legal-table`;
+  caselle di consenso su più righe `.checkbox.consent-checkbox`
 - Riepiloghi: `.summary-items`, `.summary-lines`, `.summary-row`, `.summary-total`
 
 ## Dati e formattazione

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ComuneController;
 use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\MarketingConsentController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ProductController;
@@ -14,8 +15,10 @@ use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register'])
+    ->middleware(['throttle:register', 'bot.guard:3']);
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware(['throttle:login', 'bot.guard']);
 Route::get('/comuni', ComuneController::class);
 
 Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
@@ -24,8 +27,12 @@ Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 've
 Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
     ->middleware('throttle:6,1');
 
+Route::post('/unsubscribe/{user}', [MarketingConsentController::class, 'unsubscribe'])
+    ->middleware(['signed:relative', 'throttle:6,1'])
+    ->name('marketing.unsubscribe');
+
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
-    ->middleware('throttle:6,1');
+    ->middleware(['throttle:6,1', 'bot.guard']);
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])
     ->middleware('throttle:6,1');
 
@@ -41,6 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::patch('/user/marketing-consent', [MarketingConsentController::class, 'update']);
 
     Route::apiResource('addresses', AddressController::class)->except(['show']);
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);

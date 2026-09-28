@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Concerns\ResolvesComuneForAddress;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Throttle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -26,6 +29,10 @@ class AuthController extends Controller
             'address.address_line' => ['required', 'string', 'max:255'],
             'address.comune_id' => ['required', 'integer', 'exists:comuni,id'],
             'address.postal_code' => ['required', 'string', 'size:5'],
+            'privacy_accepted' => ['accepted'],
+            'marketing_consent' => ['sometimes', 'boolean'],
+        ], [
+            'privacy_accepted.accepted' => 'Per registrarti devi dichiarare di aver compiuto 14 anni e di aver letto l\'informativa privacy.',
         ]);
 
         $comuneFields = $this->resolveComuneFields(
@@ -40,7 +47,14 @@ class AuthController extends Controller
                 'username' => $data['username'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
+                'privacy_accepted_at' => now(),
             ]);
+
+            // Facoltativo e mai preselezionato: senza consenso il cliente riceve
+            // solo le comunicazioni di servizio, non le offerte.
+            if ($data['marketing_consent'] ?? false) {
+                $user->setMarketingConsent(true);
+            }
 
             $user->addresses()->create([
                 'label' => 'Principale',
@@ -65,22 +79,29 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        // `login` accetta indifferentemente email o username.
         $credentials = $request->validate([
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        $this->ensureLoginNotLocked($request, $credentials['login']);
+
+        $user = User::findByLogin($credentials['login']);
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            $this->recordFailedLogin($request, $credentials['login']);
+
             throw ValidationException::withMessages([
-                'email' => ['Le credenziali fornite non sono corrette.'],
+                'login' => ['Le credenziali fornite non sono corrette.'],
             ]);
         }
 
+        $this->clearFailedLogins($request, $credentials['login']);
+
         if (! $user->hasVerifiedEmail()) {
             throw ValidationException::withMessages([
-                'email' => ['Devi verificare la tua email prima di accedere. Controlla la tua casella di posta.'],
+                'login' => ['Devi verificare la tua email prima di accedere. Controlla la tua casella di posta.'],
             ]);
         }
 
@@ -88,6 +109,50 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $user->createToken('api')->plainTextToken,
         ]);
+    }
+
+    /**
+     * Blocco contro chi prova a indovinare la password di un account:
+     * - 5 tentativi sbagliati dallo stesso IP → account bloccato 15 minuti per quell'IP
+     * - 20 tentativi sbagliati da IP qualsiasi → account bloccato 1 ora (attacchi distribuiti)
+     * Contano solo i tentativi falliti; un accesso riuscito azzera il contatore per IP.
+     */
+    private const LOGIN_LIMITS = [
+        'ip' => ['attempts' => 5, 'decay' => 15 * 60],
+        'account' => ['attempts' => 20, 'decay' => 60 * 60],
+    ];
+
+    private function loginThrottleKeys(Request $request, string $login): array
+    {
+        $account = Str::transliterate(Str::lower(trim($login)));
+
+        return [
+            'ip' => 'login:'.$account.'|'.$request->ip(),
+            'account' => 'login:'.$account,
+        ];
+    }
+
+    private function ensureLoginNotLocked(Request $request, string $login): void
+    {
+        foreach ($this->loginThrottleKeys($request, $login) as $type => $key) {
+            if (RateLimiter::tooManyAttempts($key, self::LOGIN_LIMITS[$type]['attempts'])) {
+                throw ValidationException::withMessages([
+                    'login' => [Throttle::message(RateLimiter::availableIn($key))],
+                ])->status(429);
+            }
+        }
+    }
+
+    private function recordFailedLogin(Request $request, string $login): void
+    {
+        foreach ($this->loginThrottleKeys($request, $login) as $type => $key) {
+            RateLimiter::hit($key, self::LOGIN_LIMITS[$type]['decay']);
+        }
+    }
+
+    private function clearFailedLogins(Request $request, string $login): void
+    {
+        RateLimiter::clear($this->loginThrottleKeys($request, $login)['ip']);
     }
 
     public function logout(Request $request)

@@ -1,6 +1,6 @@
 # Frontend — stato e decisioni
 
-Ultimo aggiornamento: 2026-09-27
+Ultimo aggiornamento: 2026-09-28
 
 ## Stack
 - **React puro** (no Next.js, deciso con l'utente) scaffoldato con **Vite**
@@ -20,6 +20,22 @@ in seguito dal proprio account.
   in un'unica transazione
 - Frontend: `src/pages/Register.jsx`, un form unico diviso in due sezioni ("I tuoi
   dati" / "Indirizzo di spedizione")
+
+## Login con email o username
+Decisione presa con l'utente: nel form di accesso si può inserire **indifferentemente
+l'email o lo username**, in un unico campo "Email o username".
+
+- Backend: `POST /api/login` accetta ora il campo `login` (al posto di `email`) +
+  `password`. La ricerca è in `User::findByLogin()`: se il valore contiene `@` cerca
+  per email, altrimenti per username — nessuna ambiguità possibile perché la
+  validazione di registrazione vieta `@` nello username (`regex:/^[a-zA-Z0-9._-]+$/`)
+- Gli errori di login (credenziali errate, email non verificata) sono restituiti
+  sotto la chiave `login`
+- `POST /api/email/verification-notification` accetta anch'esso `login` (email o
+  username), così "Invia di nuovo" funziona anche se l'utente ha provato ad
+  accedere con lo username. La risposta resta generica
+- Frontend: `Login.jsx` usa un campo `type="text"` con `autoComplete="username"`;
+  `AuthContext.login(identifier, password)` e `resendVerificationEmail(identifier)`
 
 ## Indirizzi multipli
 Dal proprio account (`src/pages/Account.jsx`) l'utente può aggiungere, modificare,
@@ -457,7 +473,9 @@ WhatsApp), poi eliminato con stock restituito.
 - Istruzioni di pagamento Postepay da mostrare dopo l'ordine (rimandato
   dall'utente)
 - Pagina di modifica dati account (nome/email/password)
-- Pagine legali (privacy policy, cookie policy) da collegare nel footer —
-  obbligatorie per il GDPR prima di andare online
+- Far rileggere privacy e cookie policy (fatte il 2026-09-28, vedi
+  [PRIVACY.md](PRIVACY.md))
+- Condizioni di vendita (recesso 14 giorni, resi, spedizioni) ed eliminazione
+  dell'account dal profilo
 - Verificare che i profili TikTok linkati nel footer (`@flbeauty`, `@flbeauty2`)
   siano esattamente quelli giusti (`src/config/contacts.js`)

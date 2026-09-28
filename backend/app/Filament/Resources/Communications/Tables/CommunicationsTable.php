@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Communications\Tables;
 
+use App\Models\Communication;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -15,6 +16,11 @@ class CommunicationsTable
                     ->label('Oggetto')
                     ->weight('bold')
                     ->searchable(),
+                TextColumn::make('type')
+                    ->label('Tipo')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => $state === Communication::TYPE_MARKETING ? 'Promozionale' : 'Di servizio')
+                    ->color(fn (string $state) => $state === Communication::TYPE_MARKETING ? 'primary' : 'warning'),
                 TextColumn::make('recipients_count')
                     ->label('Destinatari')
                     ->badge()

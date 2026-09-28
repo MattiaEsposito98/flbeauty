@@ -27,13 +27,14 @@ class EmailVerificationController extends Controller
 
     /**
      * Reinvia l'email di verifica. Risposta generica in ogni caso per non
-     * rivelare se un indirizzo email è registrato o meno.
+     * rivelare se un indirizzo email è registrato o meno. Accetta email o
+     * username (`login`), come il form di accesso da cui viene richiamato.
      */
     public function resend(Request $request)
     {
-        $request->validate(['email' => ['required', 'email']]);
+        $request->validate(['login' => ['required', 'string', 'max:255']]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::findByLogin($request->login);
 
         if ($user && ! $user->hasVerifiedEmail()) {
             $user->sendEmailVerificationNotification();

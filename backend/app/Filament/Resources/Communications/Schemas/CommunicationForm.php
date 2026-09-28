@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Communications\Schemas;
 
 use App\Models\Communication;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -16,8 +17,19 @@ class CommunicationForm
             ->columns(1)
             ->components([
                 Section::make('Nuova comunicazione')
-                    ->description(fn () => 'Verrà inviata via email a '.Communication::recipientEmails()->count().' destinatari (clienti registrati e clienti che hanno effettuato un ordine). L\'invio parte subito dopo il salvataggio.')
+                    ->description('L\'invio parte subito dopo il salvataggio. Ogni cliente riceve una email singola.')
                     ->schema([
+                        Radio::make('type')
+                            ->label('Tipo di comunicazione')
+                            ->options(Communication::TYPES)
+                            ->descriptions(fn () => [
+                                Communication::TYPE_MARKETING => 'Offerte, sconti, nuovi prodotti. Arriva solo ai clienti che hanno dato il consenso: '
+                                    .Communication::recipients(Communication::TYPE_MARKETING)->count().' destinatari. Contiene il link per disiscriversi.',
+                                Communication::TYPE_SERVICE => 'Solo avvisi importanti su account e ordini (es. modifica delle condizioni di vendita, ritardi nelle spedizioni, chiusura per ferie). Mai offerte: senza consenso è vietato. Arriva a tutti: '
+                                    .Communication::recipients(Communication::TYPE_SERVICE)->count().' destinatari.',
+                            ])
+                            ->default(Communication::TYPE_MARKETING)
+                            ->required(),
                         TextInput::make('subject')
                             ->label('Oggetto')
                             ->placeholder('Es. Nuova offerta di stagione!')
