@@ -5,11 +5,15 @@
 
     <p style="margin:16px 0;">
         <span style="display:inline-block; background-color:#B76E79; color:#ffffff; padding:6px 14px; border-radius:4px; font-weight:bold;">
-            In attesa di pagamento
+            {{ $statusLabel }}
         </span>
     </p>
 
     @include('emails.partials.order-summary', ['order' => $order])
 
-    <p>I prodotti sono riservati per te. Ti aggiorneremo via email quando lo stato dell'ordine cambierà.</p>
+    @if($status === 'nuovo')
+        <p>I prodotti sono riservati per te. Ti aggiorneremo via email quando lo stato dell'ordine cambierà.</p>
+    @else
+        <p>Ti aggiorneremo via email quando lo stato dell'ordine cambierà.</p>
+    @endif
 </x-mail.layout>

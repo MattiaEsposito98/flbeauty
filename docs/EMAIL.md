@@ -41,6 +41,15 @@ ordine. L'invio parte subito dopo il salvataggio e resta uno storico consultabil
 > tentativi a distanza di un minuto) appena il worker è attivo. **Senza queue worker
 > in produzione nessuna email parte**, nemmeno quella di verifica.
 
+> **Email di cambio stato e coda (corretto il 2026-09-29)**: la coda salva solo un
+> riferimento all'ordine e lo rilegge dal database quando l'email parte. Prima, se
+> lo stato cambiava di nuovo prima dell'invio (es. worker spento, o "In lavorazione"
+> e subito "Evaso"), tutte le email mostravano l'ultimo stato. Ora
+> `OrderStatusUpdated` salva stato, corriere, numero e link di tracking nel momento
+> del cambio. Test: `tests/Feature/OrderStatusEmailTest.php`. Nota per lo sviluppo:
+> un `queue:work` sempre acceso tiene in memoria il codice vecchio, dopo una modifica
+> va riavviato (`php artisan queue:restart`).
+
 Entrambe le mailable implementano `ShouldQueue`: gli invii non bloccano il pannello,
 finiscono in coda (tabella `jobs`) e vengono spediti dal **queue worker** (vedi sotto).
 

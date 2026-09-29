@@ -19,7 +19,26 @@ class OrderStatusUpdated extends Mailable implements ShouldQueue
         'annullato' => 'Annullato',
     ];
 
-    public function __construct(public Order $order) {}
+    /**
+     * Stato e tracking vengono "fotografati" qui, al momento del cambio: l'email
+     * parte dalla coda più tardi e a quel punto l'ordine viene riletto dal
+     * database, dove lo stato potrebbe essere già cambiato di nuovo.
+     */
+    public string $status;
+
+    public ?string $carrier;
+
+    public ?string $trackingNumber;
+
+    public ?string $trackingUrl;
+
+    public function __construct(public Order $order)
+    {
+        $this->status = $order->status;
+        $this->carrier = $order->carrier;
+        $this->trackingNumber = $order->tracking_number;
+        $this->trackingUrl = $order->effective_tracking_url;
+    }
 
     public function build(): self
     {
@@ -30,7 +49,11 @@ class OrderStatusUpdated extends Mailable implements ShouldQueue
             ->with([
                 'subject' => $subject,
                 'order' => $this->order,
-                'statusLabel' => self::STATUS_LABELS[$this->order->status] ?? $this->order->status,
+                'status' => $this->status,
+                'statusLabel' => self::STATUS_LABELS[$this->status] ?? $this->status,
+                'carrier' => $this->carrier,
+                'trackingNumber' => $this->trackingNumber,
+                'trackingUrl' => $this->trackingUrl,
             ]);
     }
 }

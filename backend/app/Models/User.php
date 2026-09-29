@@ -90,6 +90,41 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      * che serve come prova del consenso. `marketing_consent` non è mass
      * assignable di proposito: si cambia solo da qui.
      */
+    /**
+     * Quando un cliente verifica la sua email (link di verifica o pulsante
+     * dell'admin), gli ordini fatti prima da ospite con quella email passano al
+     * suo account e li vede nel profilo. Solo dopo la verifica: prima non è
+     * dimostrato che l'email sia sua, e chiunque potrebbe registrarsi con
+     * l'email di un altro per vederne ordini, indirizzo e telefono.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user) {
+            if ($user->wasChanged('email_verified_at') && $user->email_verified_at !== null) {
+                $user->claimGuestOrders();
+            }
+        });
+    }
+
+    /**
+     * Collega gli ordini da ospite con la stessa email (senza distinguere
+     * maiuscole/minuscole). Aggiornamento diretto: non fa partire email.
+     */
+    public function claimGuestOrders(): int
+    {
+        return Order::query()
+            ->whereNull('user_id')
+            ->whereRaw('LOWER(TRIM(customer_email)) = ?', [mb_strtolower(trim($this->email))])
+            ->update(['user_id' => $this->id]);
+    }
+
+    public static function findByEmail(?string $email): ?self
+    {
+        return filled($email)
+            ? static::query()->whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first()
+            : null;
+    }
+
     public function setMarketingConsent(bool $consent): void
     {
         if ($this->marketing_consent === $consent) {

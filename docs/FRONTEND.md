@@ -451,11 +451,20 @@ Altre novità:
 - **Tracking**: campi `carrier` (con suggerimenti), `tracking_number`,
   `tracking_url` nell'ordine admin; il cliente li vede nella pagina dell'ordine
   ("La tua spedizione") e li riceve via email
-- **Link di tracking automatico**: con corriere "Poste Italiane" o "SDA" e link
-  vuoto si usa la pagina di ricerca Poste (`Order::CARRIER_TRACKING_PAGES`,
-  esposto come `effective_tracking_url`). Quella pagina non riceve il codice
-  nell'URL, quindi sul sito c'è il pulsante "Copia" accanto al numero e un
-  suggerimento a incollarlo; un link inserito a mano dall'admin ha la precedenza
+- **Link di tracking automatico** (aggiornato il 2026-09-29): con corriere "Poste
+  Italiane" o "SDA" e link vuoto, il link si costruisce dal numero:
+  `https://business.poste.it/grandi-imprese/cerca-spedizioni/index.html#/risultati-spedizioni/{codice}`
+  (`Order::CARRIER_TRACKING_URLS`, esposto come `effective_tracking_url`), che apre
+  direttamente la spedizione. Lo usano il pulsante "Segui la spedizione" dell'email e
+  la pagina ordine; il cliente non deve più incollare il codice (il pulsante "Copia"
+  resta). Un link inserito a mano dall'admin ha la precedenza; il form admin non
+  compila più il campo "Link tracking" da solo. Gli ordini che avevano salvato la
+  vecchia pagina generica sono stati corretti da una migration. Test:
+  `backend/tests/Feature/TrackingUrlTest.php`
+- **Corriere predefinito**: nel form ordine dell'admin è già selezionato "Poste
+  Italiane" (`Order::DEFAULT_CARRIER`), sia nei nuovi ordini sia in quelli arrivati
+  dal sito senza corriere; un corriere già scelto non viene toccato. Test:
+  `backend/tests/Feature/OrderFormCarrierTest.php`
 - **Riepilogo su WhatsApp** nella pagina ordine: "Invia su WhatsApp" apre la chat
   con il messaggio già scritto (prodotti, subtotale, sconto, spedizione, totale,
   nome, indirizzo, telefono, email). Testo in `src/utils/orderSummary.js`
@@ -555,6 +564,53 @@ account c'è "Elimina account".
   chiusura della sessione, e la pagina protetta rimandava al login senza messaggio
 - Test: `backend/tests/Feature/AccountTest.php`. Provato anche dal vivo (password
   attuale sbagliata, cambio riuscito, eliminazione con password sbagliata e giusta)
+
+## Ordini creati dall'admin (nuovo, sessione del 2026-09-29)
+Dal pannello (`/admin/orders/create`) si creano ordini anche per clienti **ospiti**
+(senza account), ad esempio per chi ordina su WhatsApp.
+
+- **Disponibilità in tempo reale** nelle righe dell'ordine: accanto al nome del
+  prodotto c'è "N disponibili" (gli esauriti non si possono scegliere); sotto la
+  quantità compare "Disponibili: N", in rosso se si supera. Conta tutte le righe dello
+  stesso prodotto e, in modifica, i pezzi che l'ordine tiene già riservati. Il
+  salvataggio viene bloccato con l'errore sul campo; `ChecksOrderStock` resta come
+  controllo finale lato server (`OrderForm::availabilityCheck()`)
+- **Account registrato**: scegliendolo, nome, email, telefono e indirizzo principale
+  si compilano da soli. Lo staff non compare nell'elenco
+- **Email di conferma**: interruttore "Invia email di conferma al cliente" (attivo di
+  default, solo in creazione, non salvato nell'ordine). Parte `OrderConfirmation`
+  verso l'email del form, dopo il salvataggio delle righe. L'email mostra ora lo
+  stato vero dell'ordine (prima diceva sempre "In attesa di pagamento"), fotografato
+  al momento come per le email di cambio stato. Nessuna email all'indirizzo admin
+  (l'ordine l'ha creato l'admin)
+- **Invia su WhatsApp**: nella notifica "Ordine creato" e in alto nella pagina di
+  modifica di ogni ordine. Apre WhatsApp nella chat del cliente con il riepilogo già
+  scritto (prodotti, subtotale, sconto, spedizione, totale, indirizzo, stato e link
+  di tracking se c'è), modificabile prima dell'invio. Testo e numero in
+  `AppSupportOrderWhatsApp`: i numeri italiani senza prefisso ricevono il 39.
+  Senza telefono valido il pulsante è grigio con il motivo nel suggerimento. Con un
+  numero di tracking il messaggio ha il blocco "Tracciamento" (corriere, numero, link
+  diretto). Usa i dati **salvati**: dopo aver aggiunto il tracking va salvato l'ordine
+- Il vecchio link generico di Poste (senza codice) viene scartato e svuotato a ogni
+  salvataggio (`Order::GENERIC_TRACKING_PAGE`): capitava con pagine del form aperte
+  prima della modifica del 2026-09-29 (successo all'ordine #19, corretto)
+
+**Ospiti e clienti registrati** (aggiunto il 2026-09-29):
+- Un ordine da ospite non può usare l'email di un cliente registrato: il form lo
+  segnala sotto il campo appena si esce dall'email e blocca il salvataggio, chiedendo
+  di selezionare il cliente in "Account registrato" (controllo senza distinguere
+  maiuscole/minuscole; gli account dello staff non contano)
+- Se un ospite si registra dopo con la stessa email, i suoi ordini da ospite passano
+  al suo account **quando verifica l'email** (link di verifica o pulsante "Segna email
+  come verificata" dell'admin) e li vede nel profilo. Non alla registrazione:
+  altrimenti chiunque potrebbe registrarsi con l'email di un altro e vederne ordini,
+  indirizzo e telefono. Logica in `User::booted()` / `claimGuestOrders()`, senza
+  email. Vale anche per chi elimina l'account e si registra di nuovo con la stessa
+  email: ritrova i suoi vecchi ordini. Test: `backend/tests/Feature/GuestOrderLinkTest.php`
+
+Test: `backend/tests/Feature/AdminCreateOrderTest.php`. Provato anche dal vivo nel
+pannello (ordine da ospite, "Disponibili solo 10" con 99 pezzi, email in Mailpit,
+notifica e link WhatsApp), poi cancellato.
 
 ## Cosa manca ancora (prossimi passi)
 - Istruzioni di pagamento: **non vanno sul sito**, le manda l'admin su WhatsApp

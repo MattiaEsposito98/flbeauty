@@ -12,7 +12,13 @@ class OrderConfirmation extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Order $order) {}
+    /** Stato al momento della creazione (vedi OrderStatusUpdated). */
+    public string $status;
+
+    public function __construct(public Order $order)
+    {
+        $this->status = $order->status;
+    }
 
     public function build(): self
     {
@@ -23,6 +29,8 @@ class OrderConfirmation extends Mailable implements ShouldQueue
             ->with([
                 'subject' => $subject,
                 'order' => $this->order,
+                'status' => $this->status,
+                'statusLabel' => OrderStatusUpdated::STATUS_LABELS[$this->status] ?? $this->status,
             ]);
     }
 }

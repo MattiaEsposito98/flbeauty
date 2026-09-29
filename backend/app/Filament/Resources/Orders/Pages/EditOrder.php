@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Orders\Pages;
 
 use App\Filament\Concerns\HasBackToListAction;
 use App\Filament\Resources\Orders\Concerns\ChecksOrderStock;
+use App\Filament\Resources\Orders\Concerns\HasWhatsAppAction;
 use App\Filament\Resources\Orders\OrderResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
@@ -12,6 +13,7 @@ class EditOrder extends EditRecord
 {
     use ChecksOrderStock;
     use HasBackToListAction;
+    use HasWhatsAppAction;
 
     protected static string $resource = OrderResource::class;
 
@@ -19,6 +21,7 @@ class EditOrder extends EditRecord
     {
         return [
             $this->backToListAction(),
+            $this->whatsAppAction(),
             DeleteAction::make(),
         ];
     }

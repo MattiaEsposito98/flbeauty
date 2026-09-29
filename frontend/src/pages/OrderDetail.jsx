@@ -101,21 +101,14 @@ export default function OrderDetail() {
             </div>
           </div>
           {order.effective_tracking_url && (
-            <>
-              <a
-                href={order.effective_tracking_url}
-                className="btn btn-outline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Segui la spedizione <LuExternalLink aria-hidden="true" />
-              </a>
-              {order.tracking_needs_manual_code && (
-                <p className="hint tracking-hint">
-                  Nella pagina del corriere incolla il numero di tracking nel campo di ricerca.
-                </p>
-              )}
-            </>
+            <a
+              href={order.effective_tracking_url}
+              className="btn btn-outline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Segui la spedizione <LuExternalLink aria-hidden="true" />
+            </a>
           )}
         </section>
       )}

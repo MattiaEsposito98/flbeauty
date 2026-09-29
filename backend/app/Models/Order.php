@@ -34,18 +34,31 @@ class Order extends Model
     public const STATUS_CANCELLED = 'annullato';
 
     /**
-     * Pagina di tracking usata quando l'admin non inserisce un link specifico.
-     * La pagina Poste non riceve il codice nell'URL: il cliente lo incolla nella
-     * ricerca (sul sito c'è il pulsante "Copia" accanto al numero).
+     * Link di tracking costruito dal numero quando l'admin non inserisce un
+     * link specifico: la pagina Poste apre direttamente la spedizione se il
+     * codice è in fondo all'URL ({code}). Vale anche per SDA (gruppo Poste).
      */
-    public const CARRIER_TRACKING_PAGES = [
-        'Poste Italiane' => 'https://business.poste.it/grandi-imprese/cerca-spedizioni/index.html#/risultati-spedizioni',
-        'SDA' => 'https://business.poste.it/grandi-imprese/cerca-spedizioni/index.html#/risultati-spedizioni',
+    public const CARRIER_TRACKING_URLS = [
+        'Poste Italiane' => 'https://business.poste.it/grandi-imprese/cerca-spedizioni/index.html#/risultati-spedizioni/{code}',
+        'SDA' => 'https://business.poste.it/grandi-imprese/cerca-spedizioni/index.html#/risultati-spedizioni/{code}',
     ];
+
+    /**
+     * Pagina di ricerca Poste senza codice: il vecchio form admin la salvava nel
+     * campo link. Non porta alla spedizione, quindi viene sempre scartata.
+     */
+    public const GENERIC_TRACKING_PAGE = 'https://business.poste.it/grandi-imprese/cerca-spedizioni/index.html#/risultati-spedizioni';
 
     public const CARRIERS = ['Poste Italiane', 'SDA', 'BRT', 'GLS', 'DHL', 'UPS', 'Altro'];
 
-    protected $appends = ['effective_tracking_url', 'tracking_needs_manual_code'];
+    public const DEFAULT_CARRIER = 'Poste Italiane';
+
+    protected $appends = ['effective_tracking_url'];
+
+    public static function isGenericTrackingPage(string $url): bool
+    {
+        return rtrim(trim($url), '/') === self::GENERIC_TRACKING_PAGE;
+    }
 
     public function getEffectiveTrackingUrlAttribute(): ?string
     {
@@ -53,14 +66,15 @@ class Order extends Model
             return null;
         }
 
-        return $this->tracking_url ?: (self::CARRIER_TRACKING_PAGES[$this->carrier] ?? null);
-    }
+        if (filled($this->tracking_url) && ! self::isGenericTrackingPage($this->tracking_url)) {
+            return $this->tracking_url;
+        }
 
-    // Vero quando il link porta alla ricerca generica del corriere, dove il
-    // cliente deve incollare il codice a mano.
-    public function getTrackingNeedsManualCodeAttribute(): bool
-    {
-        return in_array($this->effective_tracking_url, self::CARRIER_TRACKING_PAGES, true);
+        $template = self::CARRIER_TRACKING_URLS[$this->carrier] ?? null;
+
+        return $template
+            ? str_replace('{code}', rawurlencode(trim($this->tracking_number)), $template)
+            : null;
     }
 
     protected function casts(): array
@@ -78,6 +92,12 @@ class Order extends Model
      */
     protected static function booted(): void
     {
+        static::saving(function (Order $order) {
+            if (filled($order->tracking_url) && self::isGenericTrackingPage($order->tracking_url)) {
+                $order->tracking_url = null;
+            }
+        });
+
         static::saved(fn (Order $order) => $order->recalculateTotal());
 
         static::updated(function (Order $order) {
