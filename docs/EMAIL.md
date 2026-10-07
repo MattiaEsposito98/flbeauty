@@ -190,3 +190,28 @@ messaggio della finestra di conferma del checkout. Il mittente è `F&L Beauty <i
 (`MAIL_FROM_NAME="F&L Beauty"`). Le email di verifica/reset hanno anche la versione solo testo
 (`emails/action-text`). Per un'anteprima grafica: generare l'HTML dalle viste con dati d'esempio e
 aprirlo nel browser (o inviare una prova a Mailpit in locale).
+
+## Monitoraggio delle email e mittenti (2026-10-08)
+**Registro email** (Admin → *Registro email*): una riga per ogni email che il sito prova a inviare, con
+data, esito, tipo, destinatario, oggetto e, se fallisce, il motivo (es. `525 Invio disabilitato`,
+`535 password`). Si aggiorna da solo ogni 30 secondi e si conserva **90 giorni** (pulizia notturna alle
+04:30). Codice: `App\Listeners\LogMailEvents` (eventi `MessageSent` e `JobFailed`), modello `EmailLog`,
+risorsa `Filament/Resources/EmailLogs`. Se un invio fallisce **non si ripete da solo** (coda `deferred`):
+si vede nel registro e si può rimandare a mano.
+- **Limite onesto:** «Inviata» vuol dire che il server di posta (Aruba) ha accettato il messaggio. Se poi
+  finisce nello spam o viene scartato da Hotmail/Gmail **da qui non si vede**. Per quello servono le
+  statistiche di un servizio come Brevo/Mailjet (passaggio previsto quando ci saranno molti clienti)
+- Gli indirizzi nel registro sono dati personali: stanno solo nel database, visibili agli admin, 90 giorni
+
+**Mittenti:**
+| Email | Da | Rispondendo scrivi a |
+|---|---|---|
+| Ordini (conferma, cambio stato, avviso per te) | `info@flbeauty.it` | `info@` |
+| Verifica account, reset password, comunicazioni | `no-reply@flbeauty.it` | `info@` (impostato come "Rispondi a") |
+
+`no-reply@` **non è una casella da leggere**: è un **alias** di `info@`, da creare in Aruba (Webmail →
+Impostazioni dominio → *Alias*). Finché l'alias non esiste e `MAIL_NOREPLY_ADDRESS` non è nel `.env`, tutte
+le email partono da `info@` (così Aruba non rifiuta nulla). Per attivarlo: creare l'alias, poi nel `.env`
+del server `MAIL_NOREPLY_ADDRESS="no-reply@flbeauty.it"` e `php artisan config:cache`, e controllare nel
+Registro email che le prossime email risultino «Inviata».
+Indirizzo di contatto pubblico (sito, privacy, avviso nuovi ordini `ADMIN_ORDER_EMAIL`): **`info@flbeauty.it`**.

@@ -25,3 +25,8 @@ Schedule::call(fn () => Artisan::call('queue:work', [
 Schedule::call(fn () => Artisan::call('sitemap:generate'))
     ->name('sitemap-generate')
     ->dailyAt('04:00');
+
+// Cancella dal registro email le righe più vecchie di 90 giorni.
+Schedule::call(fn () => Artisan::call('model:prune', ['--model' => [App\Models\EmailLog::class]]))
+    ->name('email-log-prune')
+    ->dailyAt('04:30');

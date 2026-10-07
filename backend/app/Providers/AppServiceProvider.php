@@ -2,13 +2,17 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogMailEvents;
 use App\Models\Order;
 use App\Observers\OrderObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Order::observe(OrderObserver::class);
 
+        // Registro email (Admin → Registro email): ogni invio riuscito o fallito.
+        Event::listen(MessageSent::class, [LogMailEvents::class, 'onSent']);
+        Event::listen(JobFailed::class, [LogMailEvents::class, 'onFailed']);
+
         // Limiti per IP sulle rotte di accesso. Il blocco per singolo account
         // dopo troppe password sbagliate è invece in AuthController::login.
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
@@ -40,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
             $subject = 'Verifica il tuo indirizzo email - F&L Beauty';
 
             return (new MailMessage)
+                ->from(config('brand.noreply'), config('brand.name'))
+                ->replyTo(config('brand.email'), config('brand.name'))
                 ->subject($subject)
                 ->view(['emails.action', 'emails.action-text'], [
                     'subject' => $subject,
@@ -69,6 +79,8 @@ class AppServiceProvider extends ServiceProvider
             $subject = 'Reimposta la tua password - F&L Beauty';
 
             return (new MailMessage)
+                ->from(config('brand.noreply'), config('brand.name'))
+                ->replyTo(config('brand.email'), config('brand.name'))
                 ->subject($subject)
                 ->view(['emails.action', 'emails.action-text'], [
                     'subject' => $subject,

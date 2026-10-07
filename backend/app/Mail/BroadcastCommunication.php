@@ -35,7 +35,10 @@ class BroadcastCommunication extends Mailable implements ShouldQueue
             });
         }
 
-        return $this->subject($this->subjectLine)
+        // Mittente "no-reply" (nessuno legge quella casella); chi risponde scrive a info@.
+        return $this->from(config('brand.noreply'), config('brand.name'))
+            ->replyTo(config('brand.email'), config('brand.name'))
+            ->subject($this->subjectLine)
             ->view('emails.broadcast')
             ->with([
                 'subject' => $this->subjectLine,
