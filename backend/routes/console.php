@@ -8,15 +8,20 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// In produzione basta UN cron ogni minuto: `php artisan schedule:run`.
-// Da qui partono sia l'invio delle email in coda sia la sitemap (vedi docs/DEPLOY.md).
+// In produzione basta UN cron di Aruba (PHP, file backend/cron.php, ogni 10 minuti).
+// Le attività girano nello stesso processo (non lanciano programmi esterni): sugli
+// hosting condivisi `proc_open`/`exec` possono essere limitati. Vedi docs/DEPLOY.md.
 
-// Spedisce le email in coda (conferma ordine, verifica account, comunicazioni).
-// Con la coda vuota fa una sola query e termina; `withoutOverlapping` evita che due
-// esecuzioni lavorino insieme se una è lenta.
-Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
-    ->everyMinute()
-    ->withoutOverlapping(10);
+// Spedisce le comunicazioni di massa in coda (le email singole partono subito, vedi
+// QUEUE_CONNECTION=deferred). Con la coda vuota fa una sola query e termina;
+// `withoutOverlapping` evita che due esecuzioni lavorino insieme.
+Schedule::call(fn () => Artisan::call('queue:work', [
+    '--stop-when-empty' => true,
+    '--max-time' => 50,
+    '--tries' => 3,
+]))->name('queue-work')->everyMinute()->withoutOverlapping(10);
 
 // Tiene aggiornata la sitemap per Google (prodotti nuovi o disattivati).
-Schedule::command('sitemap:generate')->dailyAt('04:00');
+Schedule::call(fn () => Artisan::call('sitemap:generate'))
+    ->name('sitemap-generate')
+    ->dailyAt('04:00');
