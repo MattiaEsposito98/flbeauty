@@ -2,16 +2,20 @@
 
 namespace App\Listeners;
 
-use App\Models\EmailLog;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Tiene traccia di ogni email: quelle accettate dal server di posta e quelle fallite.
- * Non deve mai far fallire un invio: ogni errore qui viene solo segnalato nel registro.
+ * Tiene traccia di ogni email nel registro dedicato `storage/logs/mail-AAAA-MM-GG.log`
+ * (canale `mail`, 14 giorni): quelle accettate dal server di posta e quelle fallite.
+ * Non deve mai far fallire un invio: ogni errore qui viene solo segnalato.
+ *
+ * "INVIATA" vuol dire che il server di posta (Aruba) ha accettato il messaggio: se poi
+ * finisce nello spam del destinatario da qui non si vede. "ERRORE" vuol dire che non è partita.
  */
 class LogMailEvents
 {
@@ -20,12 +24,10 @@ class LogMailEvents
         try {
             $message = $event->message;
 
-            EmailLog::create([
-                'status' => EmailLog::STATUS_SENT,
-                'kind' => self::kindFromData($event->data),
-                'recipient' => self::addresses($message->getTo()),
-                'subject' => $message->getSubject(),
-                'created_at' => now(),
+            Log::channel('mail')->info('INVIATA', [
+                'tipo' => self::kindFromData($event->data),
+                'a' => self::addresses($message->getTo()),
+                'oggetto' => $message->getSubject(),
             ]);
         } catch (Throwable $e) {
             report($e);
@@ -59,13 +61,11 @@ class LogMailEvents
                     ->flatten()->filter()->implode(', ');
             }
 
-            EmailLog::create([
-                'status' => EmailLog::STATUS_FAILED,
-                'kind' => $kind,
-                'recipient' => $recipient ?: null,
-                'subject' => $subject,
-                'error' => mb_substr($event->exception->getMessage(), 0, 1000),
-                'created_at' => now(),
+            Log::channel('mail')->error('ERRORE', [
+                'tipo' => $kind,
+                'a' => $recipient ?: null,
+                'oggetto' => $subject,
+                'motivo' => mb_substr($event->exception->getMessage(), 0, 1000),
             ]);
         } catch (Throwable $e) {
             report($e);

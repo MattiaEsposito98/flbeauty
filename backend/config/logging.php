@@ -73,6 +73,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Registro delle email inviate dal sito (storage/logs/mail-AAAA-MM-GG.log), separato dal
+        // registro generale. Si conserva lo stesso numero di giorni degli altri log (14).
+        'mail' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/mail.log'),
+            'level' => 'debug',
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

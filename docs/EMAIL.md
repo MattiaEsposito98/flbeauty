@@ -192,16 +192,22 @@ messaggio della finestra di conferma del checkout. Il mittente è `F&L Beauty <i
 aprirlo nel browser (o inviare una prova a Mailpit in locale).
 
 ## Monitoraggio delle email e mittenti (2026-10-08)
-**Registro email** (Admin → *Registro email*): una riga per ogni email che il sito prova a inviare, con
-data, esito, tipo, destinatario, oggetto e, se fallisce, il motivo (es. `525 Invio disabilitato`,
-`535 password`). Si aggiorna da solo ogni 30 secondi e si conserva **90 giorni** (pulizia notturna alle
-04:30). Codice: `App\Listeners\LogMailEvents` (eventi `MessageSent` e `JobFailed`), modello `EmailLog`,
-risorsa `Filament/Resources/EmailLogs`. Se un invio fallisce **non si ripete da solo** (coda `deferred`):
-si vede nel registro e si può rimandare a mano.
-- **Limite onesto:** «Inviata» vuol dire che il server di posta (Aruba) ha accettato il messaggio. Se poi
+**Registro delle email** (nei log di Laravel, non nel pannello admin): ogni email che il sito prova a
+inviare viene scritta in `backend/storage/logs/mail-AAAA-MM-GG.log` (canale `mail` in `config/logging.php`,
+conservato 14 giorni come gli altri log). Una riga per email, con tipo, destinatario, oggetto e, se fallisce,
+il motivo (es. `525 Invio disabilitato`, `535 password`). Codice: `App\Listeners\LogMailEvents` (eventi
+`MessageSent` e `JobFailed`). Per leggerlo, via SSH nella cartella `home`:
+```bash
+tail -n 30 backend/storage/logs/mail-$(date +%F).log      # le ultime email di oggi
+grep ERRORE backend/storage/logs/mail-*.log               # solo i fallimenti
+```
+Se un invio fallisce **non si ripete da solo** (coda `deferred`): si vede nel log e si può rimandare a mano.
+- **Limite onesto:** `INVIATA` vuol dire che il server di posta (Aruba) ha accettato il messaggio. Se poi
   finisce nello spam o viene scartato da Hotmail/Gmail **da qui non si vede**. Per quello servono le
   statistiche di un servizio come Brevo/Mailjet (passaggio previsto quando ci saranno molti clienti)
-- Gli indirizzi nel registro sono dati personali: stanno solo nel database, visibili agli admin, 90 giorni
+- Gli indirizzi nel log sono dati personali: stanno solo sul server, 14 giorni (come gli altri log)
+- Una versione con tabella nel database e pagina nel pannello esisteva per poche ore (2026-10-08): è stata
+  tolta per scelta (migration `drop_email_logs_table`)
 
 **Mittenti:**
 | Email | Da | Rispondendo scrivi a |
@@ -218,7 +224,7 @@ Indirizzo di contatto pubblico (sito, privacy, avviso nuovi ordini `ADMIN_ORDER_
 
 ### Esito della prova con l'alias no-reply (2026-10-08): NON funziona su Aruba
 Aruba **rifiuta l'invio a nome di un alias**: `550 5.1.0 <no-reply@flbeauty.it> … Mittente non consentito`.
-L'alias serve solo a *ricevere* (inoltra a `info@`). Il Registro email ha segnalato subito l'errore.
+L'alias serve solo a *ricevere* (inoltra a `info@`). Il registro delle email (log) ha segnalato subito l'errore.
 Quindi **oggi tutte le email partono da `info@flbeauty.it`** (con "Rispondi a" sempre `info@`) e il codice è
 già pronto per cambiare: basta valorizzare `MAIL_NOREPLY_ADDRESS` nel `.env` (ora commentato). Strade per
 avere davvero un `no-reply@`:
