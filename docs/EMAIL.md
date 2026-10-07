@@ -215,3 +215,17 @@ le email partono da `info@` (così Aruba non rifiuta nulla). Per attivarlo: crea
 del server `MAIL_NOREPLY_ADDRESS="no-reply@flbeauty.it"` e `php artisan config:cache`, e controllare nel
 Registro email che le prossime email risultino «Inviata».
 Indirizzo di contatto pubblico (sito, privacy, avviso nuovi ordini `ADMIN_ORDER_EMAIL`): **`info@flbeauty.it`**.
+
+### Esito della prova con l'alias no-reply (2026-10-08): NON funziona su Aruba
+Aruba **rifiuta l'invio a nome di un alias**: `550 5.1.0 <no-reply@flbeauty.it> … Mittente non consentito`.
+L'alias serve solo a *ricevere* (inoltra a `info@`). Il Registro email ha segnalato subito l'errore.
+Quindi **oggi tutte le email partono da `info@flbeauty.it`** (con "Rispondi a" sempre `info@`) e il codice è
+già pronto per cambiare: basta valorizzare `MAIL_NOREPLY_ADDRESS` nel `.env` (ora commentato). Strade per
+avere davvero un `no-reply@`:
+1. una **vera casella** `no-reply@flbeauty.it` in Aruba (le caselle sono 5 nel piano) **più** un secondo
+   accesso SMTP con le sue credenziali per le email automatiche (richiede una modifica al codice: un
+   secondo mailer). Utile solo se il nome del mittente conta davvero
+2. un servizio come Brevo/Mailjet, dove si può scegliere il mittente (previsto in futuro)
+Consiglio: restare su `info@` per ora, è anche più accogliente per i clienti ("rispondi a questa email").
+Attenzione quando si modifica il `.env` a mano: l'ultima riga deve finire con un "a capo", altrimenti
+la riga aggiunta si attacca alla precedente e il sito dà errore 500 (successo il 2026-10-08, ripristinato).
