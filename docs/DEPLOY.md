@@ -129,21 +129,20 @@ i collegamenti copia i file: in quel caso va rilanciato dopo ogni aggiornamento 
 backend). Controllo: `https://www.flbeauty.it/images/logo-mark.png` deve mostrare il logo.
 
 ## 5. Cron (pannello Aruba → Hosting Linux → Processi Cron)
-Serve **un solo** cron, ogni minuto:
-```bash
-php /web/htdocs/www.flbeauty.it/home/backend/artisan schedule:run
-```
-Da lì Laravel lancia da solo (vedi `backend/routes/console.php`):
-- ogni minuto l'invio delle email in coda (conferme ordine, verifica account,
-  comunicazioni), che con la coda vuota fa una sola query e termina
-- ogni notte alle 04:00 la sitemap per Google
+Il modulo di Aruba ha due modalità: **HTTP/HTTPS** (chiama un indirizzo) e **PHP** (esegue
+un file PHP, senza argomenti), con frequenza minima di **10 minuti** se manuale. Quindi
+non si può lanciare `php artisan schedule:run`: si usa il file `backend/cron.php`
+(fa la stessa cosa, ed è chiuso al web: da browser risponde 403).
 
-**Carico**: trascurabile (equivale a una pagina aperta al minuto). Senza questo cron le
-email non partono. Se il pannello non permette un cron al minuto (verificare), usa
-l'intervallo minimo consentito, ad esempio 5 minuti: basta che sia `schedule:run`; le
-email arriveranno con quel ritardo. Se il PHP del cron non è l'8.3, serve il percorso
-completo del PHP 8.3 (si vede dalla guida Aruba o dal pannello).
+Aggiungi cron: nome `Laravel`, tipo **PHP**, file `backend/cron.php` (il percorso come lo
+chiede il modulo, relativo alla cartella del sito), frequenza **ogni 10 minuti**.
 
+Cosa gira da lì (vedi `backend/routes/console.php`): l'invio delle **comunicazioni di
+massa** in coda, a gruppi, e ogni notte la sitemap. Le email singole (verifica
+account, conferma ordine, cambio stato, reset password) **non aspettano il cron**: con
+`QUEUE_CONNECTION=deferred` nel `.env` di produzione partono subito dopo la risposta al
+cliente. Se un invio fallisce non viene riprovato, ma l'errore resta nel registro
+(`storage/logs`); per volumi piccoli va bene. Il carico del cron è trascurabile.
 ## 6. Email
 Vedi [EMAIL.md](EMAIL.md). Si parte con l'SMTP di Aruba (casella `info@flbeauty.it`),
 Brevo si aggiunge più avanti per le comunicazioni di massa.

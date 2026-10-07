@@ -19,7 +19,11 @@ class BroadcastCommunication extends Mailable implements ShouldQueue
         public string $subjectLine,
         public string $bodyHtml,
         public ?array $unsubscribeUrls = null,
-    ) {}
+    ) {
+        // Le comunicazioni di massa passano SEMPRE dalla coda del database (le spedisce il
+        // cron a gruppi), anche quando le email singole partono subito (QUEUE_CONNECTION=deferred).
+        $this->onConnection('database');
+    }
 
     public function build(): self
     {

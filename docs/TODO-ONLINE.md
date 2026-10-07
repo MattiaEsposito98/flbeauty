@@ -23,7 +23,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
       `audience`, utenti `blocked_at`/`blocked_reason`
 - [ ] Seeder `ComuniSeeder` e `ShippingRateSeeder` (mai `DemoDataSeeder`)
 - [ ] Creare il proprio utente admin con `is_admin = 1`
-- [ ] **Un solo cron** ogni minuto: `php <percorso>/backend/artisan schedule:run`
+- [ ] Cron di Aruba (tipo PHP, file `backend/cron.php`, ogni 10 minuti): serve per le comunicazioni di massa e la sitemap
       (spedisce le email in coda e aggiorna la sitemap di notte; se Aruba non ammette
       un minuto, usare l'intervallo minimo, es. 5 minuti)
 - [ ] `SITEMAP_PATH` nel `.env` e prima `php artisan sitemap:generate`
