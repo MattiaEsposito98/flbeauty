@@ -91,7 +91,8 @@ main {
 
 h1,
 h2,
-h3 {
+h3,
+.hero-title {
   font-family: var(--font-display);
   font-weight: 500;
   line-height: 1.2;
@@ -113,7 +114,8 @@ h3 {
 }
 
 h1 em,
-h2 em {
+h2 em,
+.hero-title em {
   font-style: italic;
   padding-right: 0.08em;
   background: var(--grad-rose-gold-text);
@@ -1105,7 +1107,8 @@ input[type='checkbox'] {
   background: rgba(233, 211, 195, 0.65);
 }
 
-.hero h1 {
+.hero h1,
+.hero .hero-title {
   font-size: clamp(2rem, 1.5rem + 1.6vw, 2.8rem);
   margin-bottom: 0.6rem;
 }
@@ -1192,8 +1195,14 @@ input[type='checkbox'] {
   gap: 0.5rem 1rem;
 }
 
+.section-heading h1,
 .section-heading h2 {
   margin: 0;
+}
+
+/* Nelle pagine categoria e ricerca il titolo della pagina (h1) è questo. */
+.section-heading h1 {
+  font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.75rem);
 }
 
 .results-count {
@@ -2926,7 +2935,8 @@ input[type='checkbox'] {
     padding: 1.5rem 1.25rem;
   }
 
-  .hero h1 {
+  .hero h1,
+  .hero .hero-title {
     font-size: 2rem;
     margin-bottom: 1.1rem;
   }

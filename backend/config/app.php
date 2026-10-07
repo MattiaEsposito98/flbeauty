@@ -67,6 +67,11 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
+    // Dove `php artisan sitemap:generate` scrive sitemap.xml. In produzione deve essere
+    // la cartella pubblica del sito (flbeauty.it), non quella del backend: Google accetta
+    // la sitemap solo se sta sullo stesso dominio degli indirizzi che elenca.
+    'sitemap_path' => env('SITEMAP_PATH'),
+
     // Riceve una email per ogni nuovo ordine dal sito.
     'admin_order_email' => env('ADMIN_ORDER_EMAIL'),
 

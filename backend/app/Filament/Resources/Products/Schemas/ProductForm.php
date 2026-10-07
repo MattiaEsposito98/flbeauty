@@ -66,6 +66,12 @@ class ProductForm
                                 ->disk('public')
                                 ->image()
                                 ->imageEditor()
+                                // Foto del telefono da 4-8 MB: le riduciamo a max 1600 px, così le
+                                // pagine si caricano in fretta (conta per Google e per i clienti).
+                                ->imageResizeMode('contain')
+                                ->imageResizeTargetWidth('1600')
+                                ->imageResizeTargetHeight('1600')
+                                ->imageResizeUpscale(false)
                                 ->multiple()
                                 ->reorderable()
                                 ->maxFiles(8)
@@ -91,6 +97,10 @@ class ProductForm
                                         ->disk('public')
                                         ->image()
                                         ->imageEditor()
+                                        ->imageResizeMode('contain')
+                                        ->imageResizeTargetWidth('1600')
+                                        ->imageResizeTargetHeight('1600')
+                                        ->imageResizeUpscale(false)
                                         ->extraInputAttributes(['capture' => 'environment'])
                                         ->directory('products/images')
                                         ->visibility('public')

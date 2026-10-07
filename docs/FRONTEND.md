@@ -626,6 +626,24 @@ Pulsanti "Torna indietro" (anche Esc o click fuori, bloccati durante l'invio) e
 `Checkout.jsx`). Se l'API rifiuta l'ordine la finestra si chiude e l'errore compare
 nel riepilogo, come prima. Nessuna modifica al backend.
 
+## Blocco account dall'admin (nuovo, sessione del 2026-10-07)
+Dalla pagina Utenti si può bloccare/sbloccare un cliente, con annullamento degli
+ordini aperti nello stesso passaggio. Un utente bloccato vede al login "Il tuo account
+è sospeso. Se pensi sia un errore, scrivici su WhatsApp." Regole e dettagli in
+[SECURITY.md](SECURITY.md).
+
+**Uscita automatica** (stessa sessione): se il server risponde 401 a una richiesta
+fatta con un token (account bloccato, sessione scaduta, password cambiata da un altro
+dispositivo), l'interceptor in `src/api/client.js` lancia l'evento `auth:expired` e
+`AuthContext` toglie il token e azzera l'utente. Prima chi aveva la pagina già aperta
+restava "loggato" finché non ricaricava. Le pagine protette rimandano al login.
+
+## SEO (nuovo, sessione del 2026-10-07)
+Titoli e descrizioni per pagina, categorie con indirizzo proprio (`/categoria/{slug}`,
+il vecchio `/?category=` rimanda lì), dati strutturati, sitemap, robots, `noindex` sulle
+pagine private e pagina "non trovata". Dettagli, cron e passi dopo la messa online in
+[SEO.md](SEO.md).
+
 ## Cosa manca ancora (prossimi passi)
 - Istruzioni di pagamento: **non vanno sul sito**, le manda l'admin su WhatsApp
   (decisione presa con l'utente il 2026-09-28)

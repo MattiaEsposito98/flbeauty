@@ -16,10 +16,20 @@ import { useCart } from '../context/CartContext'
 import WishlistButton from '../components/WishlistButton'
 import ProductImage from '../components/ProductImage'
 import QuantityStepper from '../components/QuantityStepper'
+import Seo from '../components/Seo'
 import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import { WHATSAPP_URL } from '../config/contacts'
+import { SITE_NAME, SITE_URL } from '../config/site'
 import { formatPrice, isLowStock, lowStockLabel } from '../utils/format'
+
+// Taglia il testo a una lunghezza adatta alla descrizione dei risultati di Google
+// (circa 155 caratteri) senza spezzare l'ultima parola.
+function truncate(text, max) {
+  const clean = text.replace(/\s+/g, ' ').trim()
+  if (clean.length <= max) return clean
+  return `${clean.slice(0, max - 1).replace(/\s+\S*$/, '')}…`
+}
 
 export default function ProductDetail() {
   const { slug } = useParams()
@@ -42,6 +52,7 @@ export default function ProductDetail() {
   if (notFound) {
     return (
       <div className="page">
+        <Seo title="Prodotto non disponibile" noindex />
         <EmptyState
           icon={LuSearchX}
           title="Prodotto non disponibile"
@@ -68,14 +79,75 @@ export default function ProductDetail() {
     setQuantity(1)
   }
 
+  const productPath = `/prodotti/${product.slug}`
+  const productUrl = `${SITE_URL}${productPath}`
+  const seoDescription = product.description
+    ? truncate(product.description, 155)
+    : `${product.name} su F&L Beauty: prodotti beauty scelti con cura. Ordina online e ricevi a casa tua.`
+
+  // Dati strutturati: permettono a Google di mostrare prezzo e disponibilità
+  // direttamente nei risultati di ricerca.
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description: seoDescription,
+      url: productUrl,
+      ...(images.length > 0 && { image: images }),
+      ...(product.category && { category: product.category.name }),
+      brand: { '@type': 'Brand', name: SITE_NAME },
+      offers: {
+        '@type': 'Offer',
+        url: productUrl,
+        priceCurrency: 'EUR',
+        price: Number(product.price).toFixed(2),
+        itemCondition: 'https://schema.org/NewCondition',
+        availability: product.in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        seller: { '@type': 'Organization', name: SITE_NAME },
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Catalogo', item: SITE_URL },
+        ...(product.category
+          ? [
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: product.category.name,
+                item: `${SITE_URL}/categoria/${product.category.slug}`,
+              },
+            ]
+          : []),
+        {
+          '@type': 'ListItem',
+          position: product.category ? 3 : 2,
+          name: product.name,
+          item: productUrl,
+        },
+      ],
+    },
+  ]
+
   return (
     <div className="page product-page">
+      <Seo
+        title={product.name}
+        description={seoDescription}
+        path={productPath}
+        image={images[0]}
+        type="product"
+        jsonLd={jsonLd}
+      />
       <nav className="breadcrumb" aria-label="Percorso">
         <Link to="/">Catalogo</Link>
         {product.category && (
           <>
             <LuChevronRight aria-hidden="true" />
-            <Link to={`/?category=${product.category.slug}`}>{product.category.name}</Link>
+            <Link to={`/categoria/${product.category.slug}`}>{product.category.name}</Link>
           </>
         )}
         <LuChevronRight aria-hidden="true" />

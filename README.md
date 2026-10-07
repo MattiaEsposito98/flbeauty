@@ -36,5 +36,6 @@ npm run dev
 - [Hosting (piano scelto, architettura domini)](docs/HOSTING.md)
 - [Frontend (stack, registrazione, indirizzi, comuni)](docs/FRONTEND.md)
 - [Design system (colori, font, icone, componenti del sito)](docs/DESIGN.md)
+- [SEO (Google, sitemap, dati strutturati, cosa fare dopo la messa online)](docs/SEO.md)
 - [Sicurezza (limite tentativi, anti-bot, sessioni)](docs/SECURITY.md)
 - [Privacy, cookie e consenso marketing](docs/PRIVACY.md)

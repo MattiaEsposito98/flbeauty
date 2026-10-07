@@ -1,0 +1,11 @@
+# robots.txt di flbeauty.it
+# Le pagine private (account, carrello, checkout, accessi) NON sono bloccate qui
+# di proposito: hanno il tag noindex, che Google può leggere solo se può aprirle.
+# Qui si bloccano solo le pagine con token o codici personali e le ricerche interne.
+User-agent: *
+Disallow: /ordini/
+Disallow: /reimposta-password
+Disallow: /disiscrizione
+Disallow: /*?q=
+
+Sitemap: https://flbeauty.it/sitemap.xml

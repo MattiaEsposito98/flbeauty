@@ -1,2 +1,8 @@
+# robots.txt del backend (admin.flbeauty.it): pannello e API non vanno su Google.
+# /storage resta aperto: sono le foto dei prodotti, che Google deve poter leggere
+# per mostrarle nelle ricerche per immagini.
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /api
+Disallow: /livewire
+Disallow: /up
