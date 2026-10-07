@@ -83,3 +83,17 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 - Registrazione solo con conferma del numero di telefono, per frenare gli ordini
   fasulli (oggi: blocco account dall'admin)
 - Conferma d'ordine con data stimata di consegna
+
+## Stato della messa online (aggiornato 2026-10-07, sera)
+- [x] Backend online su `https://www.flbeauty.it` (`/api`, `/admin`): migration eseguite,
+      comuni (7894) e tariffe di spedizione (21) caricati, nessun dato di prova
+- [x] Blocco del codice dal web verificato (`/backend/.env`, `/repo/.git` → 403)
+- [x] Indirizzo ufficiale **con www** (Aruba rimanda già l'apex a www)
+- [ ] Creare l'utente admin: `cd backend && php artisan admin:create` (via SSH)
+- [ ] Caricare il negozio React (`npm run build`, poi `dist/` via FTP/VS Code) — il sito
+      risponde 500 sulle pagine finché manca `index.html`
+- [ ] **Cambiare la password del database** (è comparsa in chat) e rifare `read -s` nel `.env`
+- [ ] Cron `schedule:run` ogni minuto (Hosting Linux → Processi Cron)
+- [ ] Email: ora `MAIL_MAILER=log` (non invia nulla). Configurare SMTP con `info@flbeauty.it`
+- [ ] Eliminare l'utente SSH `claude` e la sua chiave in Aruba quando abbiamo finito
+- [ ] Cambiare la passphrase della chiave SSH personale (`ssh-keygen -p`), è comparsa in chat

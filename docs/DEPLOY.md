@@ -98,7 +98,7 @@ Poi:
 - **Tariffe di spedizione**: `php artisan db:seed --class=ShippingRateSeeder` (poi
   controlla prezzi e regioni dal pannello admin)
 - **NON** lanciare `DemoDataSeeder`/`db:seed` completo: contiene dati finti
-- **Il tuo utente admin**: crealo con `php artisan tinker` (nome, email, password
+- **Il tuo utente admin**: `php artisan admin:create` (chiede nome, username, email e la password in modo nascosto, min. 12 caratteri; l'email risulta già verificata). Vecchio metodo con tinker:
   forte, `is_admin = 1`) e verifica l'email (`email_verified_at`)
 - Permessi di scrittura su `storage/` e `bootstrap/cache/`
 
