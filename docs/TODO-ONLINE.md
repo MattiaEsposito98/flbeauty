@@ -7,7 +7,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 - [x] Hosting attivo (dominio attivo il 2026-10-07)
 - [x] PHP 8.3 impostato (Strumenti e impostazioni → Gestione PHP)
 - [x] Database MySQL 8.0 già creato da Aruba (`Sql1964275_1`, vuoto): annotare host, utente e password (non nel repository)
-- [ ] Attivare l'accesso SSH: Strumenti e impostazioni → Chiavi SSH (serve generare una chiave sul PC e importarla)
+- [x] Accesso SSH attivo (chiave `aruba_flbeauty`, utente `k29tzap-flbeauty`, porta 2222): PHP 8.3.23, composer e git disponibili
 - [x] ~~Sottodominio `admin.flbeauty.it`~~ — NON serve: si usa `flbeauty.it/admin` (su Aruba il terzo livello costa 15 €/anno, vedi DEPLOY.md)
 - [ ] Attivare il certificato SSL per `flbeauty.it` (Sicurezza → Certificato SSL e Redirect HTTPS)
 - [ ] Verificare nel pannello che il **rinnovo (79,99 € + IVA)** includa ancora le 5

@@ -1,0 +1,9 @@
+# Il backend sta dentro la cartella pubblica del dominio (Aruba): nessuno deve poterlo aprire dal web.
+# Questa è una seconda protezione, oltre alle regole nel .htaccess del sito.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

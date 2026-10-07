@@ -18,58 +18,75 @@ serve solo a inoltrare verso un altro indirizzo. Decisione presa con l'utente
 (2026-10-07): usare un solo indirizzo, senza costi in più. In più cookie e CORS non
 sono un problema, perché negozio e API sono sullo stesso dominio.
 
+## Dati del server (verificati via SSH il 2026-10-07)
+- Connessione SSH (solo con chiave, vedi sotto): host `p5pws5i.zonep5.webhostingaruba.it`,
+  porta **2222**, utente `k29tzap-flbeauty`
+- Appena entri sei in `/web/htdocs/www.flbeauty.it/home`: **quella è la cartella
+  pubblica del dominio** (contiene `cgi-bin`, `index.php`, `ver.php` segnaposto di
+  Aruba). La cartella sopra è del sistema e non è scrivibile
+- PHP da riga di comando: **8.3.23**; `composer` in `/usr/local/bin/composer`; `git` in
+  `/usr/bin/git`
+- Database MySQL 8.0 creato da Aruba (`Sql1964275_1`); host, utente e password sono nel
+  pannello Aruba → Database (non vanno nel repository)
+- Backup automatici già presenti (cartelle `…_Backup_Giornaliero` e `…_Settimanale`,
+  visibili nel File Manager)
+
 ## Come sono organizzati i file sul server
-Nello spazio web (File Manager / FTP / SSH) c'è già la cartella pubblica del dominio,
-`www.flbeauty.it`, accanto alle cartelle dei backup. Il backend va **accanto**, non
-dentro: così il file `.env` con le password non è raggiungibile dal web.
+Siccome si può scrivere solo dentro la cartella pubblica, il backend sta in una
+sottocartella **chiusa al web** da regole nel `.htaccess` (e da un secondo `.htaccess`
+dentro `backend/`). Nessuno può aprire `flbeauty.it/backend/.env`.
 
 ```
-<spazio web>/
-├── backend/                  ← il contenuto di backend/ del repository (fuori dal web)
-│   ├── .env                  ← password e impostazioni di produzione
-│   └── public/               ← cartella con css, js, immagini del pannello
-├── www.flbeauty.it/          ← cartella pubblica = contenuto di frontend/dist
-│   ├── index.html, assets/…  ← negozio React
-│   ├── .htaccess             ← regole: https, /api e /admin al backend, resto al negozio
-│   ├── _gateway/index.php    ← ingresso del backend (copiato dalla build)
-│   ├── css, js, fonts, images, storage   ← collegamenti a backend/ (vedi §4)
-│   └── sitemap.xml           ← creata ogni notte dal backend
-└── flbeauty.it_Backup_…      ← backup automatici di Aruba
+home/                            ← cartella pubblica di flbeauty.it
+├── index.html, assets/…         ← negozio React (contenuto di frontend/dist)
+├── .htaccess                    ← https, backend chiuso, /api e /admin al backend
+├── _gateway/index.php           ← ingresso del backend
+├── repo/                        ← git clone del progetto (chiuso al web)
+├── backend/ → repo/backend      ← collegamento (chiuso al web)
+├── css, js, fonts, images       ← collegamenti a backend/public/… (stile del pannello)
+├── storage                      ← collegamento alle foto dei prodotti
+└── sitemap.xml                  ← creata ogni notte dal backend
 ```
 
-## 0. Prima di iniziare
-- Hosting "Attivo", **PHP 8.3** impostato (Hosting Linux → Strumenti e impostazioni →
-  Gestione PHP), **database MySQL 8.0** già creato da Aruba (`Sql1964275_1`: host,
-  utente e password sono nel pannello Database)
-- Accesso SSH: Strumenti e impostazioni → **Chiavi SSH** (si accede con una chiave: si
-  genera sul PC e si importa lì; la guida è nel link "Consulta la nostra guida")
-- **SSL**: Sicurezza → Certificato SSL, e Sicurezza → Redirect HTTPS
-- Sul tuo PC: il codice aggiornato da GitHub (`git pull`), `npm` installato
+**La regola da non togliere mai:** in `.htaccess` la riga
+`RewriteRule ^(backend|repo|_repo|vendor|storage/logs)(/|$) - [F,L]` è ciò che impedisce
+di scaricare `.env`. Dopo ogni messa online controlla che
+`https://flbeauty.it/backend/.env` dia **403 o 404** (vedi collaudo).
+
+## 0. Collegarsi via SSH
+Una volta sola (già fatto): chiave creata sul PC (`ssh-keygen -t rsa -b 4096 -f
+~/.ssh/aruba_flbeauty`), chiave pubblica **senza commento** importata in Hosting Linux →
+Strumenti e impostazioni → Chiavi SSH, utente creato nel tab "Utenti" (Aruba aggiunge il
+prefisso `k29tzap-`). L'attivazione può richiedere qualche minuto. Poi, da PowerShell:
+```powershell
+ssh -i "$env:USERPROFILE\.ssh\aruba_flbeauty" -p 2222 k29tzap-flbeauty@p5pws5i.zonep5.webhostingaruba.it
+```
+Chiede la passphrase della chiave. La chiave **privata** non va mai condivisa. Non si può
+clonare con `git@github.com:` (Aruba non permette git via SSH): si usa `https://`.
 
 ## 1. SSL e HTTPS
-1. Menu **Sicurezza → Certificato SSL**: attiva il certificato per `flbeauty.it`
-2. Menu **Sicurezza → Redirect HTTPS** (se previsto dal piano; il `.htaccess` del sito
-   comunque rimanda tutto su `https://flbeauty.it`)
+Menu **Sicurezza → Certificato SSL** per `flbeauty.it` (poi **Redirect HTTPS** se
+previsto). Il `.htaccess` del sito rimanda comunque tutto su `https://flbeauty.it`.
 
-## 2. Caricare il backend (fuori dalla cartella pubblica)
-Via SSH, nella cartella che contiene `www.flbeauty.it`:
+## 2. Caricare il backend (via SSH, in `home`)
 ```bash
 git clone https://github.com/MattiaEsposito98/flbeauty.git repo
-mv repo/backend backend            # il backend va accanto a www.flbeauty.it
+ln -s repo/backend backend
 cd backend
 composer install --no-dev --optimize-autoloader
-cp .env.production.example .env    # poi compilalo (vedi sotto)
+cp .env.production.example .env      # poi compilalo (vedi sotto)
 php artisan key:generate
 php artisan migrate --force
 php artisan filament:assets
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 ```
-(se `composer` non è disponibile sul server, si può lanciare `composer install` sul tuo
-PC e caricare anche la cartella `vendor/`: più lento ma funziona.)
+(se il repository è privato, `git clone` chiede le credenziali: in alternativa carica i
+file con il File Manager di Aruba.)
 
-Compila il `.env` (modello: `backend/.env.production.example`): `APP_ENV=production`,
-`APP_DEBUG=false`, database di Aruba, `APP_URL`/`FRONTEND_URL` = `https://flbeauty.it`,
-`SITEMAP_PATH`, SMTP.
+Compila il `.env` (modello: `backend/.env.production.example`, si modifica con
+`nano .env`): `APP_ENV=production`, `APP_DEBUG=false`, database di Aruba, `APP_URL` e
+`FRONTEND_URL` = `https://flbeauty.it`, `SITEMAP_PATH=/web/htdocs/www.flbeauty.it/home/sitemap.xml`,
+SMTP.
 
 Poi:
 - **Comuni italiani**: `php artisan db:seed --class=ComuniSeeder` (7894 comuni, serve
@@ -81,9 +98,8 @@ Poi:
   forte, `is_admin = 1`) e verifica l'email (`email_verified_at`)
 - Permessi di scrittura su `storage/` e `bootstrap/cache/`
 
-Per aggiornare in futuro: `git pull` (nella cartella `repo`) e copiare `backend/`
-aggiornato, poi `composer install --no-dev -o`, `php artisan migrate --force`, e
-di nuovo i tre `*:cache`.
+Per aggiornare in futuro: `cd repo && git pull`, poi in `backend`:
+`composer install --no-dev -o`, `php artisan migrate --force`, e di nuovo i tre `*:cache`.
 
 ## 3. Costruire e caricare il negozio
 Sul tuo PC:
@@ -94,26 +110,24 @@ npm install
 npm run build
 ```
 Carica **tutto il contenuto di `dist/`** (compresi i file nascosti `.htaccess` e la
-cartella `_gateway`) nella cartella `www.flbeauty.it`, sostituendo i file segnaposto di
-Aruba (`index.php`, `ver.php`; lascia `cgi-bin`). **Non cancellare** `sitemap.xml`, né i
-collegamenti del passo 4, se già presenti.
+cartella `_gateway`) dentro `home`, sostituendo `index.php` e `ver.php` di Aruba (lascia
+`cgi-bin`). **Non cancellare** `backend`, `repo`, `sitemap.xml` né i collegamenti del
+passo 4: carica i file *sopra* quelli esistenti, senza svuotare la cartella.
 
 ## 4. Collegare le risorse del backend alla cartella pubblica
 Il pannello admin ha bisogno di css, script, immagini e delle foto dei prodotti
-(`/storage`), che stanno nel backend. Via SSH, nella cartella che contiene `backend` e
-`www.flbeauty.it`:
+(`/storage`), che stanno nel backend. Via SSH, in `home`:
 ```bash
 bash repo/tools/aruba-link-public.sh .
 ```
-Crea i collegamenti `css`, `js`, `fonts`, `images`, `storage` dentro `www.flbeauty.it`
-(se l'hosting non permette i collegamenti, copia i file: in quel caso va rilanciato dopo
-ogni aggiornamento del backend). Controllo: `https://flbeauty.it/images/logo-mark.png`
-deve mostrare il logo.
+Crea i collegamenti `css`, `js`, `fonts`, `images`, `storage` (se l'hosting non permette
+i collegamenti copia i file: in quel caso va rilanciato dopo ogni aggiornamento del
+backend). Controllo: `https://flbeauty.it/images/logo-mark.png` deve mostrare il logo.
 
 ## 5. Cron (pannello Aruba → Hosting Linux → Processi Cron)
 Serve **un solo** cron, ogni minuto:
 ```bash
-php <percorso>/backend/artisan schedule:run
+php /web/htdocs/www.flbeauty.it/home/backend/artisan schedule:run
 ```
 Da lì Laravel lancia da solo (vedi `backend/routes/console.php`):
 - ogni minuto l'invio delle email in coda (conferme ordine, verifica account,
@@ -123,7 +137,8 @@ Da lì Laravel lancia da solo (vedi `backend/routes/console.php`):
 **Carico**: trascurabile (equivale a una pagina aperta al minuto). Senza questo cron le
 email non partono. Se il pannello non permette un cron al minuto (verificare), usa
 l'intervallo minimo consentito, ad esempio 5 minuti: basta che sia `schedule:run`; le
-email arriveranno con quel ritardo.
+email arriveranno con quel ritardo. Se il PHP del cron non è l'8.3, serve il percorso
+completo del PHP 8.3 (si vede dalla guida Aruba o dal pannello).
 
 ## 6. Email
 Vedi [EMAIL.md](EMAIL.md). Si parte con l'SMTP di Aruba (casella `info@flbeauty.it`),
@@ -134,8 +149,9 @@ Brevo si aggiunge più avanti per le comunicazioni di massa.
 - [ ] Aprendo direttamente `https://flbeauty.it/prodotti/<slug>` il prodotto si vede
 - [ ] `https://flbeauty.it/admin` mostra il login del pannello, con stile e logo
 - [ ] `https://flbeauty.it/api/categories` risponde con i dati
-- [ ] I file del backend NON sono raggiungibili: `https://flbeauty.it/backend/.env` e
-      `https://flbeauty.it/.env` devono dare 404
+- [ ] **Sicurezza:** `https://flbeauty.it/backend/.env`, `/repo/.git/config`,
+      `/backend/composer.json` e `/.env` devono dare **403 o 404**, mai il contenuto.
+      Se uno si apre, togli subito `.env` e avvisami
 - [ ] Le foto caricate dall'admin si vedono nel negozio (`/storage/...`)
 - [ ] Registrazione di prova → email di verifica arriva → login funziona
 - [ ] Ordine di prova → email di conferma al cliente e all'admin → tracking
@@ -143,15 +159,14 @@ Brevo si aggiunge più avanti per le comunicazioni di massa.
 - [ ] `https://flbeauty.it/sitemap.xml` e `/robots.txt` rispondono
 - [ ] Cookie banner: spento finché `VITE_GA_MEASUREMENT_ID` è vuoto
 - [ ] Cancella l'utente e gli ordini di prova dal database
-- [ ] I backup automatici di Aruba esistono già (cartelle `…_Backup_Giornaliero` e
-      `…_Backup_Settimanale`); scarica comunque una copia del database prima del lancio
+- [ ] Scarica una copia del database prima di aprire al pubblico (i backup automatici di
+      Aruba ci sono già)
 
 ## Cose da verificare sul server (non testabili in locale)
-Questa configurazione è stata provata in locale (il file `_gateway` avvia il backend
-correttamente), ma alcune cose dipendono da Aruba e si vedono solo online:
+Il file `_gateway` è stato provato in locale (avvia il backend e risponde alle API), ma
+alcune cose dipendono da Aruba e si vedono solo online:
 - che il server permetta i **collegamenti simbolici** (altrimenti lo script copia i file)
 - che `.htaccess` con `mod_rewrite` sia attivo (di solito sì su hosting Linux Apache)
 - che l'intestazione `Authorization` arrivi al backend (regola già nel `.htaccess`;
   si vede se il login dei clienti funziona)
-- la versione di `composer`/`php` da riga di comando (`php -v` via SSH deve essere 8.3;
-  se è diversa, usare il percorso completo del PHP 8.3 indicato da Aruba)
+- che la regola di blocco del backend funzioni (collaudo di sicurezza qui sopra)

@@ -15,6 +15,13 @@
   # Vecchio indirizzo del catalogo
   RewriteRule ^catalogo/?$ / [L,R=301]
 
+  # SICUREZZA: il codice del backend e il clone del progetto stanno dentro questa
+  # cartella, ma nessuno deve poterli aprire dal web (contengono il file .env con le
+  # password). Anche i file nascosti (.env, .git…) restano chiusi.
+  # Va prima di ogni altra regola e NON va tolta.
+  RewriteRule ^(backend|repo|_repo|vendor|storage/logs)(/|$) - [F,L]
+  RewriteRule (^|/)\.(?!well-known) - [F,L]
+
   # Il backend ha bisogno dell'intestazione Authorization (accesso dei clienti):
   # sull'hosting condiviso va passata esplicitamente.
   RewriteCond %{HTTP:Authorization} .
