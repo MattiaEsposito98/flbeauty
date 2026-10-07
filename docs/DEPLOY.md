@@ -203,3 +203,11 @@ partono.
 nella cartella pubblica (tasto destro → Upload da VS Code, o `scp`). Non cancellare
 `backend`, `repo`, `sitemap.xml` e i collegamenti. Se la home sembra vecchia: Aruba →
 Velocità → Caching → svuota cache.
+
+### Nota: Livewire ha un indirizzo con un codice (scoperto il 2026-10-08)
+Il pannello usa `/livewire-<codice>/update` e `/livewire-<codice>/livewire.min.js`, non `/livewire/…`.
+Il `.htaccess` del sito deve quindi mandare al backend `livewire` **con o senza codice**
+(`livewire(-[A-Za-z0-9]+)?`); con la regola vecchia il pulsante di accesso di `/admin` non faceva
+nulla. Se il pannello "non fa entrare" o non risponde ai clic, controllare per prima cosa che
+`https://www.flbeauty.it/livewire-<codice>/livewire.min.js` risponda `text/javascript` e non
+`text/html` (il codice si vede nel sorgente della pagina `/admin/login`).

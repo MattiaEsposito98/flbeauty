@@ -32,9 +32,10 @@ DirectoryIndex index.html
   RewriteCond %{HTTP:Authorization} .
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  # Backend Laravel: API, pannello admin e componenti Livewire del pannello.
+  # Backend Laravel: API, pannello admin e componenti Livewire del pannello. Livewire usa un
+  # indirizzo con un codice casuale (/livewire-b7780ddd/…): la regola copre anche quello.
   # Prima del resto, altrimenti finirebbero nel negozio.
-  RewriteRule ^(api|admin|livewire)(/|$) /_gateway/index.php [L]
+  RewriteRule ^(api|admin|livewire(-[A-Za-z0-9]+)?)(/|$) /_gateway/index.php [L]
 
   # Il negozio è una SPA: ogni indirizzo che non è un file vero (es. /prodotti/rossetto
   # o /categoria/rossetti) deve aprire index.html, altrimenti dà 404 se aperto direttamente.
