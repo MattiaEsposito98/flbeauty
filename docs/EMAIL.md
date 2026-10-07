@@ -219,7 +219,7 @@ Se un invio fallisce **non si ripete da solo** (coda `deferred`): si vede nel lo
 Impostazioni dominio → *Alias*). Finché l'alias non esiste e `MAIL_NOREPLY_ADDRESS` non è nel `.env`, tutte
 le email partono da `info@` (così Aruba non rifiuta nulla). Per attivarlo: creare l'alias, poi nel `.env`
 del server `MAIL_NOREPLY_ADDRESS="no-reply@flbeauty.it"` e `php artisan config:cache`, e controllare nel
-Registro email che le prossime email risultino «Inviata».
+log delle email (`mail-*.log`) che le prossime risultino `INVIATA`.
 Indirizzo di contatto pubblico (sito, privacy, avviso nuovi ordini `ADMIN_ORDER_EMAIL`): **`info@flbeauty.it`**.
 
 ### Esito della prova con l'alias no-reply (2026-10-08): NON funziona su Aruba
