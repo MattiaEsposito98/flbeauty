@@ -25,10 +25,14 @@ class CreateCommunication extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        $recipients = Communication::recipients($data['type']);
+        $selected = $data['type'] === Communication::TYPE_SERVICE
+            && ($data['audience'] ?? Communication::AUDIENCE_ALL) === Communication::AUDIENCE_SELECTED;
+
+        $recipients = Communication::recipients($data['type'], $selected ? ($data['user_ids'] ?? []) : null);
 
         $record = Communication::create([
             'type' => $data['type'],
+            'audience' => $selected ? Communication::AUDIENCE_SELECTED : Communication::AUDIENCE_ALL,
             'subject' => $data['subject'],
             'body' => $data['body'],
             'recipients_count' => $recipients->count(),

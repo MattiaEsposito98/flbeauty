@@ -56,6 +56,52 @@ it('invia dal pannello con il link di disiscrizione solo nelle promozionali', fu
         && $mail->unsubscribeUrls === null);
 });
 
+it('invia un avviso di servizio solo ai clienti scelti', function () {
+    Mail::fake();
+    $admin = User::factory()->create(['is_admin' => true]);
+    $chosen = customer(['email' => 'scelto@example.test']);
+    customer(['email' => 'altro@example.test']);
+
+    Livewire::actingAs($admin)
+        ->test(CreateCommunication::class)
+        ->fillForm([
+            'type' => 'servizio',
+            'audience' => 'selected',
+            'user_ids' => [$chosen->id],
+            'subject' => 'Il tuo ordine',
+            'body' => '<p>Ti scriviamo per il tuo ordine</p>',
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    Mail::assertQueued(BroadcastCommunication::class, 1);
+    Mail::assertQueued(BroadcastCommunication::class, fn ($mail) => $mail->hasTo('scelto@example.test')
+        && $mail->unsubscribeUrls === null);
+
+    $communication = Communication::latest('id')->first();
+    expect($communication->audience)->toBe('selected')
+        ->and($communication->recipients_count)->toBe(1);
+});
+
+it('richiede di scegliere almeno un cliente e ignora la selezione per le promozionali', function () {
+    Mail::fake();
+    $admin = User::factory()->create(['is_admin' => true]);
+    $chosen = customer(['email' => 'scelto@example.test']);
+    customer(['email' => 'si@example.test'], marketing: true);
+
+    Livewire::actingAs($admin)
+        ->test(CreateCommunication::class)
+        ->fillForm(['type' => 'servizio', 'audience' => 'selected', 'subject' => 'A', 'body' => '<p>B</p>'])
+        ->call('create')
+        ->assertHasFormErrors(['user_ids' => 'required']);
+
+    Mail::assertNothingQueued();
+
+    // Con una promozionale la selezione manuale non vale: restano solo i consensi.
+    expect(Communication::recipients(Communication::TYPE_MARKETING, [$chosen->id])->pluck('email')->all())
+        ->toBe(['si@example.test']);
+});
+
 it('disiscrive con il link firmato e rifiuta una firma falsa', function () {
     $user = customer(marketing: true);
     $apiUrl = MarketingConsentController::unsubscribeUrls($user)['api'];

@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext'
 import Alert from '../components/Alert'
 import CartAdjustmentsNotice from '../components/CartAdjustmentsNotice'
 import EmptyState from '../components/EmptyState'
+import OrderConfirmDialog from '../components/OrderConfirmDialog'
 import Spinner from '../components/Spinner'
 import { formatPrice } from '../utils/format'
 
@@ -22,6 +23,7 @@ export default function Checkout() {
   const [discountCode, setDiscountCode] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   useEffect(() => {
     client.get('/addresses').then(({ data }) => {
@@ -57,8 +59,16 @@ export default function Checkout() {
   const shippingRate = shippingRates.find((r) => String(r.id) === shippingRateId)
   const grandTotal = total + (shippingRate ? Number(shippingRate.price) : 0)
 
-  async function handleSubmit(e) {
+  // Il pulsante del form non invia l'ordine: apre prima la finestra di conferma,
+  // perché il pagamento è fuori dal sito e un click per errore creerebbe un ordine
+  // da annullare.
+  function handleSubmit(e) {
     e.preventDefault()
+    setError(null)
+    setConfirmOpen(true)
+  }
+
+  async function placeOrder() {
     setError(null)
     setSubmitting(true)
 
@@ -72,6 +82,7 @@ export default function Checkout() {
       clearCart()
       navigate(`/ordini/${data.id}`, { state: { justPlaced: true } })
     } catch (err) {
+      setConfirmOpen(false)
       const errors = err.response?.data?.errors
 
       // Stock cambiato tra l'apertura del checkout e la conferma: riallineiamo
@@ -247,10 +258,19 @@ export default function Checkout() {
           {error && <Alert type="error">{error}</Alert>}
 
           <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting}>
-            {submitting ? 'Invio ordine...' : 'Conferma ordine'}
+            Conferma ordine
           </button>
         </aside>
       </form>
+
+      <OrderConfirmDialog
+        open={confirmOpen}
+        total={grandTotal}
+        itemCount={items.length}
+        submitting={submitting}
+        onConfirm={placeOrder}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   )
 }

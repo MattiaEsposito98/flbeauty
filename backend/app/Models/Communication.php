@@ -20,8 +20,13 @@ class Communication extends Model
         self::TYPE_SERVICE => 'Di servizio (avvisi importanti)',
     ];
 
+    public const AUDIENCE_ALL = 'all';
+
+    public const AUDIENCE_SELECTED = 'selected';
+
     protected $fillable = [
         'type',
+        'audience',
         'subject',
         'body',
         'recipients_count',
@@ -50,10 +55,26 @@ class Communication extends Model
      *   un ordine. Solo per avvisi che riguardano account e ordini (es. modifica
      *   delle condizioni, problemi con le spedizioni), mai per offerte
      *
+     * Con `$userIds` la comunicazione va solo ai clienti registrati scelti a mano
+     * (solo per le comunicazioni di servizio: le promozionali restano limitate a
+     * chi ha dato il consenso, quindi la selezione manuale non vale per loro).
+     *
+     * @param  array<int, int>|null  $userIds
      * @return Collection<int, array{email: string, user: User|null}>
      */
-    public static function recipients(string $type): Collection
+    public static function recipients(string $type, ?array $userIds = null): Collection
     {
+        if ($userIds !== null && $type === self::TYPE_SERVICE) {
+            return User::query()
+                ->where('is_admin', false)
+                ->whereNotNull('email')
+                ->whereKey($userIds)
+                ->get()
+                ->map(fn (User $user) => ['email' => mb_strtolower(trim($user->email)), 'user' => $user])
+                ->unique('email')
+                ->values();
+        }
+
         $users = User::query()
             ->where('is_admin', false)
             ->whereNotNull('email')

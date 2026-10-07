@@ -19,6 +19,15 @@ pannello admin, il cliente riceve automaticamente una email di aggiornamento.
 > dato il consenso marketing, con link di disiscrizione) e *di servizio* (a tutti,
 > solo avvisi su account e ordini). Dettagli e regole in [PRIVACY.md](PRIVACY.md).
 
+> **Aggiornato il 2026-10-07**: per le comunicazioni *di servizio* c'è l'opzione "A chi
+> inviarla": **Tutti i clienti** oppure **Solo i clienti che scelgo io** (selezione
+> multipla con ricerca per nome, username o email, solo clienti registrati, staff
+> escluso). Serve per avvisi mirati (es. un problema con un ordine). La selezione
+> manuale **non esiste per le promozionali**, che restano limitate a chi ha dato il
+> consenso (`Communication::recipients($type, $userIds)` la ignora). Lo storico mostra
+> la colonna "Inviata a" (`communications.audience`: `all` / `selected`). Test in
+> `backend/tests/Feature/MarketingConsentTest.php`.
+
 Nuova voce di menu **Comunicazioni** nel pannello admin (`/admin/communications`).
 Permette di scrivere un oggetto + testo (editor ricco) e inviarlo via email a tutti i
 clienti: sia quelli registrati sia i clienti "guest" che hanno lasciato una email su un
@@ -120,6 +129,7 @@ Nota: Brevo NON sostituisce una casella di posta leggibile (tipo Gmail/Outlook) 
 solo a spedire. Le caselle "vere" restano su Aruba o Google Workspace/Zoho, se servono.
 
 ## Possibili estensioni future (non ancora fatte)
-- Segmentazione destinatari nelle Comunicazioni (es. solo chi ha ordinato di recente)
+- Segmentazione automatica destinatari nelle Comunicazioni (es. solo chi ha ordinato di
+  recente; la scelta manuale dei clienti c'è già per quelle di servizio)
 - Tracking apertura/click sulle comunicazioni broadcast
 - Template email multipli riutilizzabili invece del singolo editor libero

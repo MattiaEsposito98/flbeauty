@@ -612,6 +612,20 @@ Test: `backend/tests/Feature/AdminCreateOrderTest.php`. Provato anche dal vivo n
 pannello (ordine da ospite, "Disponibili solo 10" con 99 pezzi, email in Mailpit,
 notifica e link WhatsApp), poi cancellato.
 
+## Conferma prima di inviare l'ordine (nuovo, sessione del 2026-10-07)
+Richiesta dell'utente: senza pagamento online, un click per errore su "Conferma
+ordine" crea un ordine che poi va annullato. Ora il pulsante nel checkout **non invia
+più l'ordine**: apre una finestra di conferma (`OrderConfirmDialog.jsx`) che spiega
+che cosa succede:
+- l'ordine arriva subito a noi e i prodotti vengono riservati
+- le istruzioni di pagamento arrivano su WhatsApp (sul sito non si paga)
+- l'ordine è confermato solo quando arriva il pagamento
+
+Pulsanti "Torna indietro" (anche Esc o click fuori, bloccati durante l'invio) e
+"Sì, invia l'ordine", che fa partire `POST /api/orders` (`placeOrder()` in
+`Checkout.jsx`). Se l'API rifiuta l'ordine la finestra si chiude e l'errore compare
+nel riepilogo, come prima. Nessuna modifica al backend.
+
 ## Cosa manca ancora (prossimi passi)
 - Istruzioni di pagamento: **non vanno sul sito**, le manda l'admin su WhatsApp
   (decisione presa con l'utente il 2026-09-28)

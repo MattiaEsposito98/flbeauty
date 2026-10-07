@@ -21,6 +21,10 @@ class CommunicationsTable
                     ->badge()
                     ->formatStateUsing(fn (string $state) => $state === Communication::TYPE_MARKETING ? 'Promozionale' : 'Di servizio')
                     ->color(fn (string $state) => $state === Communication::TYPE_MARKETING ? 'primary' : 'warning'),
+                TextColumn::make('audience')
+                    ->label('Inviata a')
+                    ->formatStateUsing(fn (string $state) => $state === Communication::AUDIENCE_SELECTED ? 'Clienti scelti' : 'Tutti')
+                    ->color('gray'),
                 TextColumn::make('recipients_count')
                     ->label('Destinatari')
                     ->badge()

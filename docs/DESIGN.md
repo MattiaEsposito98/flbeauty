@@ -78,6 +78,7 @@ Gradienti pronti: `--grad-rose-gold` (decorativo/metallico), `--grad-rose-gold-t
 | `CartToast` | Avviso in basso: "aggiunto al carrello" (verde) o limite di disponibilità (`warning`, arancione) |
 | `CartAdjustmentsNotice` | Riquadro con le quantità corrette automaticamente per disponibilità cambiata |
 | `ConfirmButton` | Pulsante con conferma interna per azioni distruttive (niente `confirm()` del browser) |
+| `OrderConfirmDialog` | Finestra modale di conferma prima di inviare l'ordine (classi `.modal*`, sfondo come il carrello laterale, si chiude con Esc o click fuori) |
 | `PasswordField` | Campo password con lucchetto e occhiello mostra/nascondi |
 | `AuthCard` | Card centrata delle pagine login/registrazione/password |
 | `Alert` | Messaggi `success` / `error` / `info` con icona |
