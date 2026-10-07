@@ -181,3 +181,26 @@ dei nostri file). Il `.htaccess` del sito forzava l'opposto e i due redirect si 
 rimandati a vicenda all'infinito (scoperto il 2026-10-07 prima della messa online).
 Quindi l'indirizzo ufficiale è **con www**: sitemap, canonical, dati strutturati, email e
 `.env` usano tutti `https://www.flbeauty.it`. Non forzare mai la versione senza www.
+
+## Aggiornare il sito dopo una modifica (flusso di lavoro)
+Si lavora **in locale** (`.env` di sviluppo, XAMPP, `npm run dev`), si prova, poi si pubblica.
+Il server ha impostazioni sue; non si copiano mai da un posto all'altro:
+
+| Cosa | Sul PC (sviluppo) | Sul server (produzione) | Come si aggiorna |
+|---|---|---|---|
+| `backend/.env` | database XAMPP, `APP_DEBUG=true`, email su Mailpit | database Aruba, `APP_ENV=production`, SMTP reale | si modifica a mano sul server; **non è su GitHub** |
+| `frontend/.env` / `.env.production` | API su `127.0.0.1:8000` | build con `VITE_API_URL=https://www.flbeauty.it/api` | `npm run build` legge `.env.production` |
+| Dati (utenti, ordini, prodotti) | database locale | database Aruba | **separati**: nulla si trasferisce da solo |
+| Foto prodotto (`storage/`) | sul PC | sul server | si caricano dall'admin online |
+| `vendor/`, `sitemap.xml`, collegamenti `css/js/images/storage` | — | creati sul server | non vanno toccati |
+
+**Backend** (codice PHP, migration, pannello): `git push`, poi sul server
+`bash repo/tools/aruba-update-backend.sh` (scarica, aggiorna le librerie, esegue le
+migration, rifà le cache e la sitemap). Serve l'accesso SSH. Caricare file PHP a mano
+**non basta**: le cache di Laravel tengono la versione vecchia e le migration non
+partono.
+
+**Negozio** (React): `npm run build` sul PC e si carica il contenuto di `frontend/dist`
+nella cartella pubblica (tasto destro → Upload da VS Code, o `scp`). Non cancellare
+`backend`, `repo`, `sitemap.xml` e i collegamenti. Se la home sembra vecchia: Aruba →
+Velocità → Caching → svuota cache.

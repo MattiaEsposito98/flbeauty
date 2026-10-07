@@ -4,6 +4,9 @@
 #   /            → negozio React
 #   /api, /admin → backend Laravel (sta in backend/, chiuso al web da queste regole)
 
+# La home è index.html (il negozio), non il segnaposto index.php di Aruba.
+DirectoryIndex index.html
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
