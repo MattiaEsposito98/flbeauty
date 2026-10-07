@@ -16,6 +16,9 @@ class CreateCommunication extends CreateRecord
 {
     protected static string $resource = CommunicationResource::class;
 
+    /** Fino a questo numero di destinatari l'invio parte subito, senza aspettare il cron. */
+    private const IMMEDIATE_LIMIT = 30;
+
     protected Width|string|null $maxContentWidth = Width::FourExtraLarge;
 
     public function getTitle(): string
@@ -40,14 +43,22 @@ class CreateCommunication extends CreateRecord
             'sent_at' => now(),
         ]);
 
+        // Pochi destinatari: partono subito dopo il salvataggio. Tanti: restano nella coda e le
+        // spedisce il cron a gruppi (centinaia di invii in una volta sola rischiano di bloccarsi).
+        $immediate = $recipients->count() <= self::IMMEDIATE_LIMIT;
+
         foreach ($recipients as $recipient) {
             $unsubscribeUrls = $record->isMarketing()
                 ? MarketingConsentController::unsubscribeUrls($recipient['user'])
                 : null;
 
-            Mail::to($recipient['email'])->send(
-                new BroadcastCommunication($record->subject, $record->body, $unsubscribeUrls)
-            );
+            $mail = new BroadcastCommunication($record->subject, $record->body, $unsubscribeUrls);
+
+            if ($immediate) {
+                $mail->onConnection('deferred');
+            }
+
+            Mail::to($recipient['email'])->send($mail);
         }
 
         return $record;

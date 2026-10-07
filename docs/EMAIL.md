@@ -133,3 +133,13 @@ solo a spedire. Le caselle "vere" restano su Aruba o Google Workspace/Zoho, se s
   recente; la scelta manuale dei clienti c'è già per quelle di servizio)
 - Tracking apertura/click sulle comunicazioni broadcast
 - Template email multipli riutilizzabili invece del singolo editor libero
+
+## Quando partono le email in produzione (2026-10-08)
+- **Email singole** (verifica account, conferma ordine, cambio stato, reset password): partono
+  **subito dopo la risposta al cliente** (`QUEUE_CONNECTION=deferred` nel `.env` di produzione).
+  Non servono il cron né un worker. Se l'invio fallisce non viene riprovato: l'errore resta in
+  `storage/logs` (volumi piccoli, accettato)
+- **Comunicazioni dall'admin**: fino a **30 destinatari** partono subito; oltre, passano dalla coda
+  `database` e le spedisce il cron di Aruba (`backend/cron.php`, ogni 10 minuti) a gruppi
+  (`CreateCommunication::IMMEDIATE_LIMIT`)
+- In sviluppo resta `QUEUE_CONNECTION=database` con `queue:work` e Mailpit, come prima
