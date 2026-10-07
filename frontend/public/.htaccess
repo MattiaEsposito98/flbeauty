@@ -1,5 +1,8 @@
-# .htaccess del negozio (flbeauty.it) — viene copiato in dist/ dalla build.
-# Va caricato insieme agli altri file di dist/ nella cartella pubblica del dominio.
+# .htaccess del sito (flbeauty.it) — viene copiato in dist/ dalla build.
+# Va caricato insieme agli altri file di dist/ nella cartella pubblica del dominio
+# (www.flbeauty.it). Il sito è tutto su un solo indirizzo:
+#   /            → negozio React
+#   /api, /admin → backend Laravel (caricato fuori dalla cartella pubblica)
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
@@ -12,7 +15,16 @@
   # Vecchio indirizzo del catalogo
   RewriteRule ^catalogo/?$ / [L,R=301]
 
-  # Il sito è una SPA: ogni indirizzo che non è un file vero (es. /prodotti/rossetto
+  # Il backend ha bisogno dell'intestazione Authorization (accesso dei clienti):
+  # sull'hosting condiviso va passata esplicitamente.
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+  # Backend Laravel: API, pannello admin e componenti Livewire del pannello.
+  # Prima del resto, altrimenti finirebbero nel negozio.
+  RewriteRule ^(api|admin|livewire)(/|$) /_gateway/index.php [L]
+
+  # Il negozio è una SPA: ogni indirizzo che non è un file vero (es. /prodotti/rossetto
   # o /categoria/rossetti) deve aprire index.html, altrimenti dà 404 se aperto direttamente.
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d

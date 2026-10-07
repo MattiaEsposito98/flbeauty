@@ -1,4 +1,5 @@
-# robots.txt del backend (admin.flbeauty.it): pannello e API non vanno su Google.
+# robots.txt del backend in sviluppo e quando il backend è raggiunto direttamente: pannello e API non vanno su Google.
+# In produzione vale il robots.txt del sito (frontend/public/robots.txt), che dice lo stesso.
 # /storage resta aperto: sono le foto dei prodotti, che Google deve poter leggere
 # per mostrarle nelle ricerche per immagini.
 User-agent: *

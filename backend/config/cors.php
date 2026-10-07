@@ -5,8 +5,8 @@
 | CORS — chi può chiamare le API dal browser
 |--------------------------------------------------------------------------
 |
-| Il negozio (flbeauty.it) e le API (admin.flbeauty.it) stanno su domini diversi,
-| quindi il browser chiede al backend il permesso. In sviluppo si accetta tutto;
+| In produzione negozio e API stanno sullo stesso indirizzo (flbeauty.it), quindi non serve;
+| in sviluppo negozio (porta 5173) e API (porta 8000) sono separati e si accetta tutto;
 | in produzione imposta CORS_ALLOWED_ORIGINS=https://flbeauty.it nel .env, così
 | nessun altro sito può usare le API dal browser dei tuoi clienti.
 | Più origini: separate da virgola.

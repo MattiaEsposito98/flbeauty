@@ -2,7 +2,7 @@
 
 Ultimo aggiornamento: 2026-10-07
 
-Dominio definitivo: **https://flbeauty.it** (negozio React) e `admin.flbeauty.it`
+Dominio definitivo: **https://flbeauty.it** (negozio React; pannello e API sullo stesso dominio, `/admin` e `/api`)
 (backend, pannello e API). Il negozio è una SPA React: l'HTML che arriva è quasi
 vuoto e i contenuti compaiono dopo il caricamento. Google esegue il JavaScript, ma
 con più ritardi di un sito classico. Per questo ogni pagina dichiara da sola titolo,
@@ -57,21 +57,21 @@ titolo `h1` è il nome della categoria; sulla home resta "Il tuo momento di bell
 - **Aggiornamento automatico**: il comando è schedulato **ogni notte alle 04:00**
   (`routes/console.php`), quindi un prodotto nuovo o disattivato compare/sparisce in
   sitemap entro un giorno. Richiede il cron di Laravel, vedi sotto
-- **Percorso del file**: Google accetta la sitemap solo se sta su `flbeauty.it`, non
-  su `admin.flbeauty.it`. In produzione imposta `SITEMAP_PATH` nel `.env` del backend
-  alla cartella pubblica del negozio (es. `/percorso/flbeauty.it/sitemap.xml`)
+- **Percorso del file**: la sitemap deve stare nella cartella pubblica del sito, dove sta il
+  negozio (`www.flbeauty.it`): in produzione imposta `SITEMAP_PATH` nel `.env` del backend
+  a `<spazio web>/www.flbeauty.it/sitemap.xml`
 - Il caricamento del sito React (`dist/`) non deve cancellare quel file: copia
   `dist/` **senza svuotare** la cartella, oppure rigenera subito la sitemap dopo ogni
   deploy
 
 ### robots.txt
-- **Negozio** (`frontend/public/robots.txt`): blocca solo `/ordini/`,
+- **Un solo file** (`frontend/public/robots.txt`), perché negozio, pannello e API sono sullo
+  stesso dominio. Blocca `/admin`, `/api`, `/livewire` e `/_gateway`, più `/ordini/`,
   `/reimposta-password`, `/disiscrizione` (indirizzi con token personali) e le ricerche
-  interne `?q=`; indica la sitemap. Le altre pagine private **non** sono bloccate di
-  proposito: Google deve poter aprire la pagina per leggere il suo `noindex`
-- **Backend** (`backend/public/robots.txt`): blocca `/admin`, `/api`, `/livewire`;
-  lascia aperto `/storage` perché sono le foto dei prodotti. La pagina `/` del backend
-  risponde con `X-Robots-Tag: noindex`
+  interne `?q=`; indica la sitemap. Lascia aperto `/storage` (foto dei prodotti). Le altre
+  pagine private **non** sono bloccate di proposito: Google deve poter aprire la pagina
+  per leggere il suo `noindex`
+- `backend/public/robots.txt` vale solo in sviluppo o se il backend è raggiunto da solo
 
 ### Foto prodotto più leggere
 Le foto caricate dall'admin (galleria e "Scatta una foto") vengono ridotte a massimo

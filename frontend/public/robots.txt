@@ -1,8 +1,14 @@
 # robots.txt di flbeauty.it
-# Le pagine private (account, carrello, checkout, accessi) NON sono bloccate qui
+# Pannello e API sono sullo stesso dominio: non vanno su Google. /storage resta aperto
+# perché sono le foto dei prodotti.
+# Le pagine private del negozio (account, carrello, checkout, accessi) NON sono bloccate
 # di proposito: hanno il tag noindex, che Google può leggere solo se può aprirle.
-# Qui si bloccano solo le pagine con token o codici personali e le ricerche interne.
+# Si bloccano solo le pagine con token o codici personali e le ricerche interne.
 User-agent: *
+Disallow: /admin
+Disallow: /api
+Disallow: /livewire
+Disallow: /_gateway
 Disallow: /ordini/
 Disallow: /reimposta-password
 Disallow: /disiscrizione

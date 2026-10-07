@@ -4,18 +4,18 @@ Ultimo aggiornamento: 2026-10-07. Spunta le voci man mano che le fai. La procedu
 tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 
 ## 1. Aruba (appena l'hosting è "Attivo")
-- [ ] Controllare nell'area clienti che lo stato sia "Attivo" e leggere l'email di Aruba
-- [ ] Scegliere PHP 8.3 (minimo 8.2) per il dominio
-- [ ] Creare il database MySQL e annotare host, nome, utente, password
-- [ ] Attivare l'accesso SSH
-- [ ] Creare il sottodominio `admin.flbeauty.it` con document root su `backend/public`
-- [ ] Attivare SSL (Let's Encrypt) su `flbeauty.it` e `admin.flbeauty.it`
+- [x] Hosting attivo (dominio attivo il 2026-10-07)
+- [x] PHP 8.3 impostato (Strumenti e impostazioni → Gestione PHP)
+- [x] Database MySQL 8.0 già creato da Aruba (`Sql1964275_1`, vuoto): annotare host, utente e password (non nel repository)
+- [ ] Attivare l'accesso SSH: Strumenti e impostazioni → Chiavi SSH (serve generare una chiave sul PC e importarla)
+- [x] ~~Sottodominio `admin.flbeauty.it`~~ — NON serve: si usa `flbeauty.it/admin` (su Aruba il terzo livello costa 15 €/anno, vedi DEPLOY.md)
+- [ ] Attivare il certificato SSL per `flbeauty.it` (Sicurezza → Certificato SSL e Redirect HTTPS)
 - [ ] Verificare nel pannello che il **rinnovo (79,99 € + IVA)** includa ancora le 5
       caselle PEC, e segnare la scadenza (7/10/2027, rinnovo automatico attivo)
 - [ ] Chiedere all'assistenza quanti domini aggiuntivi supporta il piano (se si vuole un
       secondo progetto, vedi HOSTING.md)
 - [ ] Creare la casella `info@flbeauty.it` (e, se serve, la PEC)
-- [ ] Attivare i backup automatici e scaricare una copia del database prima del lancio
+- [x] Backup automatici già presenti (cartelle `..._Backup_Giornaliero` e `_Settimanale`); [ ] scaricare comunque una copia del database prima del lancio
 
 ## 2. Caricamento del sito
 - [ ] Backend: clone, `composer install`, `.env` di produzione, `migrate`, `storage:link`,

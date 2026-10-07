@@ -26,7 +26,7 @@ Deciso con l'utente dopo confronto tra hosting condiviso e VPS (vedi ragionament
 
 ## Architettura di dominio prevista
 - `flbeauty.it` → frontend (negozio, React)
-- `admin.flbeauty.it` (sottodominio) → backend Laravel + pannello Filament + API
+- `flbeauty.it/admin` e `flbeauty.it/api` → backend Laravel (pannello Filament + API), nello stesso indirizzo del negozio. Il sottodominio `admin.` non si usa: su Aruba costa 15 €/anno a parte (vedi DEPLOY.md)
 - I cron (scheduler Laravel + worker delle code email) girano sullo stesso hosting,
   configurati dal pannello Aruba
 
