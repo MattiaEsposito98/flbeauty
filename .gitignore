@@ -1,0 +1,2 @@
+# Configurazione SFTP locale (host e utente del server): non va nel repository
+.vscode/sftp.json
