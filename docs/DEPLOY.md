@@ -69,12 +69,16 @@ Menu **Sicurezza → Certificato SSL** per `flbeauty.it` (poi **Redirect HTTPS**
 previsto). Il `.htaccess` del sito rimanda comunque tutto su `https://flbeauty.it`.
 
 ## 2. Caricare il backend (via SSH, in `home`)
+> **Ordine importante:** finché il `.htaccess` di dist/ (passo 3) non è caricato, `repo/` e
+> `backend/` sarebbero apribili dal web. Quindi: clone e `composer install` ora, poi il
+> passo 3 (carica dist con `.htaccess`) e il collaudo del blocco, e **solo dopo** crea il
+> file `.env` (la riga `cp .env.production.example .env` e quelle seguenti).
 ```bash
 git clone https://github.com/MattiaEsposito98/flbeauty.git repo
 ln -s repo/backend backend
 cd backend
 composer install --no-dev --optimize-autoloader
-cp .env.production.example .env      # poi compilalo (vedi sotto)
+cp .env.production.example .env      # SOLO dopo aver caricato il .htaccess (passo 3) e verificato il blocco
 php artisan key:generate
 php artisan migrate --force
 php artisan filament:assets
