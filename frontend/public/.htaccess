@@ -2,15 +2,17 @@
 # Va caricato insieme agli altri file di dist/ nella cartella pubblica del dominio
 # (www.flbeauty.it). Il sito è tutto su un solo indirizzo:
 #   /            → negozio React
-#   /api, /admin → backend Laravel (caricato fuori dalla cartella pubblica)
+#   /api, /admin → backend Laravel (sta in backend/, chiuso al web da queste regole)
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Un solo indirizzo per Google: sempre https://flbeauty.it (niente http, niente www)
+  # Un solo indirizzo per Google: sempre https://www.flbeauty.it. Aruba rimanda già da solo
+  # flbeauty.it a www.flbeauty.it: la versione senza www NON va forzata qui, altrimenti
+  # i due redirect si rimandano a vicenda all'infinito.
   RewriteCond %{HTTPS} !=on [OR]
-  RewriteCond %{HTTP_HOST} ^www\. [NC]
-  RewriteRule ^ https://flbeauty.it%{REQUEST_URI} [L,R=301]
+  RewriteCond %{HTTP_HOST} !^www\. [NC]
+  RewriteRule ^ https://www.flbeauty.it%{REQUEST_URI} [L,R=301]
 
   # Vecchio indirizzo del catalogo
   RewriteRule ^catalogo/?$ / [L,R=301]

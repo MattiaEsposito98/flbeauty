@@ -27,7 +27,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
       (spedisce le email in coda e aggiorna la sitemap di notte; se Aruba non ammette
       un minuto, usare l'intervallo minimo, es. 5 minuti)
 - [ ] `SITEMAP_PATH` nel `.env` e prima `php artisan sitemap:generate`
-- [ ] `CORS_ALLOWED_ORIGINS=https://flbeauty.it` nel `.env`
+- [ ] `CORS_ALLOWED_ORIGINS=https://www.flbeauty.it` nel `.env`
 - [ ] Frontend: `.env.production`, `npm run build`, caricare `dist/` (con `.htaccess`)
 - [ ] Ricaricare le foto dei prodotti dall'admin (quelle locali non si trasferiscono;
       il "Lenzuolo bianco" è senza immagine), inserire i prodotti veri, controllare
@@ -43,7 +43,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 
 ## 4. Google
 - [ ] Search Console: aggiungere `flbeauty.it`, verificare con record DNS TXT, inviare
-      `https://flbeauty.it/sitemap.xml`, chiedere l'indicizzazione della home
+      `https://www.flbeauty.it/sitemap.xml`, chiedere l'indicizzazione della home
 - [ ] Testare un prodotto con https://search.google.com/test/rich-results
 - [ ] PageSpeed Insights sulla home e su un prodotto
 - [ ] Google Business Profile (se si vende anche in zona)

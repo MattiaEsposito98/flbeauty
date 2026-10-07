@@ -14,4 +14,4 @@ Disallow: /reimposta-password
 Disallow: /disiscrizione
 Disallow: /*?q=
 
-Sitemap: https://flbeauty.it/sitemap.xml
+Sitemap: https://www.flbeauty.it/sitemap.xml

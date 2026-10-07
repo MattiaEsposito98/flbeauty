@@ -45,4 +45,4 @@ link "$BACKEND/public/fonts"  fonts
 link "$BACKEND/public/images" images
 link "$BACKEND/storage/app/public" storage
 
-echo "Fatto. Controlla: https://flbeauty.it/images/logo-mark.png deve aprire il logo."
+echo "Fatto. Controlla: https://www.flbeauty.it/images/logo-mark.png deve aprire il logo."

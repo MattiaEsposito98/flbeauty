@@ -3,7 +3,7 @@
 Ultimo aggiornamento: 2026-10-07
 
 Piano: **Hosting Linux Advanced** (vedi [HOSTING.md](HOSTING.md)). Tutto il sito sta su
-**un solo indirizzo**, `https://flbeauty.it`:
+**un solo indirizzo**, `https://www.flbeauty.it`:
 - `flbeauty.it/` → negozio React
 - `flbeauty.it/admin` → pannello di gestione (Filament) per l'amministratore
 - `flbeauty.it/api` → API usate dal negozio
@@ -51,7 +51,7 @@ home/                            ← cartella pubblica di flbeauty.it
 **La regola da non togliere mai:** in `.htaccess` la riga
 `RewriteRule ^(backend|repo|_repo|vendor|storage/logs)(/|$) - [F,L]` è ciò che impedisce
 di scaricare `.env`. Dopo ogni messa online controlla che
-`https://flbeauty.it/backend/.env` dia **403 o 404** (vedi collaudo).
+`https://www.flbeauty.it/backend/.env` dia **403 o 404** (vedi collaudo).
 
 ## 0. Collegarsi via SSH
 Una volta sola (già fatto): chiave creata sul PC (`ssh-keygen -t rsa -b 4096 -f
@@ -66,7 +66,7 @@ clonare con `git@github.com:` (Aruba non permette git via SSH): si usa `https://
 
 ## 1. SSL e HTTPS
 Menu **Sicurezza → Certificato SSL** per `flbeauty.it` (poi **Redirect HTTPS** se
-previsto). Il `.htaccess` del sito rimanda comunque tutto su `https://flbeauty.it`.
+previsto). Il `.htaccess` del sito rimanda comunque tutto su `https://www.flbeauty.it`.
 
 ## 2. Caricare il backend (via SSH, in `home`)
 > **Ordine importante:** finché il `.htaccess` di dist/ (passo 3) non è caricato, `repo/` e
@@ -89,7 +89,7 @@ file con il File Manager di Aruba.)
 
 Compila il `.env` (modello: `backend/.env.production.example`, si modifica con
 `nano .env`): `APP_ENV=production`, `APP_DEBUG=false`, database di Aruba, `APP_URL` e
-`FRONTEND_URL` = `https://flbeauty.it`, `SITEMAP_PATH=/web/htdocs/www.flbeauty.it/home/sitemap.xml`,
+`FRONTEND_URL` = `https://www.flbeauty.it`, `SITEMAP_PATH=/web/htdocs/www.flbeauty.it/home/sitemap.xml`,
 SMTP.
 
 Poi:
@@ -109,7 +109,7 @@ Per aggiornare in futuro: `cd repo && git pull`, poi in `backend`:
 Sul tuo PC:
 ```bash
 cd frontend
-cp .env.production.example .env.production   # VITE_API_URL=https://flbeauty.it/api
+cp .env.production.example .env.production   # VITE_API_URL=https://www.flbeauty.it/api
 npm install
 npm run build
 ```
@@ -126,7 +126,7 @@ bash repo/tools/aruba-link-public.sh .
 ```
 Crea i collegamenti `css`, `js`, `fonts`, `images`, `storage` (se l'hosting non permette
 i collegamenti copia i file: in quel caso va rilanciato dopo ogni aggiornamento del
-backend). Controllo: `https://flbeauty.it/images/logo-mark.png` deve mostrare il logo.
+backend). Controllo: `https://www.flbeauty.it/images/logo-mark.png` deve mostrare il logo.
 
 ## 5. Cron (pannello Aruba → Hosting Linux → Processi Cron)
 Serve **un solo** cron, ogni minuto:
@@ -149,18 +149,18 @@ Vedi [EMAIL.md](EMAIL.md). Si parte con l'SMTP di Aruba (casella `info@flbeauty.
 Brevo si aggiunge più avanti per le comunicazioni di massa.
 
 ## 7. Controlli finali (checklist di collaudo)
-- [ ] `https://flbeauty.it` si apre, `http://` e `www.` rimandano a `https://flbeauty.it`
-- [ ] Aprendo direttamente `https://flbeauty.it/prodotti/<slug>` il prodotto si vede
-- [ ] `https://flbeauty.it/admin` mostra il login del pannello, con stile e logo
-- [ ] `https://flbeauty.it/api/categories` risponde con i dati
-- [ ] **Sicurezza:** `https://flbeauty.it/backend/.env`, `/repo/.git/config`,
+- [ ] `https://www.flbeauty.it` si apre; `http://` e `flbeauty.it` (senza www) rimandano a `https://www.flbeauty.it` senza giri infiniti di redirect
+- [ ] Aprendo direttamente `https://www.flbeauty.it/prodotti/<slug>` il prodotto si vede
+- [ ] `https://www.flbeauty.it/admin` mostra il login del pannello, con stile e logo
+- [ ] `https://www.flbeauty.it/api/categories` risponde con i dati
+- [ ] **Sicurezza:** `https://www.flbeauty.it/backend/.env`, `/repo/.git/config`,
       `/backend/composer.json` e `/.env` devono dare **403 o 404**, mai il contenuto.
       Se uno si apre, togli subito `.env` e avvisami
 - [ ] Le foto caricate dall'admin si vedono nel negozio (`/storage/...`)
 - [ ] Registrazione di prova → email di verifica arriva → login funziona
 - [ ] Ordine di prova → email di conferma al cliente e all'admin → tracking
 - [ ] Comunicazione di prova dall'admin a un solo cliente
-- [ ] `https://flbeauty.it/sitemap.xml` e `/robots.txt` rispondono
+- [ ] `https://www.flbeauty.it/sitemap.xml` e `/robots.txt` rispondono
 - [ ] Cookie banner: spento finché `VITE_GA_MEASUREMENT_ID` è vuoto
 - [ ] Cancella l'utente e gli ordini di prova dal database
 - [ ] Scarica una copia del database prima di aprire al pubblico (i backup automatici di
@@ -174,3 +174,10 @@ alcune cose dipendono da Aruba e si vedono solo online:
 - che l'intestazione `Authorization` arrivi al backend (regola già nel `.htaccess`;
   si vede se il login dei clienti funziona)
 - che la regola di blocco del backend funzioni (collaudo di sicurezza qui sopra)
+
+## Indirizzo ufficiale: `https://www.flbeauty.it` (con www)
+Aruba rimanda da solo `flbeauty.it` a `www.flbeauty.it` (a livello del suo server, prima
+dei nostri file). Il `.htaccess` del sito forzava l'opposto e i due redirect si sarebbero
+rimandati a vicenda all'infinito (scoperto il 2026-10-07 prima della messa online).
+Quindi l'indirizzo ufficiale è **con www**: sitemap, canonical, dati strutturati, email e
+`.env` usano tutti `https://www.flbeauty.it`. Non forzare mai la versione senza www.

@@ -1,6 +1,6 @@
 // Dati del sito usati per SEO (titoli, canonical, anteprime sui social).
 // Il dominio definitivo è flbeauty.it; in sviluppo si può cambiare con VITE_SITE_URL.
-export const SITE_URL = (import.meta.env.VITE_SITE_URL || 'https://flbeauty.it').replace(/\/$/, '')
+export const SITE_URL = (import.meta.env.VITE_SITE_URL || 'https://www.flbeauty.it').replace(/\/$/, '')
 
 export const SITE_NAME = 'F&L Beauty'
 

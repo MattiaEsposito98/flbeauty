@@ -2,7 +2,7 @@
 
 Ultimo aggiornamento: 2026-10-07
 
-Dominio definitivo: **https://flbeauty.it** (negozio React; pannello e API sullo stesso dominio, `/admin` e `/api`)
+Dominio definitivo: **https://www.flbeauty.it** (negozio React; pannello e API sullo stesso dominio, `/admin` e `/api`)
 (backend, pannello e API). Il negozio è una SPA React: l'HTML che arriva è quasi
 vuoto e i contenuti compaiono dopo il caricamento. Google esegue il JavaScript, ma
 con più ritardi di un sito classico. Per questo ogni pagina dichiara da sola titolo,
@@ -14,7 +14,7 @@ descrizione, indirizzo canonico e dati strutturati (vedi sotto).
 Componente che scrive nell'`<head>`: `<title>`, `meta description`, `robots`, link
 `canonical`, Open Graph (`og:*`) e Twitter card. Alla chiusura della pagina i valori
 tornano a quelli di default (`index.html`). Valori di base in `src/config/site.js`
-(dominio da `VITE_SITE_URL`, di default `https://flbeauty.it`).
+(dominio da `VITE_SITE_URL`, di default `https://www.flbeauty.it`).
 
 | Pagina | Titolo | Indicizzata |
 |---|---|---|
@@ -89,12 +89,12 @@ Lancia la sitemap ogni notte. Senza questo cron la sitemap non si aggiorna da so
 ## Dopo la messa online
 1. **Google Search Console** (https://search.google.com/search-console): aggiungi la
    proprietà `flbeauty.it`, verifica il dominio (record DNS TXT da Aruba) e invia
-   `https://flbeauty.it/sitemap.xml`. Poi "Controllo URL" sulla home per chiedere
+   `https://www.flbeauty.it/sitemap.xml`. Poi "Controllo URL" sulla home per chiedere
    l'indicizzazione
 2. Controlla la velocità con PageSpeed Insights (https://pagespeed.web.dev/)
 3. Se vendi anche localmente, crea la scheda **Google Business Profile**
-4. Il canonical e il redirect: fai in modo che `http://` e `www.` rimandino a
-   `https://flbeauty.it` (301) dal pannello Aruba/`.htaccess`, così Google vede un solo
+4. Il canonical e il redirect: `http://` e `flbeauty.it` (senza www) devono rimandare a
+   `https://www.flbeauty.it` (301) dal pannello Aruba/`.htaccess`, così Google vede un solo
    indirizzo
 5. Le anteprime sui social: oggi la foto di anteprima è il logo (`logo-mark-360.webp`,
    360 px). Per un risultato migliore su WhatsApp/Instagram prepara un'immagine
