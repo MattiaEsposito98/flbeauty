@@ -152,3 +152,17 @@ nella loro guida. Il mittente è **`info@flbeauty.it`** (non `no-reply@`): l'SMT
 norma accetta solo il mittente della casella autenticata, e così i clienti rispondono a `info@`.
 La password si scrive nel `.env` del server con `read -s` (non nella chat né in git); finché
 `MAIL_MAILER=log` le email non partono ma finiscono in `storage/logs`.
+
+### Lezioni dalla messa online (2026-10-08)
+- **Dopo ogni modifica a mano del `.env` sul server** (File Manager, `nano`) va lanciato
+  `php artisan config:cache`: Laravel tiene una copia veloce della configurazione e continua a usare
+  i valori vecchi (così per qualche minuto il sito mandava con la password precedente). Il comando
+  con `read -s` di DEPLOY.md lo fa già da solo
+- **Aruba blocca l'invio da una casella nuova** (errore `525 … Invio disabilitato per la casella,
+  modificare la password`) finché non se ne cambia la password dal pannello; dopo il cambio
+  l'attivazione può impiegare qualche minuto (`535` autenticazione fallita nel frattempo)
+- **Dalla riga di comando SSH le porte SMTP risultano chiuse**, ma dal sito (web) l'invio funziona:
+  per provare la posta si usa il sito vero (es. una registrazione di prova), non `artisan tinker`
+- Gli errori di invio compaiono nel registro con qualche secondo di ritardo: le email singole
+  partono dopo la risposta al cliente (`deferred`)
+- Prova superata: la mail di verifica arriva a Hotmail da `info@flbeauty.it`

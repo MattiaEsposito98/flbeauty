@@ -89,11 +89,11 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
       comuni (7894) e tariffe di spedizione (21) caricati, nessun dato di prova
 - [x] Blocco del codice dal web verificato (`/backend/.env`, `/repo/.git` → 403)
 - [x] Indirizzo ufficiale **con www** (Aruba rimanda già l'apex a www)
-- [ ] Creare l'utente admin: `cd backend && php artisan admin:create` (via SSH)
-- [ ] Caricare il negozio React (`npm run build`, poi `dist/` via FTP/VS Code) — il sito
+- [x] Utente admin creato (`info@flbeauty.it`)
+- [x] Negozio React caricato (www.flbeauty.it)
       risponde 500 sulle pagine finché manca `index.html`
 - [ ] **Cambiare la password del database** (è comparsa in chat) e rifare `read -s` nel `.env`
-- [ ] Cron `schedule:run` ogni minuto (Hosting Linux → Processi Cron)
-- [ ] Email: ora `MAIL_MAILER=log` (non invia nulla). Configurare SMTP con `info@flbeauty.it`
+- [x] Cron di Aruba impostato (PHP, `backend/cron.php`, ogni 10 minuti): verificare la colonna "Ultima esecuzione"
+- [x] Email: SMTP di Aruba con `info@flbeauty.it` attivo e provato (verifica account arrivata a Hotmail, 2026-10-08)
 - [ ] Eliminare l'utente SSH `claude` e la sua chiave in Aruba quando abbiamo finito
 - [ ] Cambiare la passphrase della chiave SSH personale (`ssh-keygen -p`), è comparsa in chat
