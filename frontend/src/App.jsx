@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { LuSearchX } from 'react-icons/lu'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -13,20 +13,24 @@ import EmptyState from './components/EmptyState'
 import Seo from './components/Seo'
 import Spinner from './components/Spinner'
 import CookieBanner from './components/CookieBanner'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import Account from './pages/Account'
 import Catalog from './pages/Catalog'
 import ProductDetail from './pages/ProductDetail'
-import Cart from './pages/Cart'
-import Checkout from './pages/Checkout'
-import OrderDetail from './pages/OrderDetail'
-import Wishlist from './pages/Wishlist'
-import Privacy from './pages/Privacy'
-import CookiePolicy from './pages/CookiePolicy'
-import Unsubscribe from './pages/Unsubscribe'
+
+// Catalogo e prodotto (le pagine che Google e i clienti aprono per prime) sono nel
+// pacchetto principale; le altre si scaricano solo quando servono, così la prima
+// visita è più leggera e veloce.
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const Account = lazy(() => import('./pages/Account'))
+const Cart = lazy(() => import('./pages/Cart'))
+const Checkout = lazy(() => import('./pages/Checkout'))
+const OrderDetail = lazy(() => import('./pages/OrderDetail'))
+const Wishlist = lazy(() => import('./pages/Wishlist'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const CookiePolicy = lazy(() => import('./pages/CookiePolicy'))
+const Unsubscribe = lazy(() => import('./pages/Unsubscribe'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -108,6 +112,7 @@ function AppRoutes() {
       <Navbar />
       <CartDrawer />
       <main>
+        <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/" element={<Catalog />} />
           <Route path="/categoria/:slug" element={<Catalog />} />
@@ -155,6 +160,7 @@ function AppRoutes() {
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
       <Footer />
       <WhatsAppButton />

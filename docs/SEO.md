@@ -54,9 +54,9 @@ titolo `h1` è il nome della categoria; sulla home resta "Il tuo momento di bell
   data di modifica) e privacy/cookie, con gli indirizzi di `flbeauty.it`
 - Codice in `backend/app/Support/Sitemap.php`; comando `php artisan sitemap:generate`
   (scrive il file) e rotta `/sitemap.xml` del backend (per controllarla da browser)
-- **Aggiornamento automatico**: il comando è schedulato **ogni ora**
+- **Aggiornamento automatico**: il comando è schedulato **ogni notte alle 04:00**
   (`routes/console.php`), quindi un prodotto nuovo o disattivato compare/sparisce in
-  sitemap entro un'ora. Richiede il cron di Laravel, vedi sotto
+  sitemap entro un giorno. Richiede il cron di Laravel, vedi sotto
 - **Percorso del file**: Google accetta la sitemap solo se sta su `flbeauty.it`, non
   su `admin.flbeauty.it`. In produzione imposta `SITEMAP_PATH` nel `.env` del backend
   alla cartella pubblica del negozio (es. `/percorso/flbeauty.it/sitemap.xml`)
@@ -79,12 +79,11 @@ Le foto caricate dall'admin (galleria e "Scatta una foto") vengono ridotte a mas
 diventa di poche centinaia di KB: pagine più veloci (conta per Google) e meno traffico.
 
 ## Cron da attivare in produzione (Aruba)
-Oltre al cron della coda email (`queue:work --stop-when-empty`, vedi
-[EMAIL.md](EMAIL.md)), ogni minuto:
+Un solo cron, ogni minuto (lo stesso che spedisce le email, vedi [DEPLOY.md](DEPLOY.md)):
 ```bash
 php /percorso/backend/artisan schedule:run
 ```
-Lancia la sitemap ogni ora. Senza questo cron la sitemap non si aggiorna da sola
+Lancia la sitemap ogni notte. Senza questo cron la sitemap non si aggiorna da sola
 (si può sempre lanciare a mano `php artisan sitemap:generate`).
 
 ## Dopo la messa online

@@ -27,3 +27,4 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /public/sitemap.xml
+!.env.production.example

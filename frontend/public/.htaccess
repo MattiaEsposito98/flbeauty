@@ -1,0 +1,44 @@
+# .htaccess del negozio (flbeauty.it) — viene copiato in dist/ dalla build.
+# Va caricato insieme agli altri file di dist/ nella cartella pubblica del dominio.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Un solo indirizzo per Google: sempre https://flbeauty.it (niente http, niente www)
+  RewriteCond %{HTTPS} !=on [OR]
+  RewriteCond %{HTTP_HOST} ^www\. [NC]
+  RewriteRule ^ https://flbeauty.it%{REQUEST_URI} [L,R=301]
+
+  # Vecchio indirizzo del catalogo
+  RewriteRule ^catalogo/?$ / [L,R=301]
+
+  # Il sito è una SPA: ogni indirizzo che non è un file vero (es. /prodotti/rossetto
+  # o /categoria/rossetti) deve aprire index.html, altrimenti dà 404 se aperto direttamente.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ /index.html [L]
+</IfModule>
+
+# Sicurezza di base
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# Velocità: i file in /assets hanno il nome con codice (cambia a ogni build), quindi
+# si possono tenere in cache un anno; index.html no, così le novità arrivano subito.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>

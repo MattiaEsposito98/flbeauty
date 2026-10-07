@@ -1,6 +1,6 @@
 # Hosting — decisioni prese
 
-Ultimo aggiornamento: 2026-09-26
+Ultimo aggiornamento: 2026-10-07 (procedura di messa online: [DEPLOY.md](DEPLOY.md))
 
 ## Piano scelto: Aruba Hosting Linux Advanced
 
