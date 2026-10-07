@@ -143,3 +143,12 @@ solo a spedire. Le caselle "vere" restano su Aruba o Google Workspace/Zoho, se s
   `database` e le spedisce il cron di Aruba (`backend/cron.php`, ogni 10 minuti) a gruppi
   (`CreateCommunication::IMMEDIATE_LIMIT`)
 - In sviluppo resta `QUEUE_CONNECTION=database` con `queue:work` e Mailpit, come prima
+
+## SMTP di Aruba in produzione (2026-10-08)
+Si parte con la casella `info@flbeauty.it` (Brevo resta per più avanti, per le comunicazioni di
+massa): `MAIL_HOST=smtps.aruba.it`, `MAIL_PORT=465`, `MAIL_SCHEME=smtps`,
+`MAIL_USERNAME=info@flbeauty.it`, password della casella. Valori standard Aruba, da verificare
+nella loro guida. Il mittente è **`info@flbeauty.it`** (non `no-reply@`): l'SMTP di Aruba di
+norma accetta solo il mittente della casella autenticata, e così i clienti rispondono a `info@`.
+La password si scrive nel `.env` del server con `read -s` (non nella chat né in git); finché
+`MAIL_MAILER=log` le email non partono ma finiscono in `storage/logs`.
