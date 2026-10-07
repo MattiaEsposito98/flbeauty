@@ -34,13 +34,27 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
         RateLimiter::for('register', fn (Request $request) => Limit::perHour(10)->by($request->ip()));
 
+        // Le email "verifica account" e "reimposta password" usano lo stesso layout delle
+        // altre email del sito (emails/action.blade.php), non quello inglese di Laravel.
         VerifyEmail::toMailUsing(function ($notifiable, string $url) {
+            $subject = 'Verifica il tuo indirizzo email - F&L Beauty';
+
             return (new MailMessage)
-                ->subject('Verifica il tuo indirizzo email - F&L Beauty')
-                ->greeting('Ciao'.($notifiable->name ? ' '.$notifiable->name : '').'!')
-                ->line('Grazie per esserti registrato su F&L Beauty. Conferma il tuo indirizzo email per poter accedere al tuo account.')
-                ->action('Verifica la tua email', $url)
-                ->line('Se non hai richiesto tu questa registrazione, puoi ignorare questa email.');
+                ->subject($subject)
+                ->view(['emails.action', 'emails.action-text'], [
+                    'subject' => $subject,
+                    'preheader' => 'Conferma la tua email per accedere al tuo account.',
+                    'greeting' => 'Ti diamo il benvenuto'.($notifiable->name ? ', '.$notifiable->name : '').'!',
+                    'introLines' => [
+                        'Grazie per la tua registrazione su F&L Beauty.',
+                        'Conferma il tuo indirizzo email per poter accedere al tuo account.',
+                    ],
+                    'actionText' => 'Verifica la tua email',
+                    'actionUrl' => $url,
+                    'outroLines' => [
+                        'Se non hai fatto tu questa registrazione, puoi ignorare questa email.',
+                    ],
+                ]);
         });
 
         ResetPassword::createUrlUsing(function ($notifiable, string $token) {
@@ -52,13 +66,25 @@ class AppServiceProvider extends ServiceProvider
             $url = config('app.frontend_url').'/reimposta-password?token='.$token
                 .'&email='.urlencode($notifiable->getEmailForPasswordReset());
 
+            $subject = 'Reimposta la tua password - F&L Beauty';
+
             return (new MailMessage)
-                ->subject('Reimposta la tua password - F&L Beauty')
-                ->greeting('Ciao'.($notifiable->name ? ' '.$notifiable->name : '').'!')
-                ->line('Hai richiesto di reimpostare la password del tuo account F&L Beauty.')
-                ->action('Reimposta password', $url)
-                ->line('Se non hai richiesto tu questa modifica, puoi ignorare questa email.')
-                ->line('Il link scade tra 60 minuti.');
+                ->subject($subject)
+                ->view(['emails.action', 'emails.action-text'], [
+                    'subject' => $subject,
+                    'preheader' => 'Scegli una nuova password per il tuo account.',
+                    'greeting' => 'Ciao'.($notifiable->name ? ' '.$notifiable->name : '').'!',
+                    'introLines' => [
+                        'Hai chiesto di reimpostare la password del tuo account F&L Beauty.',
+                        'Clicca il pulsante qui sotto per sceglierne una nuova.',
+                    ],
+                    'actionText' => 'Reimposta la password',
+                    'actionUrl' => $url,
+                    'outroLines' => [
+                        'Il link scade tra 60 minuti.',
+                        'Se non hai fatto tu questa richiesta, puoi ignorare questa email: la tua password non cambierà.',
+                    ],
+                ]);
         });
     }
 }

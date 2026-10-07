@@ -166,3 +166,27 @@ La password si scrive nel `.env` del server con `read -s` (non nella chat né in
 - Gli errori di invio compaiono nel registro con qualche secondo di ritardo: le email singole
   partono dopo la risposta al cliente (`deferred`)
 - Prova superata: la mail di verifica arriva a Hotmail da `info@flbeauty.it`
+
+## Grafica delle email (2026-10-08)
+Tutte le email del sito usano **lo stesso layout** (`backend/resources/views/components/mail/layout.blade.php`)
+nei colori del sito: sfondo rosa cipria, logo, titoli in serif (Georgia), pulsante pieno rose-gold,
+piè di pagina con WhatsApp, email e TikTok (`backend/config/brand.php`, da tenere uguale a
+`frontend/src/config/contacts.js`). Tutto in italiano, con formule neutre. Componenti:
+`x-mail.layout`, `x-mail.heading`, `x-mail.button`, `x-mail.status`.
+
+| Email | Vista | Quando |
+|---|---|---|
+| Verifica account | `emails/action` (da `AppServiceProvider`) | registrazione |
+| Reset password | `emails/action` (da `AppServiceProvider`) | "password dimenticata" |
+| Conferma ordine | `emails/order-confirmation` | ordine dal sito o dall'admin |
+| Cambio stato / tracking | `emails/order-status` | stato dell'ordine cambia |
+| Nuovo ordine (per l'admin) | `emails/new-order-admin` | ordine dal sito |
+| Comunicazioni | `emails/broadcast` | invio dall'admin |
+
+Note: il logo è `public/images/email-logo.png` (144 px, 32 KB: le email non mostrano bene il WebP e il
+logo grande pesa troppo). Nella conferma d'ordine in attesa di pagamento c'è il riquadro "Cosa succede
+adesso" (prodotti riservati → istruzioni su WhatsApp → ordine confermato al pagamento), lo stesso
+messaggio della finestra di conferma del checkout. Il mittente è `F&L Beauty <info@flbeauty.it>`
+(`MAIL_FROM_NAME="F&L Beauty"`). Le email di verifica/reset hanno anche la versione solo testo
+(`emails/action-text`). Per un'anteprima grafica: generare l'HTML dalle viste con dati d'esempio e
+aprirlo nel browser (o inviare una prova a Mailpit in locale).
