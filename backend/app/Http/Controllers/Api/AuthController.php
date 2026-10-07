@@ -100,6 +100,14 @@ class AuthController extends Controller
 
         $this->clearFailedLogins($request, $credentials['login']);
 
+        // Solo dopo aver controllato la password: chi non la conosce non scopre
+        // se un account esiste ed è sospeso.
+        if ($user->isBlocked()) {
+            throw ValidationException::withMessages([
+                'login' => ['Il tuo account è sospeso. Se pensi sia un errore, scrivici su WhatsApp.'],
+            ]);
+        }
+
         if (! $user->hasVerifiedEmail()) {
             throw ValidationException::withMessages([
                 'login' => ['Devi verificare la tua email prima di accedere. Controlla la tua casella di posta.'],

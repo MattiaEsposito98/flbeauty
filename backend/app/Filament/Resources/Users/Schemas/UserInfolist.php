@@ -32,6 +32,17 @@ class UserInfolist
                         TextEntry::make('created_at')->label('Registrato il')->dateTime('d/m/Y H:i'),
                     ]),
 
+                Section::make('Account bloccato')
+                    ->icon('heroicon-o-no-symbol')
+                    ->iconColor('danger')
+                    ->columnSpan(['lg' => 3])
+                    ->columns(2)
+                    ->visible(fn (User $record) => $record->isBlocked())
+                    ->schema([
+                        TextEntry::make('blocked_at')->label('Bloccato il')->dateTime('d/m/Y H:i')->color('danger'),
+                        TextEntry::make('blocked_reason')->label('Motivo')->placeholder('Nessun motivo indicato'),
+                    ]),
+
                 Section::make('Attività')
                     ->icon('heroicon-o-chart-bar')
                     ->columns(2)

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Concerns\HasBackToListAction;
+use App\Filament\Resources\Users\Actions\BlockUserActions;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -18,6 +19,8 @@ class ViewUser extends ViewRecord
     {
         return [
             $this->backToListAction(),
+            BlockUserActions::block()->record($this->record),
+            BlockUserActions::unblock()->record($this->record),
             // Per i clienti che non ricevono l'email di verifica (spam, casella
             // piena) e chiedono aiuto su WhatsApp.
             Action::make('verifyEmail')

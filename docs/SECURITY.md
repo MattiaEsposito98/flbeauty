@@ -30,6 +30,26 @@ parti): tutto gira sul nostro backend.
 - I contatori stanno nella cache di Laravel (`CACHE_STORE`); `php artisan
   cache:clear` li azzera tutti, utile se serve sbloccare un cliente subito
 
+## Blocco degli account (nuovo, 2026-10-07)
+Per chi fa ordini fasulli (il sito è aperto e non c'è pagamento online). Dall'admin,
+in **Utenti**: pulsante "Blocca account" nella scheda utente e icona nell'elenco
+(più "Sblocca account"); l'elenco ha la colonna "Stato" e il filtro Account.
+
+- **Blocca**: la finestra elenca gli **ordini aperti** (in attesa di pagamento o in
+  lavorazione) e propone "Annulla anche gli ordini aperti" (attivo di default). Gli
+  ordini vengono annullati uno per uno, quindi i pezzi tornano in magazzino da soli
+  (`Order::booted()`) e il cliente riceve la normale email di cambio stato. Motivo
+  facoltativo, visibile solo all'admin nella scheda utente
+- **Effetti**: tutti gli accessi aperti vengono chiusi (token cancellati) e il login
+  è rifiutato con "Il tuo account è sospeso…". Il messaggio compare solo dopo aver
+  controllato la password, così chi non la conosce non scopre se l'account esiste
+- **Sblocca**: riattiva l'account; gli ordini già annullati restano annullati
+- Dati: `users.blocked_at` e `users.blocked_reason`; logica in `User::block()` /
+  `unblock()`, azioni in `Filament/Resources/Users/Actions/BlockUserActions.php`
+- Limite noto: il cliente bloccato può registrarsi di nuovo con un'altra email
+  (la registrazione è aperta); il blocco ferma chi usa quell'account, non la persona
+- Test: `backend/tests/Feature/BlockUserTest.php`
+
 ## Anti-bot (honeypot + tempo minimo)
 Middleware `App\Http\Middleware\BlockBots`, alias `bot.guard`:
 - **Honeypot**: i form hanno un campo `website` spostato fuori dallo schermo

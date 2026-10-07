@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
@@ -56,6 +57,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'marketing_consent' => 'boolean',
             'marketing_consent_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'blocked_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
         ];
@@ -123,6 +125,56 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return filled($email)
             ? static::query()->whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first()
             : null;
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this->blocked_at !== null;
+    }
+
+    /**
+     * Ordini ancora aperti: in attesa di pagamento o in lavorazione. Tengono
+     * riservati i pezzi in magazzino finché non vengono evasi o annullati.
+     */
+    public function activeOrders(): HasMany
+    {
+        return $this->orders()->whereIn('status', ['nuovo', 'in_lavorazione']);
+    }
+
+    /**
+     * Sospende l'account: chiude tutti gli accessi aperti e impedisce di
+     * accedere di nuovo. Con `$cancelActiveOrders` annulla anche gli ordini
+     * aperti, così i pezzi tornano disponibili (lo stock lo gestisce Order).
+     * Restituisce il numero di ordini annullati.
+     */
+    public function block(?string $reason = null, bool $cancelActiveOrders = false): int
+    {
+        return DB::transaction(function () use ($reason, $cancelActiveOrders) {
+            $cancelled = 0;
+
+            if ($cancelActiveOrders) {
+                // Uno per uno, non con update di massa: servono gli eventi del
+                // modello per rimettere lo stock a posto.
+                foreach ($this->activeOrders()->get() as $order) {
+                    $order->update(['status' => Order::STATUS_CANCELLED]);
+                    $cancelled++;
+                }
+            }
+
+            $this->forceFill([
+                'blocked_at' => now(),
+                'blocked_reason' => filled($reason) ? trim($reason) : null,
+            ])->save();
+
+            $this->tokens()->delete();
+
+            return $cancelled;
+        });
+    }
+
+    public function unblock(): void
+    {
+        $this->forceFill(['blocked_at' => null, 'blocked_reason' => null])->save();
     }
 
     public function setMarketingConsent(bool $consent): void

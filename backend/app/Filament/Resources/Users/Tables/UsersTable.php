@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Filament\Resources\Users\Actions\BlockUserActions;
 use App\Models\Comune;
 use App\Models\User;
 use Filament\Actions\ViewAction;
@@ -21,9 +22,16 @@ class UsersTable
                 TextColumn::make('name')
                     ->label('Nome')
                     ->weight('bold')
-                    ->description(fn (User $record) => '@'.$record->username)
-                    ->searchable(['name', 'username', 'email'])
+                    ->description(fn (User $record) => '@'.$record->username)                    ->searchable(['name', 'username', 'email'])
                     ->sortable(),
+                TextColumn::make('blocked_at')
+                    ->label('Stato')
+                    ->badge()
+                    ->state(fn (User $record) => $record->isBlocked() ? 'Bloccato' : null)
+                    ->color('danger')
+                    ->icon('heroicon-o-no-symbol')
+                    ->placeholder('Attivo')
+                    ->alignCenter(),
                 TextColumn::make('email')
                     ->label('Email')
                     ->copyable()
@@ -76,6 +84,14 @@ class UsersTable
             ])
             ->defaultSort('name')
             ->filters([
+                TernaryFilter::make('blocked')
+                    ->label('Account')
+                    ->trueLabel('Solo bloccati')
+                    ->falseLabel('Solo attivi')
+                    ->queries(
+                        true: fn (Builder $q) => $q->whereNotNull('blocked_at'),
+                        false: fn (Builder $q) => $q->whereNull('blocked_at'),
+                    ),
                 TernaryFilter::make('verified')
                     ->label('Email verificata')
                     ->trueLabel('Solo verificate')
@@ -110,6 +126,8 @@ class UsersTable
             ])
             ->recordActions([
                 ViewAction::make(),
+                BlockUserActions::block()->iconButton()->tooltip('Blocca account'),
+                BlockUserActions::unblock()->iconButton()->tooltip('Sblocca account'),
             ])
             ->recordUrl(fn (User $record) => route('filament.admin.resources.users.view', $record))
             ->striped()

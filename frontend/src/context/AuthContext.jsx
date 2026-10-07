@@ -22,6 +22,17 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
+  // Sessione non più valida (vedi l'interceptor in api/client.js): si esce subito.
+  useEffect(() => {
+    function handleExpired() {
+      localStorage.removeItem('token')
+      setUser(null)
+    }
+
+    window.addEventListener('auth:expired', handleExpired)
+    return () => window.removeEventListener('auth:expired', handleExpired)
+  }, [])
+
   // `identifier` può essere l'email o lo username.
   async function login(identifier, password, botFields = {}) {
     const { data } = await client.post('/login', { login: identifier, password, ...botFields })
