@@ -11,7 +11,7 @@
     @foreach ($order->items as $item)
         <tr>
             <td style="padding:10px 12px 10px 0; border-bottom:1px solid #f5e1e0;">
-                {{ $item->product?->name ?? 'Prodotto' }}
+                {{ $item->displayName() }}
                 <span style="color:#7b6468;">&times; {{ $item->quantity }}</span><br>
                 <span style="font-size:12px; color:#7b6468;">{!! $euro($item->unit_price) !!} cad.</span>
             </td>

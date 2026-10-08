@@ -12,7 +12,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $products = Product::query()
-            ->with('category')
+            ->with(['category', 'activeVariants'])
             ->where('is_active', true)
             ->when($request->query('category'), fn ($query, $slug) => $query->whereHas(
                 'category',
@@ -45,7 +45,7 @@ class ProductController extends Controller
             ->take(100);
 
         $products = Product::query()
-            ->with('category')
+            ->with(['category', 'activeVariants'])
             ->where('is_active', true)
             ->whereIn('id', $ids)
             ->get();
@@ -57,7 +57,7 @@ class ProductController extends Controller
     {
         abort_unless($product->is_active, 404);
 
-        return new ProductResource($product->load('category'));
+        return new ProductResource($product->load(['category', 'activeVariants']));
     }
 
     /**

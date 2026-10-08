@@ -13,6 +13,8 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'product_variant_id',
+        'variant_name',
         'quantity',
         'unit_price',
     ];
@@ -32,9 +34,24 @@ class OrderItem extends Model
      */
     protected static function booted(): void
     {
+        // Il nome della variante si "fotografa" qui: resta leggibile anche se poi la variante si elimina.
+        static::creating(function (OrderItem $item) {
+            if ($item->product_variant_id && blank($item->variant_name)) {
+                $item->variant_name = ProductVariant::whereKey($item->product_variant_id)->value('name');
+            }
+        });
+
+        static::updating(function (OrderItem $item) {
+            if ($item->isDirty('product_variant_id')) {
+                $item->variant_name = $item->product_variant_id
+                    ? ProductVariant::whereKey($item->product_variant_id)->value('name')
+                    : null;
+            }
+        });
+
         static::created(function (OrderItem $item) {
             if ($item->order?->reservesStock()) {
-                Product::whereKey($item->product_id)->decrement('stock', $item->quantity);
+                self::adjustStock($item->product_id, $item->product_variant_id, -$item->quantity);
             }
 
             $item->order?->recalculateTotal();
@@ -42,13 +59,16 @@ class OrderItem extends Model
 
         static::updated(function (OrderItem $item) {
             if ($item->order?->reservesStock()) {
-                if ($item->wasChanged('product_id')) {
-                    Product::whereKey($item->getOriginal('product_id'))
-                        ->increment('stock', $item->getOriginal('quantity'));
-                    Product::whereKey($item->product_id)->decrement('stock', $item->quantity);
+                if ($item->wasChanged('product_id') || $item->wasChanged('product_variant_id')) {
+                    self::adjustStock(
+                        $item->getOriginal('product_id'),
+                        $item->getOriginal('product_variant_id'),
+                        $item->getOriginal('quantity')
+                    );
+                    self::adjustStock($item->product_id, $item->product_variant_id, -$item->quantity);
                 } elseif ($item->wasChanged('quantity')) {
                     $difference = $item->quantity - $item->getOriginal('quantity');
-                    Product::whereKey($item->product_id)->decrement('stock', $difference);
+                    self::adjustStock($item->product_id, $item->product_variant_id, -$difference);
                 }
             }
 
@@ -57,13 +77,25 @@ class OrderItem extends Model
 
         static::deleted(function (OrderItem $item) {
             if ($item->order?->reservesStock()) {
-                Product::whereKey($item->product_id)->increment('stock', $item->quantity);
+                self::adjustStock($item->product_id, $item->product_variant_id, $item->quantity);
             }
 
             $item->order?->recalculateTotal();
         });
     }
 
+    /**
+     * Sposta pezzi dal magazzino di una riga d'ordine: della variante se ce l'ha, altrimenti
+     * del prodotto. Un numero negativo scala, uno positivo restituisce.
+     */
+    public static function adjustStock(?int $productId, ?int $variantId, int $delta): void
+    {
+        if ($variantId) {
+            ProductVariant::adjustStock($variantId, $delta);
+        } elseif ($productId) {
+            Product::whereKey($productId)->increment('stock', $delta);
+        }
+    }
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
@@ -72,5 +104,18 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    /** Nome da mostrare: "Rossetto matte – Rosso". */
+    public function displayName(): string
+    {
+        $name = $this->product?->name ?? 'Prodotto';
+
+        return $this->variant_name ? $name.' – '.$this->variant_name : $name;
     }
 }

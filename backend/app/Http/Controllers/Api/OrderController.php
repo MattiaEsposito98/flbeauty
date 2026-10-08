@@ -9,6 +9,7 @@ use App\Models\Address;
 use App\Models\Discount;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\ShippingRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class OrderController extends Controller
     {
         return $request->user()
             ->orders()
-            ->with(['items.product', 'shippingRate', 'discount'])
+            ->with(['items.product', 'items.variant', 'shippingRate', 'discount'])
             ->latest()
             ->get();
     }
@@ -30,7 +31,7 @@ class OrderController extends Controller
     {
         abort_unless($order->user_id === $request->user()->id, 403);
 
-        return $order->load(['items.product', 'shippingRate', 'discount']);
+        return $order->load(['items.product', 'items.variant', 'shippingRate', 'discount']);
     }
 
     public function store(Request $request)
@@ -40,9 +41,19 @@ class OrderController extends Controller
             'shipping_rate_id' => ['required', 'integer', 'exists:shipping_rates,id'],
             'discount_code' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.product_variant_id' => ['nullable', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
         ]);
+
+        // Due righe con lo stesso prodotto e la stessa variante aggirerebbero il controllo di disponibilità.
+        $lines = collect($data['items'])->map(fn ($item) => $item['product_id'].'-'.($item['product_variant_id'] ?? 0));
+
+        if ($lines->duplicates()->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'items' => ['Lo stesso prodotto (o la stessa variante) compare più volte: unisci le righe.'],
+            ]);
+        }
 
         $address = Address::findOrFail($data['address_id']);
         abort_unless($address->user_id === $request->user()->id, 403);
@@ -74,6 +85,15 @@ class OrderController extends Controller
                 ->get()
                 ->keyBy('id');
 
+            $variants = ProductVariant::whereIn('product_id', $products->keys())
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->get()
+                ->groupBy('product_id');
+
+            // Per ogni riga: quale scorta vale (variante o prodotto) e a che prezzo.
+            $resolved = [];
+
             foreach ($data['items'] as $item) {
                 $product = $products->get($item['product_id']);
 
@@ -83,11 +103,38 @@ class OrderController extends Controller
                     ]);
                 }
 
-                if ($product->stock < $item['quantity']) {
+                $productVariants = $variants->get($product->id, collect());
+                $variant = null;
+                $available = (int) $product->stock;
+                $label = $product->name;
+                $price = (float) $product->price;
+
+                if ($productVariants->isNotEmpty()) {
+                    $variant = $productVariants->firstWhere('id', $item['product_variant_id'] ?? null);
+
+                    if (! $variant) {
+                        throw ValidationException::withMessages([
+                            'items' => ["Scegli una variante valida per \"{$product->name}\"."],
+                        ]);
+                    }
+
+                    $available = (int) $variant->stock;
+                    $label = "{$product->name} ({$variant->name})";
+                    $price = (float) ($variant->price ?? $product->price);
+                }
+
+                if ($available < $item['quantity']) {
                     throw ValidationException::withMessages([
-                        'items' => ["Disponibilità insufficiente per \"{$product->name}\" (rimasti: {$product->stock})."],
+                        'items' => ["Disponibilità insufficiente per \"{$label}\" (rimasti: {$available})."],
                     ]);
                 }
+
+                $resolved[] = [
+                    'product' => $product,
+                    'variant' => $variant,
+                    'quantity' => $item['quantity'],
+                    'price' => $price,
+                ];
             }
 
             $order = Order::create([
@@ -105,13 +152,12 @@ class OrderController extends Controller
                 'status' => 'nuovo',
             ]);
 
-            foreach ($data['items'] as $item) {
-                $product = $products->get($item['product_id']);
-
+            foreach ($resolved as $line) {
                 $order->items()->create([
-                    'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $product->price,
+                    'product_id' => $line['product']->id,
+                    'product_variant_id' => $line['variant']?->id,
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $line['price'],
                 ]);
             }
 
@@ -120,7 +166,7 @@ class OrderController extends Controller
             return $order;
         });
 
-        $order->load(['items.product', 'shippingRate', 'discount']);
+        $order->load(['items.product', 'items.variant', 'shippingRate', 'discount']);
 
         Mail::to($order->customer_email)->send(new OrderConfirmation($order));
 

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products\Schemas;
 
 use App\Models\Category;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -11,6 +12,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
@@ -135,6 +137,76 @@ class ProductForm
                                         }),
                                 ]),
                         ]),
+
+                    Section::make('Varianti (colori, profumi, formati…)')
+                        ->compact()
+                        ->description('Facoltativo. Se il prodotto esiste in più versioni (es. rossetto rosso, verde, giallo) aggiungi una riga per versione: la disponibilità si gestisce su ciascuna, e il cliente sceglie la variante prima di ordinare.')
+                        ->schema([
+                            TextInput::make('variant_label')
+                                ->label('Cosa cambia tra le varianti?')
+                                ->placeholder('Es. Colore, Profumo, Tonalità')
+                                ->helperText('È il titolo della scelta che vede il cliente. Se lasci vuoto compare "Variante".')
+                                ->maxLength(50),
+                            Repeater::make('variants')
+                                ->hiddenLabel()
+                                ->relationship()
+                                ->orderColumn('sort_order')
+                                ->reorderable()
+                                ->collapsible()
+                                ->columns(6)
+                                ->addActionLabel('Aggiungi variante')
+                                ->defaultItems(0)
+                                ->itemLabel(fn (array $state): ?string => filled($state['name'] ?? null)
+                                    ? $state['name'].' · '.((int) ($state['stock'] ?? 0) > 0 ? (int) $state['stock'].' pz' : 'esaurito')
+                                        .(($state['is_active'] ?? true) ? '' : ' · nascosta')
+                                    : 'Nuova variante')
+                                ->schema([
+                                    TextInput::make('name')
+                                        ->label('Nome')
+                                        ->placeholder('Es. Rosso ciliegia')
+                                        ->required()
+                                        ->distinct()
+                                        ->maxLength(255)
+                                        ->live(onBlur: true)
+                                        ->columnSpan(3),
+                                    TextInput::make('stock')
+                                        ->label('Quantità')
+                                        ->required()
+                                        ->numeric()
+                                        ->default(0)
+                                        ->minValue(0)
+                                        ->suffix('pz')
+                                        ->live(onBlur: true)
+                                        ->columnSpan(1),
+                                    TextInput::make('price')
+                                        ->label('Prezzo suo (facoltativo)')
+                                        ->numeric()
+                                        ->prefix('€')
+                                        ->step(0.01)
+                                        ->minValue(0)
+                                        ->placeholder('Come il prodotto')
+                                        ->columnSpan(2),
+                                    FileUpload::make('image')
+                                        ->label('Foto della variante (facoltativa)')
+                                        ->helperText('Quando il cliente sceglie questa variante, la foto cambia.')
+                                        ->disk('public')
+                                        ->image()
+                                        ->imageEditor()
+                                        ->imageResizeMode('contain')
+                                        ->imageResizeTargetWidth('1600')
+                                        ->imageResizeTargetHeight('1600')
+                                        ->imageResizeUpscale(false)
+                                        ->directory('products/variants')
+                                        ->visibility('public')
+                                        ->columnSpan(4),
+                                    Toggle::make('is_active')
+                                        ->label('Visibile nel negozio')
+                                        ->helperText('Spegnila per nasconderla senza eliminarla.')
+                                        ->default(true)
+                                        ->live()
+                                        ->columnSpan(2),
+                                ]),
+                        ]),
                 ])->columnSpan(['lg' => 2]),
 
                 Group::make([
@@ -154,7 +226,13 @@ class ProductForm
                                 ->numeric()
                                 ->default(0)
                                 ->minValue(0)
-                                ->suffix('pz'),
+                                ->suffix('pz')
+                                // Con le varianti la quantità è la somma delle loro: si calcola da sola.
+                                ->disabled(fn (Get $get) => collect($get('variants') ?? [])->isNotEmpty())
+                                ->dehydrated(fn (Get $get) => collect($get('variants') ?? [])->isEmpty())
+                                ->helperText(fn (Get $get) => collect($get('variants') ?? [])->isNotEmpty()
+                                    ? 'Calcolata dalle varianti: gestisci le quantità lì.'
+                                    : null),
                         ]),
 
                     Section::make('Pubblicazione')

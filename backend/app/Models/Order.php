@@ -131,7 +131,7 @@ class Order extends Model
     private function adjustStockForItems(int $direction): void
     {
         foreach ($this->items()->get() as $item) {
-            Product::whereKey($item->product_id)->increment('stock', $direction * $item->quantity);
+            OrderItem::adjustStock($item->product_id, $item->product_variant_id, $direction * $item->quantity);
         }
     }
 

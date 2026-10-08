@@ -12,6 +12,12 @@ class CreateProduct extends CreateRecord
 
     protected static string $resource = ProductResource::class;
 
+    // Dopo la creazione il totale del prodotto è la somma delle varianti inserite.
+    protected function afterCreate(): void
+    {
+        $this->record->syncStockFromVariants();
+    }
+
     protected function getHeaderActions(): array
     {
         return [

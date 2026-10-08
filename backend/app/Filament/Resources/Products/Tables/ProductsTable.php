@@ -17,6 +17,7 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->withCount('variants'))
             ->columns([
                 ImageColumn::make('cover_image')
                     ->label('')
@@ -26,7 +27,7 @@ class ProductsTable
                     ->defaultImageUrl(asset('images/logo-mark.png')),
                 TextColumn::make('name')
                     ->label('Prodotto')
-                    ->description(fn ($record) => $record->category?->name)
+                    ->description(fn ($record) => collect([$record->category?->name, $record->variants_count ? $record->variants_count.' varianti' : null])->filter()->implode(' · '))
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),

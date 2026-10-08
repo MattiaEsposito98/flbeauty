@@ -54,7 +54,7 @@ class OrderWhatsApp
         ];
 
         foreach ($order->items as $item) {
-            $lines[] = '- '.($item->product?->name ?? 'Prodotto').' x'.$item->quantity.': '.self::euro($item->quantity * $item->unit_price);
+            $lines[] = '- '.$item->displayName().' x'.$item->quantity.': '.self::euro($item->quantity * $item->unit_price);
         }
 
         $lines[] = '';

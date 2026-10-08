@@ -13,6 +13,12 @@ class EditProduct extends EditRecord
 
     protected static string $resource = ProductResource::class;
 
+    // Dopo il salvataggio il totale del prodotto torna uguale alla somma delle varianti.
+    protected function afterSave(): void
+    {
+        $this->record->syncStockFromVariants();
+    }
+
     protected function getHeaderActions(): array
     {
         return [

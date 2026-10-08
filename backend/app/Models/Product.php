@@ -18,6 +18,7 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'variant_label',
         'images',
         'video',
         'price',
@@ -43,6 +44,43 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /** Tutte le varianti (anche quelle disattivate): le gestisce l'admin. */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /** Le varianti che il cliente può vedere e ordinare. */
+    public function activeVariants(): HasMany
+    {
+        return $this->variants()->where('is_active', true);
+    }
+
+    /** Il prodotto si vende "a varianti" se ne ha almeno una attiva: la scorta sta lì. */
+    public function hasVariants(): bool
+    {
+        return $this->relationLoaded('activeVariants')
+            ? $this->activeVariants->isNotEmpty()
+            : $this->activeVariants()->exists();
+    }
+
+    /**
+     * Con le varianti la disponibilità del prodotto è la somma di quelle delle varianti attive:
+     * così catalogo, "esaurito" e ricerca continuano a leggere un solo numero (products.stock).
+     */
+    public function syncStockFromVariants(): void
+    {
+        if (! $this->variants()->exists()) {
+            return;
+        }
+
+        $total = (int) $this->activeVariants()->sum('stock');
+
+        if ((int) $this->stock !== $total) {
+            $this->forceFill(['stock' => $total])->saveQuietly();
+        }
     }
 
     public function orderItems(): HasMany

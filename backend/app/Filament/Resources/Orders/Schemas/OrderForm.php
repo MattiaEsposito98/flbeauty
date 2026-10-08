@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\ShippingRate;
 use App\Models\User;
 use Filament\Forms\Components\Placeholder;
@@ -111,7 +112,7 @@ class OrderForm
                                 ->hiddenLabel()
                                 ->relationship()
                                 ->live()
-                                ->columns(6)
+                                ->columns(8)
                                 ->schema([
                                     Select::make('product_id')
                                         ->label('Prodotto')
@@ -127,9 +128,25 @@ class OrderForm
                                         ->required()
                                         ->live()
                                         ->afterStateUpdated(function ($state, callable $set) {
+                                            $set('product_variant_id', null);
                                             $set('unit_price', Product::find($state)?->price ?? 0);
                                         })
                                         ->columnSpan(3),
+                                    Select::make('product_variant_id')
+                                        ->label(fn (callable $get) => Product::find($get('product_id'))?->variant_label ?: 'Variante')
+                                        ->options(fn (callable $get) => self::variantOptions($get('product_id')))
+                                        // Le esaurite si vedono ma non si possono scegliere (a meno che siano già nella riga).
+                                        ->disableOptionWhen(fn ($value, $state) => (string) $value !== (string) $state
+                                            && (self::variantStockMap()[$value] ?? 0) <= 0)
+                                        ->visible(fn (callable $get) => self::productHasVariants($get('product_id')))
+                                        ->required(fn (callable $get) => self::productHasVariants($get('product_id')))
+                                        ->native(false)
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            $variant = ProductVariant::find($state);
+                                            $set('unit_price', $variant?->effective_price ?? Product::find($get('product_id'))?->price ?? 0);
+                                        })
+                                        ->columnSpan(2),
                                     TextInput::make('quantity')
                                         ->label('Qtà')
                                         ->numeric()
@@ -158,6 +175,7 @@ class OrderForm
                                 ->defaultItems(1)
                                 ->itemLabel(fn (array $state): ?string => filled($state['product_id'] ?? null)
                                     ? Product::find($state['product_id'])?->name
+                                        .(filled($state['product_variant_id'] ?? null) ? ' – '.ProductVariant::find($state['product_variant_id'])?->name : '')
                                     : null),
                         ]),
 
@@ -306,16 +324,57 @@ class OrderForm
         return self::$stockMap ??= Product::query()->pluck('stock', 'id')->map(fn ($stock) => (int) $stock)->all();
     }
 
+    /** @var array<int, int>|null */
+    private static ?array $variantStockMap = null;
+
     /**
-     * Disponibilità del prodotto della riga, contando tutte le righe dello
-     * stesso prodotto. In modifica, i pezzi che l'ordine tiene già riservati
-     * si sommano al magazzino (sono "suoi"). Stessa regola di ChecksOrderStock.
+     * Magazzino di tutte le varianti, letto una volta per richiesta.
+     *
+     * @return array<int, int>
+     */
+    protected static function variantStockMap(): array
+    {
+        return self::$variantStockMap ??= ProductVariant::query()->pluck('stock', 'id')->map(fn ($stock) => (int) $stock)->all();
+    }
+
+    protected static function productHasVariants($productId): bool
+    {
+        return filled($productId) && ProductVariant::where('product_id', $productId)->where('is_active', true)->exists();
+    }
+
+    /**
+     * Varianti del prodotto con la disponibilità accanto al nome. Una variante nascosta compare
+     * solo se è già quella della riga (altrimenti l'ordine in modifica perderebbe il nome).
+     *
+     * @return array<int, string>
+     */
+    protected static function variantOptions($productId): array
+    {
+        if (blank($productId)) {
+            return [];
+        }
+
+        return ProductVariant::where('product_id', $productId)
+            ->orderBy('sort_order')->orderBy('id')
+            ->get()
+            ->mapWithKeys(fn (ProductVariant $variant) => [
+                $variant->id => $variant->name.' · '.($variant->stock > 0 ? $variant->stock.' disponibili' : 'esaurita')
+                    .($variant->is_active ? '' : ' (nascosta)'),
+            ])
+            ->all();
+    }
+
+    /**
+     * Disponibilità della riga (prodotto, o variante se il prodotto ne ha), contando tutte le
+     * righe con la stessa scorta. In modifica, i pezzi che l'ordine tiene già riservati si
+     * sommano al magazzino (sono "suoi"). Stessa regola di ChecksOrderStock.
      *
      * @return array{name: string, available: int, requested: int}|null
      */
     protected static function availabilityCheck(callable $get, $livewire): ?array
     {
         $productId = $get('product_id');
+        $variantId = $get('product_variant_id');
 
         if (blank($productId) || $get('../../status') === Order::STATUS_CANCELLED) {
             return null;
@@ -327,22 +386,38 @@ class OrderForm
             return null;
         }
 
+        $variant = null;
+
+        if (self::productHasVariants($productId)) {
+            // Senza variante scelta non c'è ancora una scorta da controllare.
+            if (blank($variantId)) {
+                return null;
+            }
+
+            $variant = ProductVariant::find($variantId);
+
+            if (! $variant) {
+                return null;
+            }
+        }
+
         $order = $livewire->record ?? null;
         $reserved = $order instanceof Order && $order->exists && $order->reservesStock()
-            ? (int) $order->items()->where('product_id', $productId)->sum('quantity')
+            ? (int) $order->items()->where('product_id', $productId)
+                ->where('product_variant_id', $variant?->id)->sum('quantity')
             : 0;
 
         $requested = collect($get('../../items') ?? [])
             ->where('product_id', $productId)
+            ->filter(fn ($item) => ($item['product_variant_id'] ?? null) == $variant?->id)
             ->sum(fn ($item) => (int) ($item['quantity'] ?? 0));
 
         return [
-            'name' => $product->name,
-            'available' => $product->stock + $reserved,
+            'name' => $variant ? $product->name.' ('.$variant->name.')' : $product->name,
+            'available' => ($variant ? $variant->stock : $product->stock) + $reserved,
             'requested' => $requested,
         ];
     }
-
     protected static function availabilityHint(callable $get, $livewire): ?HtmlString
     {
         $check = self::availabilityCheck($get, $livewire);
