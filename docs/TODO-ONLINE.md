@@ -42,7 +42,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 - [ ] Controllare che le email non finiscano in spam (provare Gmail e Outlook)
 
 ## 4. Google
-- [ ] Search Console: aggiungere `flbeauty.it`, verificare con record DNS TXT, inviare
+- [x] Search Console: proprietà "Dominio" `flbeauty.it` verificata con record TXT (2026-10-08, account flbeauty32@gmail.com)
       `https://www.flbeauty.it/sitemap.xml`, chiedere l'indicizzazione della home
 - [ ] Testare un prodotto con https://search.google.com/test/rich-results
 - [ ] PageSpeed Insights sulla home e su un prodotto

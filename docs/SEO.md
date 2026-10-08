@@ -119,3 +119,11 @@ Lancia la sitemap ogni notte. Senza questo cron la sitemap non si aggiorna da so
 `backend/tests/Feature/SitemapTest.php` (contenuto della sitemap, comando, noindex del
 backend). Il resto è stato provato a mano nel browser: categoria, prodotto, ricerca e
 pagina inesistente (titolo, description, canonical, robots, JSON-LD).
+
+## Search Console collegato (2026-10-08)
+Proprietà **"Dominio" `flbeauty.it`** verificata con un record TXT `google-site-verification=…` nel DNS di Aruba
+(Dominio → Gestione DNS; non va cancellato, altrimenti si perde la verifica). Account: `flbeauty32@gmail.com`
+(aggiungere `info@flbeauty.it` come utente in Impostazioni → Utenti e autorizzazioni). La propagazione del
+record ha richiesto circa un'ora. Passi successivi: inviare `sitemap.xml`, richiedere l'indicizzazione della
+home (Controllo URL) e, dopo l'inserimento dei prodotti, controllare "Pagine" e "Miglioramenti" (dati strutturati).
+Nel DNS ci sono anche SPF, DMARC e la firma **DKIM** (`a1._domainkey`) per le email: tutti da non toccare.
