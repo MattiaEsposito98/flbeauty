@@ -62,7 +62,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
       tempi, pagamento fuori dal sito (Postepay) — con un consulente
 - [ ] Pagine "Chi siamo", "Spedizioni e resi", "Contatti" (aiutano fiducia e Google)
 - [ ] Far rileggere privacy e cookie policy a un consulente
-- [ ] Controllare i profili TikTok nel footer (`@flbeauty`, `@flbeauty2`) in
+- [x] Profili TikTok nel footer corretti (`@fl.beauty`, `@fl_beauty2`, 2026-10-08) in
       `frontend/src/config/contacts.js`
 - [ ] Scrivere le descrizioni delle **categorie** e dei **prodotti** pensando alle
       parole che le clienti cercano (compaiono su Google)

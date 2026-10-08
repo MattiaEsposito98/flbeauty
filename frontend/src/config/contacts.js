@@ -11,6 +11,6 @@ export const WHATSAPP_URL = whatsappUrl('Ciao F&L Beauty! Vorrei qualche informa
 export const EMAIL = 'info@flbeauty.it'
 
 export const TIKTOK_PROFILES = [
-  { handle: 'flbeauty', url: 'https://www.tiktok.com/@flbeauty' },
-  { handle: 'flbeauty2', url: 'https://www.tiktok.com/@flbeauty2' },
+  { handle: 'fl.beauty', url: 'https://www.tiktok.com/@fl.beauty' },
+  { handle: 'fl_beauty2', url: 'https://www.tiktok.com/@fl_beauty2' },
 ]

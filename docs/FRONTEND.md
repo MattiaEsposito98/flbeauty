@@ -344,7 +344,7 @@ la card, pagina prodotto con galleria miniature e stepper quantità, carrello
 laterale e pagina carrello a due colonne, checkout a sezioni con riepilogo
 laterale, pagine di accesso su card con l'emblema del logo, account con avatar
 ottagonale, footer con contatti (WhatsApp 351 745 9482, Flbeauty32@gmail.com,
-TikTok @flbeauty e @flbeauty2) e pulsante WhatsApp flottante.
+TikTok @fl.beauty e @fl_beauty2) e pulsante WhatsApp flottante.
 
 Piccoli cambi di comportamento arrivati col restyling:
 - "Esci" non è più nell'header ma nella pagina account (nell'header resta l'icona
@@ -650,5 +650,5 @@ pagine private e pagina "non trovata". Dettagli, cron e passi dopo la messa onli
 - Far rileggere privacy e cookie policy (fatte il 2026-09-28, vedi
   [PRIVACY.md](PRIVACY.md))
 - Condizioni di vendita (recesso 14 giorni, resi, spedizioni)
-- Verificare che i profili TikTok linkati nel footer (`@flbeauty`, `@flbeauty2`)
+- ~~Verificare che i profili TikTok linkati nel footer~~ (corretti il 2026-10-08: `@fl.beauty`, `@fl_beauty2`)
   siano esattamente quelli giusti (`src/config/contacts.js`)
