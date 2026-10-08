@@ -127,3 +127,5 @@ Proprietà **"Dominio" `flbeauty.it`** verificata con un record TXT `google-site
 record ha richiesto circa un'ora. Passi successivi: inviare `sitemap.xml`, richiedere l'indicizzazione della
 home (Controllo URL) e, dopo l'inserimento dei prodotti, controllare "Pagine" e "Miglioramenti" (dati strutturati).
 Nel DNS ci sono anche SPF, DMARC e la firma **DKIM** (`a1._domainkey`) per le email: tutti da non toccare.
+- La sitemap in Search Console va inviata con l'**indirizzo completo** `https://www.flbeauty.it/sitemap.xml`:
+  con una proprietà "Dominio" il solo `sitemap.xml` viene rifiutato ("Indirizzo Sitemap non valido"). Inviata il 2026-10-08.
