@@ -11,7 +11,7 @@ class CookieBannerStats extends StatsOverviewWidget
 {
     protected ?string $heading = 'Banner cookie (ultimi 30 giorni)';
 
-    protected ?string $description = 'Conteggi anonimi. Il banner compare solo quando Google Analytics è attivo sul sito: finché non lo è, questi numeri restano a zero.';
+    protected ?string $description = 'Conteggi anonimi (nessun dato che identifica il visitatore). «Banner mostrato» conta ogni volta che compare, quindi chi non sceglie può essere contato più volte; Analytics registra solo chi preme «Accetta».';
 
     protected ?string $pollingInterval = null;
 
