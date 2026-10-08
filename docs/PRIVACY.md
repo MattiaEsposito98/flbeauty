@@ -113,3 +113,16 @@ cambio di pagina (sito a pagina singola, `send_page_view: false` + evento manual
   profilo; banner con ID di prova: niente Analytics prima del consenso, "Rifiuta"
   salvato, riapertura dal footer, "Accetta" carica Analytics; banner controllato
   anche a 375 px
+
+## Google Analytics attivo (2026-10-08)
+Proprietà GA4 con ID **`G-J0X2Z02YCC`** (non è un segreto). Il negozio lo legge da `VITE_GA_MEASUREMENT_ID`
+nel file `frontend/.env.production`, che sta solo sul PC (non su GitHub): se si costruisce il negozio da un altro
+computer, l'ID va rimesso in quel file, altrimenti la build esce **senza** Analytics e senza banner.
+- **Non** incollare nel sito lo snippet `gtag.js` che propone Google: partirebbe prima del consenso. Il caricamento
+  lo gestisce `src/utils/cookieConsent.js`, solo dopo "Accetta"
+- Da impostare nell'interfaccia di GA: conservazione dei dati a **2 mesi**, **Segnali Google** e condivisione dei
+  dati disattivati (l'informativa e la cookie policy descrivono questa configurazione)
+- Con l'ID impostato compare il banner, il link "Preferenze cookie" nel footer e la sezione Analytics nella cookie
+  policy (si accendono da soli). Le scelte del banner sono contate in forma anonima nella pagina Utenti dell'admin
+- Come controllare: aprire il sito dal telefono, premere "Accetta", poi in GA → Rapporti → **Tempo reale** deve
+  comparire 1 utente; con "Rifiuta" non deve comparire nessun dato

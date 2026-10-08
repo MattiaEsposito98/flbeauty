@@ -47,7 +47,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 - [ ] Testare un prodotto con https://search.google.com/test/rich-results
 - [ ] PageSpeed Insights sulla home e su un prodotto
 - [ ] Google Business Profile (se si vende anche in zona)
-- [ ] Google Analytics 4: creare la proprietà, inserire `VITE_GA_MEASUREMENT_ID`, rifare
+- [x] Google Analytics 4 collegato (2026-10-08): ID `G-J0X2Z02YCC` in `frontend/.env.production` (file locale, non su GitHub), banner cookie attivo. Da fare in GA: conservazione dati a 2 mesi, Segnali Google disattivati
       la build (attiva il banner cookie). In GA4 ridurre la conservazione dati a 2 mesi
       (vedi PRIVACY.md)
 - [ ] Preparare un'immagine di anteprima **1200×630** (logo + slogan) e impostarla in
