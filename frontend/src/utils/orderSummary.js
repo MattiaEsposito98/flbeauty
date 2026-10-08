@@ -25,7 +25,7 @@ export function orderWhatsAppText(order, user) {
     '*Prodotti*',
     ...order.items.map(
       (item) =>
-        `- ${item.product?.name ?? 'Prodotto'} x${item.quantity}: ${formatPrice(item.quantity * Number(item.unit_price))}`
+        `- ${item.product?.name ?? 'Prodotto'}${item.variant_name ? ` – ${item.variant_name}` : ''} x${item.quantity}: ${formatPrice(item.quantity * Number(item.unit_price))}`
     ),
     '',
     `Subtotale: ${formatPrice(subtotal)}`,

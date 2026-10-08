@@ -4,6 +4,7 @@ import { LuArrowLeft, LuShoppingBag, LuTrash2, LuX } from 'react-icons/lu'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/format'
+import { itemImage, itemName, itemPrice, itemStock, itemVariant, lineKey } from '../utils/cart'
 import CartAdjustmentsNotice from './CartAdjustmentsNotice'
 import ConfirmButton from './ConfirmButton'
 import EmptyState from './EmptyState'
@@ -109,9 +110,9 @@ export default function CartDrawer() {
               </div>
               <ul className="drawer-items">
                 {items.map((item) => (
-                  <li key={item.product.id} className="drawer-item">
+                  <li key={lineKey(item.product.id, item.variantId)} className="drawer-item">
                     <Link to={`/prodotti/${item.product.slug}`} className="item-thumb" onClick={closeDrawer} tabIndex={-1}>
-                      <ProductImage src={item.product.images?.[0]} compact />
+                      <ProductImage src={itemImage(item)} compact />
                     </Link>
                     <div className="drawer-item-info">
                       <div className="drawer-item-top">
@@ -121,21 +122,26 @@ export default function CartDrawer() {
                         <button
                           type="button"
                           className="icon-btn remove-btn"
-                          onClick={() => removeItem(item.product.id)}
-                          aria-label={`Rimuovi ${item.product.name}`}
+                          onClick={() => removeItem(item.product.id, item.variantId)}
+                          aria-label={`Rimuovi ${itemName(item)}`}
                         >
                           <LuTrash2 aria-hidden="true" />
                         </button>
                       </div>
-                      <span className="item-unit-price">{formatPrice(item.product.price)} cad.</span>
+                      {itemVariant(item) && (
+                        <span className="item-variant">
+                          {item.product.variant_label}: {itemVariant(item).name}
+                        </span>
+                      )}
+                      <span className="item-unit-price">{formatPrice(itemPrice(item))} cad.</span>
                       <div className="drawer-item-controls">
                         <QuantityStepper
                           size="sm"
                           value={item.quantity}
-                          max={item.product.stock}
-                          onChange={(quantity) => updateQuantity(item.product.id, quantity)}
+                          max={itemStock(item)}
+                          onChange={(quantity) => updateQuantity(item.product.id, item.variantId, quantity)}
                         />
-                        <span className="item-total">{formatPrice(item.product.price * item.quantity)}</span>
+                        <span className="item-total">{formatPrice(itemPrice(item) * item.quantity)}</span>
                       </div>
                     </div>
                   </li>

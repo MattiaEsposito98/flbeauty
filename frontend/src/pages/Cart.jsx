@@ -10,6 +10,7 @@ import ProductImage from '../components/ProductImage'
 import QuantityStepper from '../components/QuantityStepper'
 import Spinner from '../components/Spinner'
 import { formatPrice } from '../utils/format'
+import { itemImage, itemName, itemPrice, itemStock, itemVariant, lineKey } from '../utils/cart'
 
 export default function Cart() {
   const { items, loading, updateQuantity, removeItem, clearCart, total, count, syncAvailability } = useCart()
@@ -72,27 +73,32 @@ export default function Cart() {
         </div>
         <ul className="cart-items">
           {items.map((item) => (
-            <li key={item.product.id} className="cart-item">
+            <li key={lineKey(item.product.id, item.variantId)} className="cart-item">
               <Link to={`/prodotti/${item.product.slug}`} className="item-thumb" tabIndex={-1}>
-                <ProductImage src={item.product.images?.[0]} compact />
+                <ProductImage src={itemImage(item)} compact />
               </Link>
               <div className="cart-item-info">
                 <Link to={`/prodotti/${item.product.slug}`} className="item-name">
                   {item.product.name}
                 </Link>
-                <span className="item-unit-price">{formatPrice(item.product.price)} cad.</span>
+                {itemVariant(item) && (
+                  <span className="item-variant">
+                    {item.product.variant_label}: {itemVariant(item).name}
+                  </span>
+                )}
+                <span className="item-unit-price">{formatPrice(itemPrice(item))} cad.</span>
               </div>
               <QuantityStepper
                 value={item.quantity}
-                max={item.product.stock}
-                onChange={(quantity) => updateQuantity(item.product.id, quantity)}
+                max={itemStock(item)}
+                onChange={(quantity) => updateQuantity(item.product.id, item.variantId, quantity)}
               />
-              <span className="item-total">{formatPrice(item.product.price * item.quantity)}</span>
+              <span className="item-total">{formatPrice(itemPrice(item) * item.quantity)}</span>
               <button
                 type="button"
                 className="icon-btn remove-btn"
-                onClick={() => removeItem(item.product.id)}
-                aria-label={`Rimuovi ${item.product.name}`}
+                onClick={() => removeItem(item.product.id, item.variantId)}
+                aria-label={`Rimuovi ${itemName(item)}`}
               >
                 <LuTrash2 aria-hidden="true" />
               </button>

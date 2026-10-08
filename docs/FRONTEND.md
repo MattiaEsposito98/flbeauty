@@ -652,3 +652,41 @@ pagine private e pagina "non trovata". Dettagli, cron e passi dopo la messa onli
 - Condizioni di vendita (recesso 14 giorni, resi, spedizioni)
 - ~~Verificare che i profili TikTok linkati nel footer~~ (corretti il 2026-10-08: `@fl.beauty`, `@fl_beauty2`)
   siano esattamente quelli giusti (`src/config/contacts.js`)
+
+## Varianti dei prodotti (nuovo, sessione del 2026-10-08)
+Un prodotto può avere **varianti** (rossetto: rosso, verde, giallo; bagnoschiuma: ciliegia, cioccolato…).
+**La disponibilità sta sulla variante**: rosso 1 pezzo e blu 1 pezzo sono scorte separate. I prodotti senza varianti
+funzionano come prima.
+
+**Come si usa (admin → Prodotti → modifica):** sezione *Varianti*: "Cosa cambia tra le varianti?" (titolo della
+scelta: Colore, Profumo, Tonalità…) e una riga per variante con nome, quantità, prezzo suo (facoltativo, se vuoto vale
+quello del prodotto), foto (facoltativa, compare quando il cliente la sceglie) e "Visibile nel negozio" (per nasconderla
+senza eliminarla). Con le varianti la "Quantità disponibile" del prodotto non si modifica più: è la **somma delle varianti
+visibili** e si aggiorna da sola. Per tornare a un prodotto senza varianti si eliminano tutte le righe.
+
+**Dati:** tabella `product_variants` (`name`, `price` nullable, `stock`, `image`, `is_active`, `sort_order`);
+`products.variant_label`; `order_items.product_variant_id` + `variant_name` (il nome si "fotografa" all'ordine, resta
+leggibile se poi la variante si elimina); `cart_items.product_variant_id` (la riga del carrello è unica per
+utente + prodotto + variante). `products.stock` resta sempre il totale (catalogo, "esaurito" e ricerca non cambiano):
+lo ricalcola `Product::syncStockFromVariants()` a ogni modifica delle varianti.
+
+**Magazzino:** un solo punto, `OrderItem::adjustStock($productId, $variantId, $delta)`: scala o restituisce alla
+variante se la riga ne ha una, altrimenti al prodotto. Lo usano le righe d'ordine (creazione, modifica, eliminazione,
+cambio di variante) e `Order` (annullamento, riattivazione, eliminazione dell'ordine). Test: `ProductVariantsTest`,
+`ProductVariantsAdminTest`, `AdminOrderVariantsTest`.
+
+**API:** `ProductResource` aggiunge `has_variants`, `variant_label`, `variants[]` (`id`, `name`, `price` già "effettivo",
+`stock`, `in_stock`, `image`). Il carrello (`/cart`, `PATCH|DELETE /cart/{prodotto}`) e gli ordini (`items[].product_variant_id`)
+accettano la variante, che è **obbligatoria** se il prodotto ne ha di attive; due righe con lo stesso prodotto e la stessa
+variante sono rifiutate. Il prezzo della riga d'ordine è quello della variante (se ne ha uno suo).
+
+**Negozio:** nella scheda prodotto compare la scelta (pulsanti): parte quella con **più disponibilità**, le esaurite si
+vedono ("Esaurito") ma non si scelgono, e cambiando variante si aggiornano prezzo, disponibilità, foto e indirizzo
+(`?variante=ID`, condivisibile). Nel catalogo il prodotto a varianti ha il pulsante "Scegli" al posto di "Aggiungi" e il
+prezzo "da …" se le varianti costano diverso. Carrello, pannello laterale, checkout, pagina ordine, email, WhatsApp e
+ordini creati dall'admin mostrano "Prodotto – Variante". Logica del carrello in `CartContext` + `utils/cart.js`
+(`lineKey`, `itemStock`, `itemPrice`…). Per Google il prodotto ha un'offerta aggregata (prezzo minimo/massimo, una offerta
+per variante con la sua disponibilità).
+
+**Ordini dall'admin:** nella riga dell'articolo compare la scelta della variante (con "N disponibili"), il prezzo si
+compila da solo e il controllo di disponibilità vale per variante.

@@ -2543,6 +2543,94 @@ input[type='checkbox'] {
   font-weight: 500;
 }
 
+/* ── Varianti del prodotto (colore, profumo…) ─────── */
+
+.variant-picker {
+  margin: 0 0 1.4rem;
+}
+
+.variant-picker-label {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.variant-picker-label strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.variant-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 3.4rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--rose-300);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.variant-chip:hover:not(:disabled) {
+  border-color: var(--rose-500);
+  color: var(--rose-700);
+}
+
+.variant-chip.active {
+  background: var(--grad-button);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(142, 79, 91, 0.8);
+}
+
+.variant-chip:focus-visible {
+  outline: 2px solid var(--rose-500);
+  outline-offset: 2px;
+}
+
+/* Esaurita: si vede ma non si può scegliere */
+.variant-chip.sold-out {
+  border-style: dashed;
+  background: var(--rose-50);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+  text-decoration: line-through;
+  text-decoration-color: var(--rose-300);
+}
+
+.variant-chip-note {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.item-variant {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--taupe);
+}
+
+.price-from {
+  font-family: var(--font-body);
+  font-size: 0.75em;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
 /* ── Finestra di conferma ordine ──────────────────── */
 
 .modal-backdrop {

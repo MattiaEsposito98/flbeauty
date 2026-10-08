@@ -9,6 +9,7 @@ import EmptyState from '../components/EmptyState'
 import OrderConfirmDialog from '../components/OrderConfirmDialog'
 import Spinner from '../components/Spinner'
 import { formatPrice } from '../utils/format'
+import { itemName, itemPrice, lineKey } from '../utils/cart'
 
 export default function Checkout() {
   const { items, loading: cartLoading, total, clearCart, syncAvailability } = useCart()
@@ -77,7 +78,11 @@ export default function Checkout() {
         address_id: Number(addressId),
         shipping_rate_id: Number(shippingRateId),
         discount_code: discountCode || undefined,
-        items: items.map((item) => ({ product_id: item.product.id, quantity: item.quantity })),
+        items: items.map((item) => ({
+          product_id: item.product.id,
+          product_variant_id: item.variantId,
+          quantity: item.quantity,
+        })),
       })
       clearCart()
       navigate(`/ordini/${data.id}`, { state: { justPlaced: true } })
@@ -231,11 +236,11 @@ export default function Checkout() {
           <h2>Riepilogo ordine</h2>
           <ul className="summary-items">
             {items.map((item) => (
-              <li key={item.product.id}>
+              <li key={lineKey(item.product.id, item.variantId)}>
                 <span>
-                  {item.product.name} <span className="muted">× {item.quantity}</span>
+                  {itemName(item)} <span className="muted">× {item.quantity}</span>
                 </span>
-                <span>{formatPrice(item.product.price * item.quantity)}</span>
+                <span>{formatPrice(itemPrice(item) * item.quantity)}</span>
               </li>
             ))}
           </ul>

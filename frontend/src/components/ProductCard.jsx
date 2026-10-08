@@ -1,10 +1,20 @@
 import { Link } from 'react-router-dom'
-import { LuShoppingBag } from 'react-icons/lu'
+import { LuShoppingBag, LuSwatchBook } from 'react-icons/lu'
 import { useCart } from '../context/CartContext'
 import { formatPrice, isLowStock, lowStockLabel } from '../utils/format'
 import ProductImage from './ProductImage'
 import QuantityStepper from './QuantityStepper'
 import WishlistButton from './WishlistButton'
+
+// Con le varianti il prezzo mostrato è il più basso tra quelle disponibili ("da ..." se differiscono).
+function priceRange(product) {
+  const prices = (product.variants ?? []).filter((variant) => variant.in_stock).map((variant) => variant.price)
+
+  if (prices.length === 0) return { min: product.price, differs: false }
+
+  const min = Math.min(...prices)
+  return { min, differs: Math.max(...prices) > min }
+}
 
 export default function ProductCard({ product }) {
   const { addItem, updateQuantity, getQuantityInCart } = useCart()
@@ -26,9 +36,24 @@ export default function ProductCard({ product }) {
         {isLowStock(product.stock) && <span className="low-stock">{lowStockLabel(product.stock)}</span>}
 
         <div className="product-card-footer">
-          <span className="price">{formatPrice(product.price)}</span>
+          <span className="price">
+            {product.has_variants && priceRange(product).differs && <span className="price-from">da </span>}
+            {formatPrice(product.has_variants ? priceRange(product).min : product.price)}
+          </span>
+
+          {product.in_stock && product.has_variants && (
+            <Link
+              to={`/prodotti/${product.slug}`}
+              className="btn btn-outline btn-sm product-card-action"
+              aria-label={`Scegli ${product.variant_label?.toLowerCase() ?? 'variante'} di ${product.name}`}
+            >
+              <LuSwatchBook aria-hidden="true" />
+              Scegli
+            </Link>
+          )}
 
           {product.in_stock &&
+            !product.has_variants &&
             (quantityInCart > 0 ? (
               <div className="product-card-action">
                 <QuantityStepper
@@ -36,7 +61,7 @@ export default function ProductCard({ product }) {
                   min={0}
                   value={quantityInCart}
                   max={product.stock}
-                  onChange={(quantity) => updateQuantity(product.id, quantity)}
+                  onChange={(quantity) => updateQuantity(product.id, null, quantity)}
                 />
               </div>
             ) : (

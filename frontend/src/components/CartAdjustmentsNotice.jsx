@@ -14,7 +14,7 @@ export default function CartAdjustmentsNotice() {
       </p>
       <ul className="adjustments-list">
         {adjustments.map((change) => (
-          <li key={change.productId}>
+          <li key={change.key}>
             {change.name}:{' '}
             {change.to > 0
               ? `ne restano ${change.to} (ne avevi ${change.from})`

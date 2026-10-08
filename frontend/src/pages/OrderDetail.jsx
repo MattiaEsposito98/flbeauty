@@ -127,7 +127,8 @@ export default function OrderDetail() {
           {order.items.map((item) => (
             <li key={item.id}>
               <span>
-                {item.product?.name ?? 'Prodotto rimosso'} <span className="muted">× {item.quantity}</span>
+                {item.product?.name ?? 'Prodotto rimosso'}
+                {item.variant_name ? ` – ${item.variant_name}` : ''} <span className="muted">× {item.quantity}</span>
               </span>
               <span>{formatPrice(item.quantity * item.unit_price)}</span>
             </li>

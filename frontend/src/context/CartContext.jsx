@@ -1,14 +1,18 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import client from '../api/client'
 import { useAuth } from './AuthContext'
+import { fromServerItems, itemName, itemPrice, itemStock, lineKey } from '../utils/cart'
 
 const CartContext = createContext(null)
 const STORAGE_KEY = 'cart'
 
+// Carrello ospite salvato nel browser. Quelli salvati prima delle varianti non hanno
+// `variantId`: valgono come righe senza variante.
 function loadCart() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
+    const items = raw ? JSON.parse(raw) : []
+    return items.map((item) => ({ ...item, variantId: item.variantId ?? null }))
   } catch {
     return []
   }
@@ -43,7 +47,11 @@ export function CartProvider({ children }) {
         const guestItems = loadCart()
 
         for (const item of guestItems) {
-          await client.post('/cart', { product_id: item.product.id, quantity: item.quantity })
+          await client.post('/cart', {
+            product_id: item.product.id,
+            product_variant_id: item.variantId,
+            quantity: item.quantity,
+          })
         }
 
         if (guestItems.length > 0) {
@@ -51,7 +59,7 @@ export function CartProvider({ children }) {
         }
 
         const { data } = await client.get('/cart')
-        setItems(data.items)
+        setItems(fromServerItems(data.items))
       } finally {
         setLoadedForUserId(user.id)
       }
@@ -71,8 +79,14 @@ export function CartProvider({ children }) {
     }
   }, [items, user])
 
-  function getQuantityInCart(productId) {
-    return items.find((item) => item.product.id === productId)?.quantity ?? 0
+  // Con `variantId` indefinito conta tutte le varianti del prodotto (serve alla card del
+  // catalogo: "nel carrello: N"); con una variante, solo quella riga.
+  function getQuantityInCart(productId, variantId) {
+    return items
+      .filter(
+        (item) => item.product.id === productId && (variantId === undefined || item.variantId === (variantId ?? null))
+      )
+      .reduce((sum, item) => sum + item.quantity, 0)
   }
 
   function showToast(message, type = 'success') {
@@ -86,93 +100,110 @@ export function CartProvider({ children }) {
     )
   }
 
-  // Il server tronca le quantità allo stock reale, che può essere più basso di
-  // quello letto dal client: se è successo, avvisiamo invece di tacere.
-  function checkServerLimit(serverItems, productId, expected) {
-    const saved = serverItems.find((item) => item.product.id === productId)
+  // Il server tronca le quantità alla disponibilità reale, che può essere più bassa di
+  // quella letta dal client: se è successo, avvisiamo invece di tacere.
+  function checkServerLimit(serverItems, productId, variantId, expected) {
+    const saved = serverItems.find((item) => lineKey(item.product.id, item.variantId) === lineKey(productId, variantId))
+
     if ((saved?.quantity ?? 0) < expected) {
-      warnLimit(saved?.product.name ?? 'il prodotto', saved?.product.stock ?? 0)
+      warnLimit(saved ? itemName(saved) : 'il prodotto', saved ? itemStock(saved) : 0)
       return true
     }
     return false
   }
 
-  // Aggiunge al massimo i pezzi ancora disponibili (stock meno quelli già nel
-  // carrello). Dal catalogo si passa openDrawer: false per non interrompere
-  // chi aggiunge più prodotti di fila: al posto del pannello compare un avviso.
-  async function addItem(product, quantity = 1, { openDrawer = true } = {}) {
-    const inCart = getQuantityInCart(product.id)
-    const allowed = Math.min(quantity, product.stock - inCart)
+  // Aggiunge al massimo i pezzi ancora disponibili (disponibilità della variante, o del
+  // prodotto se non ne ha, meno quelli già nel carrello). Dal catalogo si passa
+  // openDrawer: false per non interrompere chi aggiunge più prodotti di fila.
+  async function addItem(product, quantity = 1, { variantId = null, openDrawer = true } = {}) {
+    const variant = variantId ? (product.variants ?? []).find((v) => v.id === variantId) : null
+
+    if (product.has_variants && !variant) {
+      showToast(`Scegli prima ${product.variant_label ? `il campo “${product.variant_label}”` : 'una variante'}`, 'warning')
+      return 0
+    }
+
+    const stock = variant ? variant.stock : product.stock
+    const name = variant ? `${product.name} – ${variant.name}` : product.name
+    const chosenId = variant?.id ?? null
+    const inCart = getQuantityInCart(product.id, chosenId)
+    const allowed = Math.min(quantity, stock - inCart)
 
     if (allowed <= 0) {
-      warnLimit(product.name, product.stock)
+      warnLimit(name, stock)
       return 0
     }
 
     let limited = false
 
     if (user) {
-      const { data } = await client.post('/cart', { product_id: product.id, quantity: allowed })
-      setItems(data.items)
-      limited = checkServerLimit(data.items, product.id, inCart + allowed)
+      const { data } = await client.post('/cart', {
+        product_id: product.id,
+        product_variant_id: chosenId,
+        quantity: allowed,
+      })
+      const serverItems = fromServerItems(data.items)
+      setItems(serverItems)
+      limited = checkServerLimit(serverItems, product.id, chosenId, inCart + allowed)
     } else {
       setItems((prev) => {
-        const existing = prev.find((item) => item.product.id === product.id)
+        const key = lineKey(product.id, chosenId)
+        const existing = prev.find((item) => lineKey(item.product.id, item.variantId) === key)
 
         if (existing) {
           return prev.map((item) =>
-            item.product.id === product.id
-              ? { ...item, quantity: item.quantity + allowed }
-              : item
+            lineKey(item.product.id, item.variantId) === key ? { ...item, quantity: item.quantity + allowed } : item
           )
         }
 
-        return [...prev, { product, quantity: allowed }]
+        return [...prev, { product, variantId: chosenId, quantity: allowed }]
       })
     }
 
     if (!limited && allowed < quantity) {
-      warnLimit(product.name, product.stock)
+      warnLimit(name, stock)
       limited = true
     }
 
     if (openDrawer) setDrawerOpen(true)
-    else if (!limited) showToast(`${product.name} aggiunto al carrello`)
+    else if (!limited) showToast(`${name} aggiunto al carrello`)
 
     return allowed
   }
 
-  async function updateQuantity(productId, requested) {
-    const current = items.find((item) => item.product.id === productId)
-    const stock = current?.product.stock
+  async function updateQuantity(productId, variantId, requested) {
+    const key = lineKey(productId, variantId)
+    const current = items.find((item) => lineKey(item.product.id, item.variantId) === key)
+    const stock = current ? itemStock(current) : undefined
     const quantity = stock != null ? Math.min(requested, stock) : requested
 
-    if (quantity < requested && current) warnLimit(current.product.name, stock)
+    if (quantity < requested && current) warnLimit(itemName(current), stock)
 
     if (user) {
       const { data } =
         quantity <= 0
-          ? await client.delete(`/cart/${productId}`)
-          : await client.patch(`/cart/${productId}`, { quantity })
-      setItems(data.items)
-      if (quantity > 0 && quantity === requested) checkServerLimit(data.items, productId, quantity)
+          ? await client.delete(`/cart/${productId}`, { params: { product_variant_id: variantId } })
+          : await client.patch(`/cart/${productId}`, { quantity, product_variant_id: variantId })
+      const serverItems = fromServerItems(data.items)
+      setItems(serverItems)
+      if (quantity > 0 && quantity === requested) checkServerLimit(serverItems, productId, variantId, quantity)
       return
     }
 
     setItems((prev) =>
       quantity <= 0
-        ? prev.filter((item) => item.product.id !== productId)
-        : prev.map((item) => (item.product.id === productId ? { ...item, quantity } : item))
+        ? prev.filter((item) => lineKey(item.product.id, item.variantId) !== key)
+        : prev.map((item) => (lineKey(item.product.id, item.variantId) === key ? { ...item, quantity } : item))
     )
   }
 
-  // Ricontrolla stock e prezzi dei prodotti nel carrello (all'apertura di
-  // carrello, pannello e checkout): le quantità oltre la disponibilità vengono
-  // ridotte e i prodotti esauriti rimossi, con un riepilogo delle modifiche.
+  // Ricontrolla disponibilità e prezzi nel carrello (all'apertura di carrello, pannello e
+  // checkout): le quantità oltre la disponibilità vengono ridotte e quello che non c'è più
+  // (esaurito, variante nascosta) rimosso, con un riepilogo delle modifiche.
   async function syncAvailability() {
     if (items.length === 0) return []
 
-    const ids = items.map((item) => item.product.id).join(',')
+    const ids = [...new Set(items.map((item) => item.product.id))].join(',')
     const { data } = await client.get('/products/availability', { params: { ids } })
     const fresh = new Map(data.data.map((product) => [product.id, product]))
 
@@ -181,22 +212,33 @@ export function CartProvider({ children }) {
 
     for (const item of items) {
       const product = fresh.get(item.product.id)
-      const available = product?.stock ?? 0
+      const updated = product ? { product, variantId: item.variantId, quantity: item.quantity } : null
+      const available = updated ? itemStock(updated) : 0
       const quantity = Math.min(item.quantity, available)
 
       if (quantity < item.quantity) {
-        changes.push({ productId: item.product.id, name: item.product.name, from: item.quantity, to: quantity })
+        changes.push({
+          key: lineKey(item.product.id, item.variantId),
+          productId: item.product.id,
+          variantId: item.variantId,
+          name: itemName(item),
+          from: item.quantity,
+          to: quantity,
+        })
       }
-      if (quantity > 0) nextItems.push({ product, quantity })
+      if (quantity > 0) nextItems.push({ product, variantId: item.variantId, quantity })
     }
 
     if (user) {
       for (const change of changes) {
-        if (change.to > 0) await client.patch(`/cart/${change.productId}`, { quantity: change.to })
-        else await client.delete(`/cart/${change.productId}`)
+        if (change.to > 0) {
+          await client.patch(`/cart/${change.productId}`, { quantity: change.to, product_variant_id: change.variantId })
+        } else {
+          await client.delete(`/cart/${change.productId}`, { params: { product_variant_id: change.variantId } })
+        }
       }
       const { data: cart } = await client.get('/cart')
-      setItems(cart.items)
+      setItems(fromServerItems(cart.items))
     } else {
       setItems(nextItems)
     }
@@ -205,14 +247,15 @@ export function CartProvider({ children }) {
     return changes
   }
 
-  async function removeItem(productId) {
+  async function removeItem(productId, variantId = null) {
     if (user) {
-      const { data } = await client.delete(`/cart/${productId}`)
-      setItems(data.items)
+      const { data } = await client.delete(`/cart/${productId}`, { params: { product_variant_id: variantId } })
+      setItems(fromServerItems(data.items))
       return
     }
 
-    setItems((prev) => prev.filter((item) => item.product.id !== productId))
+    const key = lineKey(productId, variantId)
+    setItems((prev) => prev.filter((item) => lineKey(item.product.id, item.variantId) !== key))
   }
 
   async function clearCart() {
@@ -224,7 +267,7 @@ export function CartProvider({ children }) {
     setAdjustments([])
   }
 
-  const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+  const total = items.reduce((sum, item) => sum + itemPrice(item) * item.quantity, 0)
   const count = items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
