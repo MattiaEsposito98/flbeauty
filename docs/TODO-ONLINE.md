@@ -95,5 +95,5 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 - [ ] **Cambiare la password del database** (è comparsa in chat) e rifare `read -s` nel `.env`
 - [x] Cron di Aruba impostato (PHP, `backend/cron.php`, ogni 10 minuti): verificare la colonna "Ultima esecuzione"
 - [x] Email: SMTP di Aruba con `info@flbeauty.it` attivo e provato (verifica account arrivata a Hotmail, 2026-10-08)
-- [ ] Eliminare l'utente SSH `claude` e la sua chiave in Aruba quando abbiamo finito
+- [x] Utente SSH `claude` e chiave `~/.ssh/aruba_claude`: **si TENGONO** per i deploy automatici (decisione del 2026-10-10, vedi CLAUDE.md). Per revocare l'accesso: eliminare l'utente e la chiave in Aruba (Chiavi SSH)
 - [ ] Cambiare la passphrase della chiave SSH personale (`ssh-keygen -p`), è comparsa in chat

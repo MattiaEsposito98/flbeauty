@@ -211,3 +211,11 @@ Il `.htaccess` del sito deve quindi mandare al backend `livewire` **con o senza 
 nulla. Se il pannello "non fa entrare" o non risponde ai clic, controllare per prima cosa che
 `https://www.flbeauty.it/livewire-<codice>/livewire.min.js` risponda `text/javascript` e non
 `text/html` (il codice si vede nel sorgente della pagina `/admin/login`).
+
+## Deploy automatico con Claude (dal 2026-10-10)
+Un solo comando dalla radice del progetto: `bash tools/deploy.sh [all|backend|frontend]`. Controlla che il lavoro sia
+committato e pubblicato, aggiorna il backend sul server, costruisce e carica il negozio e verifica il sito online. La chiave
+SSH (`~/.ssh/aruba_claude`) sta solo sul PC e non è mai nel repository. Tutte le istruzioni per Claude (accesso, struttura del
+server, trappole già incontrate, cosa fare su un PC nuovo) sono in **`CLAUDE.md`** alla radice del progetto, che Claude Code
+legge da solo a ogni nuova chat: in una chat nuova basta dire «fai il deploy». L'accesso si può revocare in qualsiasi momento
+eliminando l'utente `claude` e la sua chiave nel pannello Aruba (Hosting Linux → Strumenti e impostazioni → Chiavi SSH).
