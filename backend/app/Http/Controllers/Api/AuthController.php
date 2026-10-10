@@ -21,7 +21,7 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'regex:/\S+\s+\S+/'],
             'username' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9._-]+$/', 'unique:users,username'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
@@ -33,6 +33,7 @@ class AuthController extends Controller
             'privacy_accepted' => ['accepted'],
             'marketing_consent' => ['sometimes', 'boolean'],
         ], [
+            'name.regex' => 'Inserisci sia il nome che il cognome.',
             'privacy_accepted.accepted' => 'Per registrarti devi dichiarare di aver compiuto 14 anni e di aver letto l\'informativa privacy.',
         ]);
 

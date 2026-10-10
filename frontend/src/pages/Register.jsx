@@ -11,7 +11,8 @@ import ComuneAutocomplete from '../components/ComuneAutocomplete'
 import PostalCodeField from '../components/PostalCodeField'
 
 const initialForm = {
-  name: '',
+  first_name: '',
+  last_name: '',
   username: '',
   email: '',
   password: '',
@@ -52,7 +53,7 @@ export default function Register() {
 
     try {
       await register({
-        name: form.name,
+        name: `${form.first_name.trim()} ${form.last_name.trim()}`,
         username: form.username,
         email: form.email,
         password: form.password,
@@ -119,17 +120,29 @@ export default function Register() {
           </h2>
           <div className="form-grid">
             <div className="field">
-              <label htmlFor="register-name">Nome e cognome *</label>
+              <label htmlFor="register-first-name">Nome *</label>
               <input
-                id="register-name"
-                name="name"
-                autoComplete="name"
-                value={form.name}
+                id="register-first-name"
+                name="first_name"
+                autoComplete="given-name"
+                value={form.first_name}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="field">
+              <label htmlFor="register-last-name">Cognome *</label>
+              <input
+                id="register-last-name"
+                name="last_name"
+                autoComplete="family-name"
+                value={form.last_name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            {fieldError('name') && <p className="error span-2">{fieldError('name')}</p>}
+            <div className="field span-2">
               <label htmlFor="register-username">Username *</label>
               <input
                 id="register-username"
