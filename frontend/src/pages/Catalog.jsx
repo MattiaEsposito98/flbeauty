@@ -157,8 +157,8 @@ export default function Catalog() {
             <LuSearch aria-hidden="true" />
             <input
               type="search"
-              placeholder="Cerca un prodotto..."
-              aria-label="Cerca un prodotto"
+              placeholder="Cerca per nome, marca..."
+              aria-label="Cerca per nome, marca o categoria"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />

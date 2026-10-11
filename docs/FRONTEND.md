@@ -717,5 +717,6 @@ compila da solo e il controllo di disponibilità vale per variante.
 - Le due schede sono il menu in alto (`UserResource::subNavigation()`); pagine in `app/Filament/Resources/Users/Pages` (`ListUsers`, `UserStats`). Test: `tests/Feature/UsersTabsTest.php`.
 
 ## Ricerca del negozio (2026-10-11)
+- Campo di ricerca del catalogo: «Cerca per nome, marca...» (corto apposta: su telefono più lungo veniva tagliato).
 - `GET /api/products?search=…`: ogni parola deve comparire nel **nome o nella descrizione** (indice FULLTEXT di MySQL, parole intere o inizi di parola) **oppure nella marca, nella categoria o in una variante attiva** (qui «contiene», es. «yara», «labbra», «corallo»). Più parole = tutte devono corrispondere, anche da campi diversi. In cima i prodotti il cui nome contiene la frase cercata.
 - I test (SQLite) usano un «contiene» semplice al posto di FULLTEXT; la ricerca vera si prova sul database MySQL locale.
