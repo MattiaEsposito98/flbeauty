@@ -103,7 +103,7 @@ export default function Login() {
             <p>{error}</p>
             {showResend && (
               <p>
-                Non hai ricevuto l'email?{' '}
+                Non hai ricevuto l'email? Guarda anche nella posta indesiderata (spam).{' '}
                 <button type="button" className="link-button" onClick={handleResend}>
                   Invia di nuovo
                 </button>

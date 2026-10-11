@@ -205,6 +205,11 @@ Se un invio fallisce **non si ripete da solo** (coda `deferred`): si vede nel lo
 - **Limite onesto:** `INVIATA` vuol dire che il server di posta (Aruba) ha accettato il messaggio. Se poi
   finisce nello spam o viene scartato da Hotmail/Gmail **da qui non si vede**. Per quello servono le
   statistiche di un servizio come Brevo/Mailjet (passaggio previsto quando ci saranno molti clienti)
+- **Email in spam (Outlook, Hotmail, iCloud) — 2026-10-11:** il DNS è già a posto (verificato: SPF `include:_spf.aruba.it`,
+  DKIM `a1._domainkey`, DMARC `p=none`). Il problema è la reputazione di un dominio nuovo con pochi invii; migliora col
+  tempo e con le segnalazioni «non è spam». Per questo la schermata dopo la registrazione e il messaggio del login
+  invitano a controllare la posta indesiderata e ad aggiungere `info@flbeauty.it` ai contatti. Se resta un problema
+  serio: Brevo (vedi sopra) o portare DMARC a `p=quarantine` solo dopo settimane di invii puliti.
 - Gli indirizzi nel log sono dati personali: stanno solo sul server, 14 giorni (come gli altri log)
 - Una versione con tabella nel database e pagina nel pannello esisteva per poche ore (2026-10-08): è stata
   tolta per scelta (migration `drop_email_logs_table`)

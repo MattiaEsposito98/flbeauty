@@ -94,6 +94,12 @@ export default function Register() {
           Ti abbiamo inviato un'email all'indirizzo <strong>{form.email}</strong> con un link per
           verificare il tuo account. Aprilo per poter accedere.
         </Alert>
+        <Alert type="info">
+          <strong>Non la trovi?</strong> Controlla anche la cartella <strong>posta indesiderata (spam)</strong>:
+          con alcuni provider (Outlook, Hotmail, iCloud) può finire lì. Se la trovi, segnala il messaggio come
+          «non indesiderato» e aggiungi <strong>info@flbeauty.it</strong> ai contatti, così riceverai senza
+          problemi anche le conferme dei tuoi ordini. Puoi sempre farla rinviare dalla pagina di accesso.
+        </Alert>
         <Link to="/login" className="btn btn-primary btn-block btn-lg">
           Vai al login
         </Link>
