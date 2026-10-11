@@ -2,22 +2,41 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Models\Brand;
 use App\Models\Category;
+use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Str;
 
 class ProductForm
 {
+    /** Campo "nome" usato sia per creare sia per rinominare una marca dal menu del prodotto. */
+    private static function brandNameField(bool $ignoreRecord = false): array
+    {
+        return [
+            TextInput::make('name')
+                ->label('Nome della marca')
+                ->required()
+                ->maxLength(255)
+                ->unique(table: Brand::class, ignoreRecord: $ignoreRecord)
+                ->validationMessages([
+                    'unique' => 'Esiste già una marca con questo nome.',
+                ]),
+        ];
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -53,6 +72,42 @@ class ProductForm
                                             'unique' => 'Esiste già una categoria con questo nome.',
                                         ]),
                                 ]),
+                            Select::make('brand_id')
+                                ->label('Marca (facoltativa)')
+                                ->relationship('brand', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->placeholder('Nessuna marca')
+                                // Tutto dal menu, senza una pagina "Marche": il + crea una marca, la matita
+                                // la rinomina, il cestino la elimina; la X toglie la marca solo da questo prodotto.
+                                ->createOptionForm(self::brandNameField())
+                                ->editOptionForm(self::brandNameField(ignoreRecord: true))
+                                ->editOptionModalHeading('Rinomina marca')
+                                ->suffixAction(
+                                    Action::make('deleteBrand')
+                                        ->label('Elimina marca')
+                                        ->tooltip('Elimina questa marca')
+                                        ->icon(Heroicon::Trash)
+                                        ->iconButton()
+                                        ->color('danger')
+                                        ->visible(fn (Select $component): bool => filled($component->getState()))
+                                        ->requiresConfirmation()
+                                        ->modalHeading(fn (Select $component): string => 'Eliminare la marca «'.$component->getSelectedRecord()?->name.'»?')
+                                        ->modalDescription(function (Select $component): string {
+                                            $count = $component->getSelectedRecord()?->products()->count() ?? 0;
+
+                                            return $count > 0
+                                                ? "È usata da {$count} ".($count === 1 ? 'prodotto' : 'prodotti').': i prodotti restano, solo senza marca.'
+                                                : 'Non è usata da nessun altro prodotto.';
+                                        })
+                                        ->modalSubmitActionLabel('Sì, elimina')
+                                        ->action(function (Select $component): void {
+                                            $component->getSelectedRecord()?->delete();
+                                            $component->state(null);
+
+                                            Notification::make()->title('Marca eliminata')->success()->send();
+                                        }),
+                                ),
                             Textarea::make('description')
                                 ->label('Descrizione')
                                 ->rows(4)

@@ -35,6 +35,11 @@ class ProductResource extends JsonResource
                 ->map(fn (string $path) => Storage::disk('public')->url($path))
                 ->values(),
             'video' => $this->video ? Storage::disk('public')->url($this->video) : null,
+            'brand' => $this->whenLoaded('brand', fn () => $this->brand ? [
+                'id' => $this->brand->id,
+                'name' => $this->brand->name,
+                'slug' => $this->brand->slug,
+            ] : null),
             'category' => $this->whenLoaded('category', fn () => [
                 'id' => $this->category->id,
                 'name' => $this->category->name,

@@ -12,10 +12,14 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $products = Product::query()
-            ->with(['category', 'activeVariants'])
+            ->with(['category', 'brand', 'activeVariants'])
             ->where('is_active', true)
             ->when($request->query('category'), fn ($query, $slug) => $query->whereHas(
                 'category',
+                fn ($q) => $q->where('slug', $slug)
+            ))
+            ->when($request->query('brand'), fn ($query, $slug) => $query->whereHas(
+                'brand',
                 fn ($q) => $q->where('slug', $slug)
             ))
             ->when($request->query('search'), function ($query, $search) {
@@ -57,7 +61,7 @@ class ProductController extends Controller
     {
         abort_unless($product->is_active, 404);
 
-        return new ProductResource($product->load(['category', 'activeVariants']));
+        return new ProductResource($product->load(['category', 'brand', 'activeVariants']));
     }
 
     /**
