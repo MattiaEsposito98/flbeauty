@@ -6,6 +6,7 @@ import {
   LuCircleAlert,
   LuCircleCheck,
   LuCircleX,
+  LuPlay,
   LuSearchX,
   LuShoppingBag,
   LuSparkles,
@@ -98,6 +99,9 @@ function ProductView({ product }) {
 
   // Foto: se la variante ne ha una propria è la prima della galleria.
   const images = [variant?.image, ...(product.images ?? [])].filter(Boolean)
+  // Il video (se c'è) è l'ultimo elemento della galleria, dopo le foto.
+  const media = [...images.map((src) => ({ type: 'image', src })), ...(product.video ? [{ type: 'video', src: product.video }] : [])]
+  const current = media[activeImage] ?? media[0]
   const price = variant ? variant.price : product.price
   const stock = product.has_variants ? (variant?.stock ?? 0) : product.stock
   const inStock = stock > 0
@@ -205,20 +209,36 @@ function ProductView({ product }) {
       <div className="product-layout">
         <div className="product-gallery">
           <div className="product-gallery-main">
-            <ProductImage src={images[activeImage]} alt={variant ? `${product.name} – ${variant.name}` : product.name} />
+            {current?.type === 'video' ? (
+              <video
+                key={current.src}
+                src={current.src}
+                poster={images[0]}
+                controls
+                playsInline
+                preload="metadata"
+                aria-label={`Video di ${product.name}`}
+              />
+            ) : (
+              <ProductImage src={current?.src} alt={variant ? `${product.name} – ${variant.name}` : product.name} />
+            )}
           </div>
 
-          {images.length > 1 && (
+          {media.length > 1 && (
             <div className="product-gallery-thumbs">
-              {images.map((src, index) => (
+              {media.map((item, index) => (
                 <button
-                  key={src}
+                  key={item.src}
                   type="button"
                   className={`product-thumb ${index === activeImage ? 'active' : ''}`}
                   onClick={() => setActiveImage(index)}
-                  aria-label={`Mostra immagine ${index + 1}`}
+                  aria-label={item.type === 'video' ? 'Guarda il video' : `Mostra immagine ${index + 1}`}
                 >
-                  <ProductImage src={src} compact loading="lazy" />
+                  {item.type === 'video' ? (
+                    <LuPlay aria-hidden="true" />
+                  ) : (
+                    <ProductImage src={item.src} compact loading="lazy" />
+                  )}
                 </button>
               ))}
             </div>

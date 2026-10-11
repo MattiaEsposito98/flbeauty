@@ -361,6 +361,10 @@ Piccoli cambi di comportamento arrivati col restyling:
   all'infinito nel checkout; ora vede un invito ad aggiungerne uno
 - **Bug corretto**: in registrazione gli errori sulla password (es. meno di 8
   caratteri, conferma diversa) non venivano mostrati
+- **Video prodotto** (2026-10-11): l'API (`ProductResource`) invia `video` e la scheda prodotto lo mostra
+  come ultima miniatura della galleria (icona play, lettore con comandi). Prima il video veniva solo salvato.
+- **Copertina nel pannello** (2026-10-11): `FileUpload::make('images')` usa `->appendFiles()`; senza, Filament mostra le
+  foto al contrario e la copertina (la prima salvata) compariva a destra. Ora la prima a sinistra è la copertina.
 - Immagini prodotto mancanti o non raggiungibili mostrano il placeholder del brand
   invece dell'icona "immagine rotta" (`ProductImage`). Nota: il prodotto "Lenzuolo
   bianco" nel DB locale punta a file che non esistono più in `storage/` — va

@@ -76,6 +76,10 @@ class ProductForm
                                 ->imageResizeUpscale(false)
                                 ->multiple()
                                 ->reorderable()
+                                // Senza questo Filament mostra le foto al contrario (l'ultima caricata a
+                                // sinistra) e la copertina finiva a destra: così la prima a sinistra è
+                                // davvero la prima salvata, cioè la copertina.
+                                ->appendFiles()
                                 ->maxFiles(8)
                                 ->directory('products/images')
                                 ->visibility('public')
