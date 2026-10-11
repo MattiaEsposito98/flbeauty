@@ -89,3 +89,27 @@ it('lets the admin rename and delete a brand from the product menu', function ()
     expect(Brand::find($this->yara->id))->toBeNull()
         ->and($this->gloss->fresh()->brand_id)->toBeNull();
 });
+
+it('finds products in the shop search by name, brand, category and variant', function () {
+    \App\Models\ProductVariant::create(['product_id' => $this->gloss->id, 'name' => 'Corallo', 'stock' => 2, 'is_active' => true]);
+    \App\Models\ProductVariant::create(['product_id' => $this->cream->id, 'name' => 'Nascosta', 'stock' => 2, 'is_active' => false]);
+
+    $names = fn (string $q) => collect($this->getJson('/api/products?search='.urlencode($q))->assertOk()->json('data'))->pluck('name')->all();
+
+    expect($names('gloss'))->toBe(['Lip gloss'])              // nome
+        ->and($names('yara'))->toBe(['Lip gloss'])            // marca
+        ->and($names('trucco'))->toBe(['Lip gloss'])          // categoria
+        ->and($names('corallo'))->toBe(['Lip gloss'])         // variante attiva
+        ->and($names('nascosta'))->toBe([])                   // variante disattivata
+        ->and($names('yara corallo'))->toBe(['Lip gloss'])    // più parole, anche da campi diversi
+        ->and($names('yara viso'))->toBe([])                  // tutte le parole devono corrispondere
+        ->and($names('100%'))->toBe([]);                      // i caratteri speciali non fanno da jolly
+});
+
+it('puts name matches before brand matches in the search results', function () {
+    Product::create(['category_id' => $this->skin->id, 'name' => 'Yara crema mani', 'price' => 4, 'stock' => 3, 'is_active' => true]);
+
+    $names = collect($this->getJson('/api/products?search=yara')->json('data'))->pluck('name')->all();
+
+    expect($names)->toBe(['Yara crema mani', 'Lip gloss']);   // nome prima, poi marca (anche se «Lip» viene dopo in ordine alfabetico)
+});

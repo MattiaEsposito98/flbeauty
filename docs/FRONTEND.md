@@ -715,3 +715,7 @@ compila da solo e il controllo di disponibilità vale per variante.
 - **Clienti** (si apre per prima): subito la tabella, con filtri rapidi in alto e il numero tra parentesi: Tutti, Da verificare, Hanno ordinato, Senza ordini, Bloccati (lo staff non conta). I filtri avanzati (consenso alle offerte, città, ecc.) restano sopra la tabella.
 - **Statistiche** (`/admin/users/statistiche`): i 5 riquadri con le percentuali, il grafico accessi/registrazioni, le città e il banner cookie. Prima stavano tutti sopra la tabella.
 - Le due schede sono il menu in alto (`UserResource::subNavigation()`); pagine in `app/Filament/Resources/Users/Pages` (`ListUsers`, `UserStats`). Test: `tests/Feature/UsersTabsTest.php`.
+
+## Ricerca del negozio (2026-10-11)
+- `GET /api/products?search=…`: ogni parola deve comparire nel **nome o nella descrizione** (indice FULLTEXT di MySQL, parole intere o inizi di parola) **oppure nella marca, nella categoria o in una variante attiva** (qui «contiene», es. «yara», «labbra», «corallo»). Più parole = tutte devono corrispondere, anche da campi diversi. In cima i prodotti il cui nome contiene la frase cercata.
+- I test (SQLite) usano un «contiene» semplice al posto di FULLTEXT; la ricerca vera si prova sul database MySQL locale.

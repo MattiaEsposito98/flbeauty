@@ -22,13 +22,7 @@ class ProductController extends Controller
                 'brand',
                 fn ($q) => $q->where('slug', $slug)
             ))
-            ->when($request->query('search'), function ($query, $search) {
-                $booleanQuery = $this->toFullTextBooleanQuery($search);
-
-                if ($booleanQuery !== '') {
-                    $query->whereFullText(['name', 'description'], $booleanQuery, ['mode' => 'boolean']);
-                }
-            })
+            ->when($request->query('search'), fn ($query, $search) => $this->applySearch($query, $search))
             ->orderBy('name')
             ->paginate(12);
 
@@ -65,20 +59,60 @@ class ProductController extends Controller
     }
 
     /**
-     * Trasforma il testo digitato dall'utente in una query per l'indice
-     * FULLTEXT di MySQL in modalità boolean: ogni parola diventa un prefisso
-     * obbligatorio ("+parola*"), per avvicinarsi al comportamento della
-     * vecchia ricerca "contiene" pur usando l'indice (parole intere/prefissi,
-     * non sottostringhe a metà parola — limite noto di FULLTEXT).
+     * Ricerca del catalogo: ogni parola digitata deve comparire nel nome o nella descrizione del
+     * prodotto, oppure nella sua marca, categoria o in una variante attiva (es. «yara», «labbra»,
+     * «corallo»). In cima i prodotti il cui nome contiene la frase cercata.
      */
-    private function toFullTextBooleanQuery(string $search): string
+    private function applySearch($query, string $search): void
     {
-        // Caratteri con significato speciale in modalità boolean: rimossi per
-        // evitare errori di sintassi ed evitare che l'utente li usi come operatori.
+        $words = $this->searchWords($search);
+
+        if ($words === []) {
+            return;
+        }
+
+        foreach ($words as $word) {
+            $like = '%'.$this->escapeLike($word).'%';
+
+            $query->where(function ($q) use ($word, $like) {
+                $q->where(fn ($text) => $this->matchesText($text, $word, $like))
+                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like))
+                    ->orWhereHas('category', fn ($c) => $c->where('name', 'like', $like))
+                    ->orWhereHas('activeVariants', fn ($v) => $v->where('name', 'like', $like));
+            });
+        }
+
+        $query->orderByRaw('CASE WHEN name LIKE ? THEN 0 ELSE 1 END', ['%'.$this->escapeLike(implode(' ', $words)).'%']);
+    }
+
+    /**
+     * Nome/descrizione: su MySQL usa l'indice FULLTEXT in modalità boolean con la parola come
+     * prefisso ("+parola*": parole intere o inizi di parola, non pezzi a metà parola — limite noto
+     * di FULLTEXT); altrove (test con SQLite) ricade su un semplice «contiene».
+     */
+    private function matchesText($query, string $word, string $like): void
+    {
+        if ($query->getConnection()->getDriverName() === 'mysql') {
+            $query->whereFullText(['name', 'description'], '+'.$word.'*', ['mode' => 'boolean']);
+
+            return;
+        }
+
+        $query->where('name', 'like', $like)->orWhere('description', 'like', $like);
+    }
+
+    /** @return list<string> */
+    private function searchWords(string $search): array
+    {
+        // Caratteri con significato speciale in modalità boolean: rimossi per evitare errori di
+        // sintassi ed evitare che l'utente li usi come operatori.
         $sanitized = preg_replace('/[+\-><()~*"@]+/', ' ', $search);
 
-        $words = array_filter(preg_split('/\s+/', trim($sanitized)));
+        return array_values(array_filter(preg_split('/\s+/', trim($sanitized))));
+    }
 
-        return implode(' ', array_map(fn ($word) => '+'.$word.'*', $words));
+    private function escapeLike(string $value): string
+    {
+        return addcslashes($value, '%_\\');
     }
 }
