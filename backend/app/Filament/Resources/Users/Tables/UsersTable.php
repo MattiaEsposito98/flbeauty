@@ -47,7 +47,7 @@ class UsersTable
                     ->boolean()
                     ->alignCenter(),
                 IconColumn::make('marketing_consent')
-                    ->label('Offerte via email')
+                    ->label('Consenso alle offerte')
                     ->boolean()
                     ->trueIcon('heroicon-o-envelope')
                     ->falseIcon('heroicon-o-minus')
@@ -101,7 +101,7 @@ class UsersTable
                         false: fn (Builder $q) => $q->whereNull('email_verified_at'),
                     ),
                 TernaryFilter::make('marketing_consent')
-                    ->label('Offerte via email')
+                    ->label('Consenso alle offerte')
                     ->trueLabel('Hanno dato il consenso')
                     ->falseLabel('Senza consenso'),
                 TernaryFilter::make('has_orders')

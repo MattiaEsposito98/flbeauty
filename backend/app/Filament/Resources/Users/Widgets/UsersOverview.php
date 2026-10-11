@@ -56,7 +56,7 @@ class UsersOverview extends StatsOverviewWidget
                 ->descriptionIcon(Heroicon::OutlinedShoppingBag)
                 ->color('success'),
 
-            Stat::make('Offerte via email', $marketing.' · '.$percent($marketing))
+            Stat::make('Consenso alle offerte', $marketing.' · '.$percent($marketing))
                 ->description('Ricevono le comunicazioni promozionali')
                 ->descriptionIcon(Heroicon::OutlinedEnvelope)
                 ->color('primary'),

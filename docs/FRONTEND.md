@@ -710,3 +710,8 @@ compila da solo e il controllo di disponibilità vale per variante.
 - **Colonne**: niente colonna Marca (si legge già sotto il nome), Pezzi modificabili direttamente nella lista (bloccati per i prodotti con varianti: lì sono la somma delle varianti), Venduti (pezzi negli ordini non annullati, ordinabile), Ultima modifica (nascosta, si attiva dal menu colonne).
 - **Azioni**: «Vedi nel negozio» (icona, apre la pagina sul sito; solo prodotti attivi). Sui prodotti selezionati: Rendi visibili, Nascondi, Cambia categoria, Cambia marca, Elimina.
 - Test: `tests/Feature/ProductsTableTest.php`.
+
+## Utenti nel pannello: due schede (2026-10-11)
+- **Clienti** (si apre per prima): subito la tabella, con filtri rapidi in alto e il numero tra parentesi: Tutti, Da verificare, Hanno ordinato, Senza ordini, Bloccati (lo staff non conta). I filtri avanzati (consenso alle offerte, città, ecc.) restano sopra la tabella.
+- **Statistiche** (`/admin/users/statistiche`): i 5 riquadri con le percentuali, il grafico accessi/registrazioni, le città e il banner cookie. Prima stavano tutti sopra la tabella.
+- Le due schede sono il menu in alto (`UserResource::subNavigation()`); pagine in `app/Filament/Resources/Users/Pages` (`ListUsers`, `UserStats`). Test: `tests/Feature/UsersTabsTest.php`.

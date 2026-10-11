@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users;
 
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Users\Pages\UserStats;
 use App\Filament\Resources\Users\Pages\ViewUser;
 use App\Filament\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Resources\Users\Tables\UsersTable;
@@ -12,6 +13,8 @@ use App\Filament\Resources\Users\Widgets\UserActivityChart;
 use App\Filament\Resources\Users\Widgets\UsersOverview;
 use App\Models\User;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -39,6 +42,8 @@ class UserResource extends Resource
 
     protected static ?int $navigationSort = 35;
 
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -58,6 +63,21 @@ class UserResource extends Resource
         return UsersTable::configure($table);
     }
 
+    /** Le due schede in alto: «Clienti» (tabella) e «Statistiche». */
+    public static function subNavigation(): array
+    {
+        return [
+            NavigationItem::make('Clienti')
+                ->icon(Heroicon::OutlinedUsers)
+                ->url(static::getUrl('index'))
+                ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.index')),
+            NavigationItem::make('Statistiche')
+                ->icon(Heroicon::OutlinedChartBar)
+                ->url(static::getUrl('statistiche'))
+                ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.statistiche')),
+        ];
+    }
+
     public static function getWidgets(): array
     {
         return [
@@ -72,6 +92,7 @@ class UserResource extends Resource
     {
         return [
             'index' => ListUsers::route('/'),
+            'statistiche' => UserStats::route('/statistiche'),
             'view' => ViewUser::route('/{record}'),
         ];
     }
