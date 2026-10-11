@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { LuChevronLeft, LuChevronRight, LuSearch, LuSearchX } from 'react-icons/lu'
+import { LuChevronDown, LuChevronLeft, LuChevronRight, LuSearch, LuSearchX, LuX } from 'react-icons/lu'
+import PillScroller from '../components/PillScroller'
 import client from '../api/client'
 import ProductCard from '../components/ProductCard'
 import Seo from '../components/Seo'
@@ -18,9 +19,12 @@ export default function Catalog() {
   const legacyCategory = searchParams.get('category')
   const activeCategory = categorySlug ?? ''
   const activeSearch = searchParams.get('q') ?? ''
+  // La marca è un filtro dentro la categoria (?marca=slug): si vede solo se la categoria ne ha.
+  const activeBrand = activeCategory ? (searchParams.get('marca') ?? '') : ''
   const activePage = Number(searchParams.get('page')) || 1
   const [searchInput, setSearchInput] = useState(activeSearch)
   const [categories, setCategories] = useState([])
+  const [brands, setBrands] = useState([])
   const [products, setProducts] = useState([])
   const [meta, setMeta] = useState({ currentPage: 1, lastPage: 1, total: 0 })
   const [loading, setLoading] = useState(true)
@@ -31,9 +35,19 @@ export default function Catalog() {
   }, [])
 
   useEffect(() => {
+    setBrands([])
+    if (!activeCategory) return
+    client
+      .get('/brands', { params: { category: activeCategory } })
+      .then(({ data }) => setBrands(data.data))
+      .catch(() => setBrands([]))
+  }, [activeCategory])
+
+  useEffect(() => {
     setLoading(true)
     const params = { page: activePage }
     if (activeCategory) params.category = activeCategory
+    if (activeBrand) params.brand = activeBrand
     if (activeSearch) params.search = activeSearch
 
     client
@@ -47,7 +61,7 @@ export default function Catalog() {
         })
       })
       .finally(() => setLoading(false))
-  }, [activeCategory, activeSearch, activePage])
+  }, [activeCategory, activeBrand, activeSearch, activePage])
 
   // Cambia pagina mantenendo gli altri filtri attivi (categoria, ricerca).
   function goToPage(page) {
@@ -75,6 +89,14 @@ export default function Catalog() {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
+  function selectBrand(slug) {
+    const next = new URLSearchParams(searchParams)
+    if (slug) next.set('marca', slug)
+    else next.delete('marca')
+    next.delete('page')
+    setSearchParams(next)
+  }
+
   function selectCategory(slug) {
     const query = activeSearch ? `?q=${encodeURIComponent(activeSearch)}` : ''
     navigate(`${slug ? `/categoria/${slug}` : '/'}${query}`)
@@ -86,6 +108,7 @@ export default function Catalog() {
 
   const activeCategoryData = categories.find((category) => category.slug === activeCategory)
   const activeCategoryName = activeCategoryData?.name
+  const activeBrandData = brands.find((brand) => brand.slug === activeBrand)
   const heading = activeSearch
     ? `Risultati per “${activeSearch}”`
     : (activeCategoryName ?? 'Tutti i prodotti')
@@ -119,7 +142,7 @@ export default function Catalog() {
         title={seoTitle}
         description={seoDescription}
         path={seoPage}
-        noindex={Boolean(activeSearch) || (activeCategory !== '' && !loading && !activeCategoryName && categories.length > 0)}
+        noindex={Boolean(activeSearch) || Boolean(activeBrand) || (activeCategory !== '' && !loading && !activeCategoryName && categories.length > 0)}
       />
       <section className="hero">
         <div className="hero-content">
@@ -151,14 +174,30 @@ export default function Catalog() {
       <div className="catalog-toolbar" ref={toolbarRef}>
         <div className="section-heading">
           <SectionTitle>{heading}</SectionTitle>
-          {!loading && (
-            <span className="results-count">
-              {meta.total} {meta.total === 1 ? 'prodotto' : 'prodotti'}
-            </span>
-          )}
+          <div className="section-meta">
+            {!loading && (
+              <span className="results-count">
+                {meta.total} {meta.total === 1 ? 'prodotto' : 'prodotti'}
+              </span>
+            )}
+            {brands.length > 0 && (
+              <label className="brand-select">
+                <span>Marca</span>
+                <select value={activeBrand} onChange={(e) => selectBrand(e.target.value)}>
+                  <option value="">Tutte</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.slug}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+                <LuChevronDown aria-hidden="true" />
+              </label>
+            )}
+          </div>
         </div>
 
-        <div className="category-pills" role="group" aria-label="Filtra per categoria">
+        <PillScroller label="Filtra per categoria" activeKey={activeCategory}>
           <button
             type="button"
             className={`pill ${activeCategory === '' ? 'active' : ''}`}
@@ -176,7 +215,16 @@ export default function Catalog() {
               {category.name}
             </button>
           ))}
-        </div>
+        </PillScroller>
+
+        {activeBrandData && (
+          <div className="active-filters">
+            <button type="button" className="filter-chip" onClick={() => selectBrand('')} aria-label={`Togli il filtro marca ${activeBrandData.name}`}>
+              Marca: <strong>{activeBrandData.name}</strong>
+              <LuX aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
 
       {loading ? (

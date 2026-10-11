@@ -1210,10 +1210,134 @@ input[type='checkbox'] {
   color: var(--ink-soft);
 }
 
+/* Categorie: una sola riga che scorre di lato (PillScroller), con frecce e sfumature ai bordi. */
+.pill-scroller {
+  --fade-left: 0px;
+  --fade-right: 0px;
+  position: relative;
+}
+
+.pill-scroller.fade-left {
+  --fade-left: 3rem;
+}
+
+.pill-scroller.fade-right {
+  --fade-right: 3rem;
+}
+
 .category-pills {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.6rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.6rem;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-left), #000 calc(100% - var(--fade-right)), transparent);
+}
+
+.category-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.pill-arrow {
+  position: absolute;
+  top: calc(50% - 0.2rem);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  transform: translateY(-50%);
+  border: 1px solid var(--rose-300);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--rose-700);
+  box-shadow: 0 6px 14px -8px rgba(142, 79, 91, 0.6);
+  transition: all 0.2s var(--ease);
+}
+
+.pill-arrow:hover {
+  border-color: var(--rose-500);
+  background: var(--rose-50);
+}
+
+.pill-arrow-left {
+  left: -0.4rem;
+}
+
+.pill-arrow-right {
+  right: -0.4rem;
+}
+
+/* Marca: menu a tendina accanto al numero di prodotti. */
+.section-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
+.brand-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.brand-select select {
+  min-width: 9.5rem;
+  margin: 0;
+  padding: 0.45rem 2.2rem 0.45rem 0.95rem;
+  border: 1px solid var(--rose-300);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 500;
+  appearance: none;
+  cursor: pointer;
+}
+
+.brand-select select:focus-visible {
+  border-color: var(--rose-500);
+  outline: 2px solid var(--rose-200);
+}
+
+.brand-select svg {
+  position: absolute;
+  right: 0.8rem;
+  color: var(--rose-600);
+  pointer-events: none;
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: -0.4rem;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem 0.35rem 0.9rem;
+  border: 1px solid var(--rose-300);
+  border-radius: var(--radius-pill);
+  background: var(--rose-100);
+  color: var(--rose-800);
+  font-size: 0.85rem;
+  transition: all 0.2s var(--ease);
+}
+
+.filter-chip:hover {
+  border-color: var(--rose-500);
+  background: var(--rose-200);
 }
 
 .pill {
@@ -2897,16 +3021,51 @@ input[type='checkbox'] {
     font-size: 1rem;
   }
 
+  /* Sul telefono si scorre col dito: niente frecce, la riga arriva ai bordi dello schermo. */
   .category-pills {
-    flex-wrap: nowrap;
-    overflow-x: auto;
     margin: 0 -1rem;
-    padding: 0 1rem 0.35rem;
-    scrollbar-width: none;
+    padding: 0.25rem 1rem 0.45rem;
   }
 
-  .category-pills::-webkit-scrollbar {
+  .pill-arrow {
     display: none;
+  }
+
+  /* Ordine logico sul telefono: titolo, categorie, poi numero prodotti e menu Marca, poi il filtro attivo. */
+  .catalog-toolbar .section-heading {
+    display: contents;
+  }
+
+  .catalog-toolbar .section-meta {
+    order: 1;
+  }
+
+  .catalog-toolbar .active-filters {
+    order: 2;
+  }
+
+  .section-meta,
+  .brand-select {
+    width: 100%;
+  }
+
+  .section-meta {
+    justify-content: space-between;
+  }
+
+  .section-meta .brand-select {
+    width: auto;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .brand-select select {
+    min-width: 0;
+    max-width: 13rem;
+  }
+
+  .brand-select select {
+    flex: 1;
   }
 
   .product-grid {

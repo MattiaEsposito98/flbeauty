@@ -156,7 +156,7 @@ function ProductView({ product }) {
       url: productUrl,
       ...((product.images ?? []).length > 0 && { image: product.images }),
       ...(product.category && { category: product.category.name }),
-      brand: { '@type': 'Brand', name: SITE_NAME },
+      brand: { '@type': 'Brand', name: product.brand?.name ?? SITE_NAME },
       offers,
     },
     {
@@ -246,7 +246,11 @@ function ProductView({ product }) {
         </div>
 
         <div className="product-info">
-          {product.category && <span className="eyebrow">{product.category.name}</span>}
+          {(product.category || product.brand) && (
+            <span className="eyebrow">
+              {[product.category?.name, product.brand?.name].filter(Boolean).join(' · ')}
+            </span>
+          )}
           <h1>{product.name}</h1>
           <p className="product-price">{formatPrice(price)}</p>
 

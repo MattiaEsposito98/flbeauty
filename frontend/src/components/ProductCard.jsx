@@ -29,7 +29,11 @@ export default function ProductCard({ product }) {
       </div>
 
       <div className="product-card-body">
-        {product.category && <span className="product-card-category">{product.category.name}</span>}
+        {(product.category || product.brand) && (
+          <span className="product-card-category">
+            {[product.category?.name, product.brand?.name].filter(Boolean).join(' · ')}
+          </span>
+        )}
         <h3 className="product-card-title">
           <Link to={`/prodotti/${product.slug}`}>{product.name}</Link>
         </h3>
