@@ -694,3 +694,5 @@ per variante con la sua disponibilità).
 
 **Ordini dall'admin:** nella riga dell'articolo compare la scelta della variante (con "N disponibili"), il prezzo si
 compila da solo e il controllo di disponibilità vale per variante.
+
+- **Avviso conferma ordine su mobile** (2026-10-11): `OrderConfirmDialog` ora è un portale nel `body`; prima, dentro il riepilogo (con transform), `position: fixed` si ancorava al riquadro e l'avviso finiva tagliato sotto l'header.

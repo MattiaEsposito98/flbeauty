@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { LuHeart, LuMessageCircle, LuPackageCheck, LuSend, LuWallet } from 'react-icons/lu'
 import { formatPrice } from '../utils/format'
 
@@ -24,7 +25,9 @@ export default function OrderConfirmDialog({ open, total, itemCount, submitting,
 
   if (!open) return null
 
-  return (
+  // Portale nel body: dentro il riepilogo (che ha animazioni/transform) `position: fixed`
+  // si ancorava a quel riquadro invece che allo schermo, e su mobile finiva sotto l'header.
+  return createPortal(
     <div
       className="modal-backdrop"
       onClick={(e) => {
@@ -88,6 +91,7 @@ export default function OrderConfirmDialog({ open, total, itemCount, submitting,
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
