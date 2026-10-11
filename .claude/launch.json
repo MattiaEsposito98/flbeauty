@@ -9,8 +9,8 @@
     },
     {
       "name": "backend-dev",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd backend && php artisan serve --port 8000"],
+      "runtimeExecutable": "D:/xampp/php/php.exe",
+      "runtimeArgs": ["backend/artisan", "serve", "--port=8000"],
       "port": 8000
     }
   ]

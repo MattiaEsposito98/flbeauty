@@ -696,3 +696,17 @@ per variante con la sua disponibilità).
 compila da solo e il controllo di disponibilità vale per variante.
 
 - **Avviso conferma ordine su mobile** (2026-10-11): `OrderConfirmDialog` ora è un portale nel `body`; prima, dentro il riepilogo (con transform), `position: fixed` si ancorava al riquadro e l'avviso finiva tagliato sotto l'header.
+
+## Marche dei prodotti (2026-10-11)
+- Campo **Marca (facoltativa)** nel prodotto, accanto alla categoria: menu a tendina con il **+** per creare una marca al volo (come la categoria), la **matita** per rinominarla, il **cestino** per eliminarla (chiede conferma e dice quanti prodotti la usano: restano, senza marca) e la **X** per toglierla solo da quel prodotto. Nessuna voce di menu a parte nel pannello. Tabella `brands` (nome e slug univoci), `products.brand_id` (se la marca viene cancellata il prodotto resta, senza marca).
+- API: `GET /api/brands[?category=slug]` (solo marche con prodotti attivi), `GET /api/products?brand=slug`; i prodotti includono `brand`.
+- Negozio (barra filtri del catalogo): le **categorie** sono una sola riga che scorre di lato (`PillScroller`: frecce ‹ › e sfumatura ai bordi su computer, scorrimento col dito su telefono; la categoria attiva viene centrata). Dentro una categoria con marche compare il menu **«Marca: Tutte ▾»** accanto al numero di prodotti (su telefono sotto le categorie) e, quando è attiva, l'etichetta **«Marca: X ✕»** per toglierla (`?marca=slug`, pagine con filtro marca non indicizzate da Google). Marca mostrata accanto alla categoria nelle schede e nella pagina prodotto; nei dati per Google è la marca del prodotto (altrimenti F&L Beauty).
+- **Catalogo di prova italiano (solo locale)**: `php artisan db:seed --class=ItalianCatalogSeeder` (con il PHP di XAMPP) crea categorie, marche, ~28 prodotti con varianti e immagini segnaposto disegnate con GD; elimina prima i vecchi prodotti di prova (tranne «Lenzuolo bianco») e gli ordini di prova che li contengono. Si può rilanciare quando vuoi; non gira mai in produzione.
+
+## Lista prodotti nel pannello (2026-10-11)
+- **Ricerca**: trova il prodotto anche scrivendo la marca, la categoria o il nome di una variante (es. «corallo»). Sotto il nome: categoria · marca · numero di varianti.
+- **Schede rapide** in alto con il numero: Tutti, Esauriti, Scorte basse (1-5 pezzi, `ListProducts::LOW_STOCK`), Nascosti.
+- **Filtri**: Categoria e Marca (scelta multipla), Attivo, Con/senza varianti, «Da completare» (senza foto / senza marca / senza categoria).
+- **Colonne**: niente colonna Marca (si legge già sotto il nome), Pezzi modificabili direttamente nella lista (bloccati per i prodotti con varianti: lì sono la somma delle varianti), Venduti (pezzi negli ordini non annullati, ordinabile), Ultima modifica (nascosta, si attiva dal menu colonne).
+- **Azioni**: «Vedi nel negozio» (icona, apre la pagina sul sito; solo prodotti attivi). Sui prodotti selezionati: Rendi visibili, Nascondi, Cambia categoria, Cambia marca, Elimina.
+- Test: `tests/Feature/ProductsTableTest.php`.
