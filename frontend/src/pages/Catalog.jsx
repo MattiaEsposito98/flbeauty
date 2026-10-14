@@ -9,6 +9,9 @@ import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import OctagonOrnament from '../components/OctagonOrnament'
 import { DEFAULT_DESCRIPTION } from '../config/site'
+import { getHomeSeed } from '../utils/homeSeed'
+
+const PAGE_SIZE = 24
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -45,10 +48,15 @@ export default function Catalog() {
 
   useEffect(() => {
     setLoading(true)
-    const params = { page: activePage }
+    const params = { page: activePage, per_page: PAGE_SIZE }
     if (activeCategory) params.category = activeCategory
     if (activeBrand) params.brand = activeBrand
     if (activeSearch) params.search = activeSearch
+    // Home («Tutte», senza filtri): prodotti mescolati, con la cosmetica in evidenza (lato server).
+    if (!activeCategory && !activeSearch) {
+      const seed = getHomeSeed()
+      if (seed) params.seed = seed
+    }
 
     client
       .get('/products', { params })

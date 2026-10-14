@@ -5,12 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Support\HomeMix;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = max(1, min(48, (int) $request->query('per_page', 12)));
+
+        // Home («Tutte», senza ricerca né filtri) con un seed: prodotti mescolati, vedi HomeMix.
+        // Senza seed (motori di ricerca, vecchi link) l'ordine resta quello alfabetico, sempre uguale.
+        $seed = $request->query('seed');
+        if (is_string($seed) && preg_match('/^[A-Za-z0-9]{6,40}$/', $seed)
+            && ! $request->filled('category') && ! $request->filled('brand') && ! $request->filled('search')
+            && ($ids = HomeMix::orderedIds($seed, $perPage)) !== null) {
+            return $this->mixedPage($request, $ids, $perPage);
+        }
+
         $products = Product::query()
             ->with(['category', 'brand', 'activeVariants'])
             ->where('is_active', true)
@@ -24,9 +37,32 @@ class ProductController extends Controller
             ))
             ->when($request->query('search'), fn ($query, $search) => $this->applySearch($query, $search))
             ->orderBy('name')
-            ->paginate(12);
+            ->paginate($perPage);
 
         return ProductResource::collection($products);
+    }
+
+    /** Una pagina della home mescolata: carica solo i prodotti della pagina, nell'ordine di $ids. */
+    private function mixedPage(Request $request, array $ids, int $perPage)
+    {
+        $page = max(1, (int) $request->query('page', 1));
+        $slice = array_slice($ids, ($page - 1) * $perPage, $perPage);
+
+        $products = Product::query()
+            ->with(['category', 'brand', 'activeVariants'])
+            ->whereIn('id', $slice)
+            ->get()
+            ->keyBy('id');
+
+        $ordered = collect($slice)->map(fn ($id) => $products->get($id))->filter()->values();
+
+        return ProductResource::collection(new LengthAwarePaginator(
+            $ordered,
+            count($ids),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        ));
     }
 
     /**

@@ -720,3 +720,11 @@ compila da solo e il controllo di disponibilità vale per variante.
 - Campo di ricerca del catalogo: «Cerca per nome, marca...» (corto apposta: su telefono più lungo veniva tagliato).
 - `GET /api/products?search=…`: ogni parola deve comparire nel **nome o nella descrizione** (indice FULLTEXT di MySQL, parole intere o inizi di parola) **oppure nella marca, nella categoria o in una variante attiva** (qui «contiene», es. «yara», «labbra», «corallo»). Più parole = tutte devono corrispondere, anche da campi diversi. In cima i prodotti il cui nome contiene la frase cercata.
 - I test (SQLite) usano un «contiene» semplice al posto di FULLTEXT; la ricerca vera si prova sul database MySQL locale.
+
+## Home mescolata (2026-10-14)
+- **Prima**: la home mostrava 12 prodotti in ordine alfabetico (con 118 profumi su 151, i nomi con i numeri riempivano tutto). **Ora**: 24 per pagina (`per_page`, massimo 48) e, nella home «Tutte» senza ricerca né filtri, ordine mescolato con circa **60%** di **Cosmetica** e il resto casuale dalle altre categorie (`App\Support\HomeMix`).
+- La categoria in evidenza e la quota stanno in `config/shop.php` (`featured_category_slug` = `cosmetica`, `featured_ratio` = 0.6; slug cambiabile con `SHOP_FEATURED_CATEGORY_SLUG` nel `.env`). **In futuro**: casella «in evidenza» nel pannello, per scegliere i prodotti/la categoria senza toccare il codice.
+- **Come resta coerente**: il browser genera un `seed` a ogni nuova visita (`utils/homeSeed.js`, in `sessionStorage`) e lo manda con `?seed=…`. Stesso seed = stesso ordine su tutte le pagine (nessun doppione, niente prodotti persi, «indietro» non cambia nulla); nuova visita = ordine nuovo.
+- **Quota per pagina**: 14 cosmetica + 10 altri su 24, mescolati tra loro. Quando la cosmetica finisce (oggi sono 15 prodotti, quindi già alla pagina 2) le pagine successive si riempiono con le altre categorie; più prodotti di cosmetica aggiungi, più la home varia.
+- **Resta fisso (alfabetico)** per: motori di ricerca (niente seed), categorie, marche, ricerche, link senza seed o con seed non valido, e se la categoria in evidenza non esiste.
+- **Velocità**: legge solo gli id (una query) e carica i prodotti della pagina. Misurato: ~107 ms a pagina con 5.000 prodotti (ordine normale: ~54 ms); con 150 prodotti pochi ms. Test: `tests/Feature/HomeMixTest.php`.
