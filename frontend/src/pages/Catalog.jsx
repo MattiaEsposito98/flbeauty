@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useNavigationType, useParams, useSearchParams } from 'react-router-dom'
 import { LuChevronDown, LuChevronLeft, LuChevronRight, LuSearch, LuSearchX, LuX } from 'react-icons/lu'
 import PillScroller from '../components/PillScroller'
 import client from '../api/client'
@@ -9,13 +9,14 @@ import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import OctagonOrnament from '../components/OctagonOrnament'
 import { DEFAULT_DESCRIPTION } from '../config/site'
-import { getHomeSeed } from '../utils/homeSeed'
+import { initialHomeSeed, refreshHomeSeed } from '../utils/homeSeed'
 
 const PAGE_SIZE = 24
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
+  const navigationType = useNavigationType()
   // La categoria sta nell'URL pulito (/categoria/rossetti), così Google la indicizza
   // come pagina a sé. Il vecchio formato /?category=… viene rimandato al nuovo.
   const { slug: categorySlug } = useParams()
@@ -28,6 +29,10 @@ export default function Catalog() {
   const [searchInput, setSearchInput] = useState(activeSearch)
   const [categories, setCategories] = useState([])
   const [brands, setBrands] = useState([])
+  // Ordine mescolato della home: cambia a ogni ricaricamento e quando si torna su «Tutte»,
+  // resta uguale tra una pagina e l'altra e col tasto «indietro» (vedi utils/homeSeed.js).
+  const [homeSeed, setHomeSeed] = useState(() => initialHomeSeed(navigationType))
+  const previousCategory = useRef(activeCategory)
   const [products, setProducts] = useState([])
   const [meta, setMeta] = useState({ currentPage: 1, lastPage: 1, total: 0 })
   const [loading, setLoading] = useState(true)
@@ -53,14 +58,15 @@ export default function Catalog() {
     if (activeBrand) params.brand = activeBrand
     if (activeSearch) params.search = activeSearch
     // Home («Tutte», senza filtri): prodotti mescolati, con la cosmetica in evidenza (lato server).
-    if (!activeCategory && !activeSearch) {
-      const seed = getHomeSeed()
-      if (seed) params.seed = seed
-    }
+    if (!activeCategory && !activeSearch && homeSeed) params.seed = homeSeed
+
+    // Se i filtri cambiano mentre la richiesta è in corso, la risposta vecchia viene ignorata.
+    let ignore = false
 
     client
       .get('/products', { params })
       .then(({ data }) => {
+        if (ignore) return
         setProducts(data.data)
         setMeta({
           currentPage: data.meta.current_page,
@@ -68,8 +74,22 @@ export default function Catalog() {
           total: data.meta.total,
         })
       })
-      .finally(() => setLoading(false))
-  }, [activeCategory, activeBrand, activeSearch, activePage])
+      .finally(() => {
+        if (!ignore) setLoading(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [activeCategory, activeBrand, activeSearch, activePage, homeSeed])
+
+  // Si torna su «Tutte» da una categoria (non con «indietro»): nuovo ordine.
+  useEffect(() => {
+    if (previousCategory.current !== '' && activeCategory === '' && navigationType !== 'POP') {
+      setHomeSeed(refreshHomeSeed())
+    }
+    previousCategory.current = activeCategory
+  }, [activeCategory, navigationType])
 
   // Cambia pagina mantenendo gli altri filtri attivi (categoria, ricerca).
   function goToPage(page) {
@@ -106,6 +126,8 @@ export default function Catalog() {
   }
 
   function selectCategory(slug) {
+    // Premere «Tutte» mentre si è già su «Tutte» rimescola la home.
+    if (!slug && activeCategory === '') setHomeSeed(refreshHomeSeed())
     const query = activeSearch ? `?q=${encodeURIComponent(activeSearch)}` : ''
     navigate(`${slug ? `/categoria/${slug}` : '/'}${query}`)
   }
