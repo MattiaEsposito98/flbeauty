@@ -30,6 +30,12 @@ class DiscountResource extends Resource
 
     protected static ?int $navigationSort = 40;
 
+    /** I codici personali di benvenuto stanno nella loro voce di menu, non qui. */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->standard();
+    }
+
     public static function form(Schema $schema): Schema
     {
         return DiscountForm::configure($schema);

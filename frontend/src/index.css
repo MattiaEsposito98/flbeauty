@@ -2149,6 +2149,32 @@ input[type='checkbox'] {
   color: var(--ink-soft);
 }
 
+.summary-discount > span:last-child {
+  color: var(--success);
+  font-weight: 500;
+}
+
+/* Codice sconto: campo + pulsante «Applica» sulla stessa riga. */
+.code-field {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.code-field input {
+  flex: 1;
+  min-width: 0;
+  text-transform: uppercase;
+}
+
+.code-field input::placeholder {
+  text-transform: none;
+}
+
+.code-field .btn {
+  flex: none;
+}
+
 .summary-total {
   padding-top: 0.85rem;
   border-top: 1px dashed var(--rose-300);

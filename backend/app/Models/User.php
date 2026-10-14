@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Notifications\QueuedResetPassword;
 use App\Notifications\QueuedVerifyEmail;
+use App\Support\WelcomeDiscount;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -104,6 +105,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         static::updated(function (User $user) {
             if ($user->wasChanged('email_verified_at') && $user->email_verified_at !== null) {
                 $user->claimGuestOrders();
+
+                // Email di benvenuto col codice sconto personale (una sola volta per account).
+                WelcomeDiscount::issueFor($user);
             }
         });
     }

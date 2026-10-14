@@ -22,6 +22,10 @@ export default function Checkout() {
   const [shippingRateId, setShippingRateId] = useState('')
   const [shippingAutoSuggested, setShippingAutoSuggested] = useState(false)
   const [discountCode, setDiscountCode] = useState('')
+  // Codice già controllato dal server con «Applica»: { code, type, value }.
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
+  const [discountError, setDiscountError] = useState(null)
+  const [applyingDiscount, setApplyingDiscount] = useState(false)
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -58,14 +62,60 @@ export default function Checkout() {
   }, [addressId, addresses, shippingRates])
 
   const shippingRate = shippingRates.find((r) => String(r.id) === shippingRateId)
-  const grandTotal = total + (shippingRate ? Number(shippingRate.price) : 0)
+  // Lo sconto si applica ai prodotti, non alla spedizione (come fa il server).
+  const discountAmount = appliedDiscount
+    ? appliedDiscount.type === 'percentuale'
+      ? Math.round(total * appliedDiscount.value) / 100
+      : Math.min(appliedDiscount.value, total)
+    : 0
+  const grandTotal = Math.max(0, total - discountAmount) + (shippingRate ? Number(shippingRate.price) : 0)
+
+  function changeDiscountCode(value) {
+    setDiscountCode(value)
+    setDiscountError(null)
+    // Se il codice cambia dopo «Applica», lo sconto non vale più finché non lo si riapplica.
+    if (appliedDiscount && value.trim().toLowerCase() !== appliedDiscount.code.toLowerCase()) {
+      setAppliedDiscount(null)
+    }
+  }
+
+  // Controlla il codice sul server PRIMA dell'ordine, così lo sconto si vede subito nel riepilogo.
+  async function applyDiscount() {
+    const code = discountCode.trim()
+    if (!code) return null
+
+    setApplyingDiscount(true)
+    setDiscountError(null)
+
+    try {
+      const { data } = await client.post('/discounts/check', { code })
+      setAppliedDiscount(data.data)
+      setDiscountCode(data.data.code)
+      return data.data
+    } catch (err) {
+      setAppliedDiscount(null)
+      setDiscountError(err.response?.data?.errors?.code?.[0] ?? 'Non è stato possibile controllare il codice. Riprova.')
+      return null
+    } finally {
+      setApplyingDiscount(false)
+    }
+  }
+
+  function removeDiscount() {
+    setAppliedDiscount(null)
+    setDiscountCode('')
+    setDiscountError(null)
+  }
 
   // Il pulsante del form non invia l'ordine: apre prima la finestra di conferma,
   // perché il pagamento è fuori dal sito e un click per errore creerebbe un ordine
-  // da annullare.
-  function handleSubmit(e) {
+  // da annullare. Un codice scritto ma non ancora applicato viene controllato adesso.
+  async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
+
+    if (discountCode.trim() && !appliedDiscount && !(await applyDiscount())) return
+
     setConfirmOpen(true)
   }
 
@@ -77,7 +127,7 @@ export default function Checkout() {
       const { data } = await client.post('/orders', {
         address_id: Number(addressId),
         shipping_rate_id: Number(shippingRateId),
-        discount_code: discountCode || undefined,
+        discount_code: appliedDiscount?.code ?? (discountCode.trim() || undefined),
         items: items.map((item) => ({
           product_id: item.product.id,
           product_variant_id: item.variantId,
@@ -221,13 +271,44 @@ export default function Checkout() {
             </h2>
             <div className="field">
               <label htmlFor="checkout-discount">Hai un codice sconto?</label>
-              <input
-                id="checkout-discount"
-                value={discountCode}
-                onChange={(e) => setDiscountCode(e.target.value)}
-                placeholder="Inserisci il codice"
-              />
-              <p className="hint">Se valido, lo sconto verrà applicato e mostrato nel riepilogo finale.</p>
+              <div className="code-field">
+                <input
+                  id="checkout-discount"
+                  value={discountCode}
+                  onChange={(e) => changeDiscountCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Invio applica il codice invece di aprire la conferma dell'ordine.
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      applyDiscount()
+                    }
+                  }}
+                  placeholder="Inserisci il codice"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  aria-describedby="checkout-discount-hint"
+                />
+                {appliedDiscount ? (
+                  <button type="button" className="btn btn-outline" onClick={removeDiscount}>
+                    Togli
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={applyDiscount}
+                    disabled={applyingDiscount || !discountCode.trim()}
+                  >
+                    {applyingDiscount ? 'Controllo...' : 'Applica'}
+                  </button>
+                )}
+              </div>
+              <p id="checkout-discount-hint" className="hint" role="status">
+                {appliedDiscount
+                  ? `Codice applicato: −${formatPrice(discountAmount)} sul totale dei prodotti.`
+                  : 'Scrivi il codice e premi «Applica»: vedrai subito lo sconto nel riepilogo.'}
+              </p>
+              {discountError && <p className="error">{discountError}</p>}
             </div>
           </section>
         </div>
@@ -249,6 +330,12 @@ export default function Checkout() {
               <span>Subtotale</span>
               <span>{formatPrice(total)}</span>
             </div>
+            {appliedDiscount && (
+              <div className="summary-row summary-discount">
+                <span>Sconto · {appliedDiscount.code}</span>
+                <span>−{formatPrice(discountAmount)}</span>
+              </div>
+            )}
             <div className="summary-row">
               <span>Spedizione</span>
               <span>{shippingRate ? formatPrice(shippingRate.price) : '—'}</span>

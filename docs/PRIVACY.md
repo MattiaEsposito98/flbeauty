@@ -36,6 +36,11 @@ banner non compare finché non c'è Google Analytics.
 | **Promozionale** | Solo clienti registrati con `marketing_consent = true` | Offerte, sconti, nuovi prodotti. Ogni email ha il link "Disiscriviti" |
 | **Di servizio** | Tutti i clienti registrati + le email lasciate sugli ordini | Solo avvisi su account e ordini: modifica delle condizioni, ritardi nelle spedizioni, chiusura per ferie, problemi di sicurezza. **Mai offerte**: inviarle senza consenso è vietato (art. 130 Codice Privacy), anche se "importanti" |
 
+- **Email di benvenuto col codice sconto (2026-10-14)**: una sola email per account, quando il cliente verifica
+  l'email, **a tutti** (anche senza `marketing_consent`), perché è un vantaggio legato alla registrazione e non una
+  newsletter: non crea invii successivi e non ha il link «Disiscriviti». Decisione presa con l'utente; dichiarata
+  nell'informativa privacy (`Privacy.jsx`, sezione «Perché li usiamo»). Se in futuro si volessero mandare altre
+  offerte al cliente, restano valide le regole sopra (solo con consenso)
 - `Communication::recipients($type)` calcola i destinatari; il tipo si sceglie nel
   form admin (Radio con il conteggio dei destinatari per tipo) e compare come badge
   nello storico. Le comunicazioni inviate prima di questa modifica sono state

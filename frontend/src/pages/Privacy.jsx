@@ -75,6 +75,12 @@ export default function Privacy() {
             (art. 6.1.f GDPR). Queste statistiche le vediamo solo noi e non vengono condivise.
           </li>
           <li>
+            <strong>Email di benvenuto con il codice sconto</strong>: quando confermi il tuo indirizzo email
+            ti mandiamo una sola email con un codice sconto personale, valido per un tempo limitato, come
+            vantaggio legato alla registrazione. La ricevono tutti i nuovi clienti, anche senza il consenso
+            alle email promozionali, e non dà luogo a invii successivi (art. 6.1.b e 6.1.f GDPR).
+          </li>
+          <li>
             <strong>Email promozionali</strong> (offerte, sconti, novità): solo se ci dai il consenso (art.
             6.1.a GDPR). Il consenso è facoltativo e puoi revocarlo in qualsiasi momento dal tuo account o
             con il link presente in ogni email promozionale, senza conseguenze sui tuoi ordini.

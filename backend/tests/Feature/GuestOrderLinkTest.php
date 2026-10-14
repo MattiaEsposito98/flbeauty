@@ -44,7 +44,10 @@ it('collega gli ordini da ospite solo dopo la verifica dell\'email', function ()
     // E ora li vede nel profilo.
     $this->actingAs($user)->getJson('/api/orders')->assertOk()->assertJsonCount(1);
 
-    Mail::assertNothingQueued();
+    // Nessuna email d'ordine: parte solo quella di benvenuto col codice sconto (vedi WelcomeDiscountTest).
+    Mail::assertNotQueued(\App\Mail\OrderConfirmation::class);
+    Mail::assertNotQueued(\App\Mail\NewOrderForAdmin::class);
+    Mail::assertQueued(\App\Mail\WelcomeDiscountMail::class, 1);
 });
 
 it('collega gli ordini anche con il pulsante "Segna email come verificata" dell\'admin', function () {

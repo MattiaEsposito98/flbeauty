@@ -77,6 +77,16 @@ quando l'ordine è evaso con un numero di tracking, mostra corriere, numero e
 "Segui la spedizione". Parte anche se il tracking viene inserito dopo aver già
 messo l'ordine in "Evaso" (`OrderObserver`).
 
+### 4. Email di benvenuto con il codice sconto (2026-10-14)
+Quando un cliente **verifica l'email** (link nell'email o pulsante dell'admin) parte `App\Mail\WelcomeDiscountMail`
+(vista `emails/welcome-discount.blade.php`) con il suo **codice personale** `BENVENUTO-XXXXXX`: 15% sul totale dei
+prodotti, valido 30 giorni dall'invio, una sola volta, solo con il suo account. La ricevono **tutti** i nuovi clienti
+(non lo staff) e una volta sola, anche senza il consenso alle offerte (vedi [PRIVACY.md](PRIVACY.md)). Il codice si
+mostra solo nell'email, non nell'account. Se l'invio fallisce la verifica va a buon fine lo stesso: il codice esiste e
+nella scheda admin «Codici di benvenuto» compare «Non inviata». Percentuale e giorni: `config/shop.php`. Dettagli del
+funzionamento in [FRONTEND.md](FRONTEND.md) (sezione «Codice di benvenuto»). I clienti già registrati prima del
+2026-10-14 **non** lo ricevono.
+
 ## Come si testa in locale (nessun account esterno, nessun dominio)
 
 Le email non vengono davvero spedite su internet: vengono catturate da **Mailpit**, un

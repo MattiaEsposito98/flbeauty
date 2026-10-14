@@ -163,7 +163,7 @@ class Order extends Model
 
         $discountAmount = $this->calculateDiscountAmount($itemsTotal);
 
-        $total = max(0, $itemsTotal - $discountAmount) + (float) $this->shipping_cost;
+        $total = round(max(0, $itemsTotal - $discountAmount) + (float) $this->shipping_cost, 2);
 
         if ((float) $this->total !== $total) {
             $this->updateQuietly(['total' => $total]);
@@ -179,7 +179,9 @@ class Order extends Model
         }
 
         if ($discount->type === 'percentuale') {
-            return $itemsTotal * ((float) $discount->value / 100);
+            // Al centesimo, come lo calcola il negozio nel riepilogo prima dell'ordine («Applica»):
+            // altrimenti il totale finale potrebbe differire di 1 centesimo da quello mostrato.
+            return round($itemsTotal * (float) $discount->value / 100, 2);
         }
 
         return min((float) $discount->value, $itemsTotal);

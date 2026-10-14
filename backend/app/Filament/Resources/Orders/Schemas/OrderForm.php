@@ -253,7 +253,12 @@ class OrderForm
                                 ->helperText('I pezzi restano scalati dal magazzino finché l\'ordine non è annullato: annullandolo tornano disponibili, riattivandolo vengono riscalati.'),
                             Select::make('discount_id')
                                 ->label('Codice sconto')
-                                ->relationship('discount', 'code')
+                                // Solo i codici validi per tutti; il codice personale (benvenuto) lo sceglie il cliente
+                                // all'ordine. Se l'ordine ne ha già uno resta visibile e non si perde salvando.
+                                ->relationship('discount', 'code', fn ($query, ?\App\Models\Order $record) => $query->where(
+                                    fn ($q) => $q->where('kind', \App\Models\Discount::KIND_STANDARD)
+                                        ->when($record?->discount_id, fn ($q, $id) => $q->orWhere('id', $id))
+                                ))
                                 ->searchable()
                                 ->preload()
                                 ->placeholder('Nessuno'),

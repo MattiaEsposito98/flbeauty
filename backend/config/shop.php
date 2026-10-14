@@ -12,4 +12,11 @@ return [
 
     'featured_ratio' => 0.6,
 
+    /*
+    | Codice di benvenuto: lo riceve ogni cliente quando verifica l'email (vedi
+    | App\Support\WelcomeDiscount). Percentuale di sconto e giorni di validità dall'invio.
+    */
+    'welcome_discount_percent' => 15,
+    'welcome_discount_days' => 30,
+
 ];

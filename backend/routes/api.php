@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ComuneController;
 use App\Http\Controllers\Api\CookieConsentStatController;
+use App\Http\Controllers\Api\DiscountCheckController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\MarketingConsentController;
 use App\Http\Controllers\Api\OrderController;
@@ -60,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('addresses', AddressController::class)->except(['show']);
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
+    Route::post('/discounts/check', DiscountCheckController::class)->middleware('throttle:30,1');
 
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist/{product}', [WishlistController::class, 'store']);

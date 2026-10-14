@@ -65,20 +65,25 @@ class OrderController extends Controller
         $discount = null;
 
         if (filled($data['discount_code'] ?? null)) {
-            $discount = Discount::where('code', $data['discount_code'])
-                ->where('is_active', true)
-                ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-                ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
-                ->first();
+            $discount = Discount::findByCode($data['discount_code']);
+            $error = $discount ? $discount->errorFor($request->user()) : 'Codice sconto non valido o scaduto.';
 
-            if (! $discount) {
-                throw ValidationException::withMessages([
-                    'discount_code' => ['Codice sconto non valido o scaduto.'],
-                ]);
+            if ($error) {
+                throw ValidationException::withMessages(['discount_code' => [$error]]);
             }
         }
 
         $order = DB::transaction(function () use ($request, $data, $address, $shippingRate, $discount) {
+            // Codice personale (benvenuto): ricontrollo con il codice bloccato, così due ordini inviati
+            // nello stesso momento non possono usarlo entrambi.
+            if ($discount?->isWelcome()) {
+                $discount = Discount::lockForUpdate()->find($discount->id);
+
+                if ($error = $discount->errorFor($request->user())) {
+                    throw ValidationException::withMessages(['discount_code' => [$error]]);
+                }
+            }
+
             $products = Product::whereIn('id', collect($data['items'])->pluck('product_id'))
                 ->where('is_active', true)
                 ->lockForUpdate()
