@@ -90,6 +90,7 @@ Sempre via SSH nella cartella `home` (usa `ssh … "comando"`; per script lunghi
 - **Windows / Git Bash**: gli heredoc con apostrofi (`'`) nel testo rompono la shell. Per scrivere file o script usa lo
   strumento di scrittura file (Write), non `cat <<EOF` con testo italiano. `sed` con `#` o apostrofi nel testo: meglio un piccolo
   script PHP o l'editor di file.
+- **Backend locale lento**: il PHP di XAMPP ha Xdebug acceso e OPcache spento (ogni richiesta ~350 ms). Il backend di sviluppo si avvia con `tools/dev-server.php` e le opzioni di `.claude/launch.json` / `tools/start-dev.bat` (Xdebug off + OPcache on, ~80 ms): non cambiare il `php.ini` di XAMPP, serve ad altri progetti. Per fare debug con Xdebug usa `php artisan serve`. La prima richiesta dopo l'avvio è lenta (OPcache compila), poi va veloce.
 - **Test locali**: PHP di XAMPP (`D:/xampp/php/php.exe`); il database MySQL locale può essere spento, i test usano SQLite in memoria.
 - **Livewire** (pannello) usa indirizzi con un codice (`/livewire-xxxx/update`): il `.htaccess` li manda al backend; se il pannello
   «non risponde ai clic» controlla che `/livewire-<codice>/livewire.min.js` sia JavaScript e non HTML.

@@ -87,6 +87,9 @@ nella scheda admin «Codici di benvenuto» compare «Non inviata». Percentuale 
 funzionamento in [FRONTEND.md](FRONTEND.md) (sezione «Codice di benvenuto»). I clienti già registrati prima del
 2026-10-14 **non** lo ricevono.
 
+### 5. Ordini modificati o annullati e campanella (2026-10-16)
+Nuove email: `OrderUpdatedMail` (al cliente: «Hai modificato l'ordine…» oppure «Il tuo ordine è stato aggiornato», col riepilogo e l'elenco di cosa è cambiato) e `OrderChangedForAdmin` (all'admin: ordine modificato o annullato dal cliente). **Ogni email ai clienti registrati ha anche una notifica nel sito** (campanella, 60 giorni), tranne verifica email e reset password. Dettagli in [FRONTEND.md](FRONTEND.md), sezione «Campanella, modifica e annullamento ordini».
+
 ## Come si testa in locale (nessun account esterno, nessun dominio)
 
 Le email non vengono davvero spedite su internet: vengono catturate da **Mailpit**, un

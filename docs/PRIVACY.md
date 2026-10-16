@@ -41,6 +41,7 @@ banner non compare finché non c'è Google Analytics.
   newsletter: non crea invii successivi e non ha il link «Disiscriviti». Decisione presa con l'utente; dichiarata
   nell'informativa privacy (`Privacy.jsx`, sezione «Perché li usiamo»). Se in futuro si volessero mandare altre
   offerte al cliente, restano valide le regole sopra (solo con consenso)
+- **Notifiche nel sito (campanella, 2026-10-16)**: le comunicazioni promozionali compaiono nella campanella di **tutti** i clienti registrati, anche senza consenso: il consenso alle offerte vale solo per l'**email** (decisione dell'utente; sono messaggi mostrati dentro l'area riservata, senza invio). Le notifiche si cancellano dopo 60 giorni e sono dichiarate nell'informativa (sezione conservazione)
 - `Communication::recipients($type)` calcola i destinatari; il tipo si sceglie nel
   form admin (Radio con il conteggio dei destinatari per tipo) e compare come badge
   nello storico. Le comunicazioni inviate prima di questa modifica sono state
