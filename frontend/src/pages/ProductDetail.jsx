@@ -73,7 +73,7 @@ export default function ProductDetail() {
 }
 
 function ProductView({ product }) {
-  const { addItem, getQuantityInCart } = useCart()
+  const { addItem, getQuantityInCart, reservedFor } = useCart()
   const [searchParams, setSearchParams] = useSearchParams()
   const [quantity, setQuantity] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
@@ -103,7 +103,8 @@ function ProductView({ product }) {
   const media = [...images.map((src) => ({ type: 'image', src })), ...(product.video ? [{ type: 'video', src: product.video }] : [])]
   const current = media[activeImage] ?? media[0]
   const price = variant ? variant.price : product.price
-  const stock = product.has_variants ? (variant?.stock ?? 0) : product.stock
+  // Nella modifica di un ordine i pezzi che l'ordine già riserva contano come disponibili.
+  const stock = (product.has_variants ? (variant?.stock ?? 0) : product.stock) + reservedFor(product.id, variant?.id ?? null)
   const inStock = stock > 0
   const quantityInCart = getQuantityInCart(product.id, variant?.id ?? null)
   const remaining = Math.max(0, stock - quantityInCart)

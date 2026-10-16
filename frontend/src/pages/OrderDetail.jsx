@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { FaWhatsapp } from 'react-icons/fa6'
-import { LuCheck, LuCopy, LuExternalLink, LuHeartHandshake, LuMapPin, LuReceipt, LuTruck } from 'react-icons/lu'
+import { LuCheck, LuCopy, LuExternalLink, LuHeartHandshake, LuMapPin, LuPencil, LuReceipt, LuTruck, LuX } from 'react-icons/lu'
 import client from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
+import Alert from '../components/Alert'
+import CancelOrderDialog from '../components/CancelOrderDialog'
+import EditOrderDialog from '../components/EditOrderDialog'
 import Spinner from '../components/Spinner'
 import { whatsappUrl } from '../config/contacts'
 import { ORDER_STATUS_LABELS, formatOrderNumber, formatPrice } from '../utils/format'
@@ -12,14 +16,78 @@ import { formatShippingAddress, orderAmounts, orderWhatsAppText } from '../utils
 export default function OrderDetail() {
   const { id } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const { user } = useAuth()
+  const { editing: editState, realCount, startEditing, stopEditing } = useCart()
   const justPlaced = location.state?.justPlaced === true
   const [order, setOrder] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [startingEdit, setStartingEdit] = useState(false)
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  // Dopo aver salvato una modifica dal carrello si torna qui con questo messaggio.
+  const [notice, setNotice] = useState(() =>
+    location.state?.justEdited
+      ? "Ordine aggiornato. Ti abbiamo mandato una email con il riepilogo: ti scriviamo su WhatsApp con l'importo da pagare."
+      : (location.state?.editBlocked ?? null),
+  )
+  const [actionError, setActionError] = useState(null)
+
+  function loadOrder() {
+    return client.get(`/orders/${id}`).then(({ data }) => setOrder(data))
+  }
 
   useEffect(() => {
-    client.get(`/orders/${id}`).then(({ data }) => setOrder(data))
+    loadOrder()
   }, [id])
+
+  // Finché è in attesa di pagamento il cliente può modificarlo o annullarlo; con il pagamento ricevuto si blocca.
+  const editable = order?.status === 'nuovo'
+
+  // «Modifica ordine»: l'ordine si riapre come carrello e il cliente naviga il sito per aggiungere prodotti.
+  // Se ha già un carrello, prima gli chiediamo cosa farne.
+  function beginEdit() {
+    if (realCount > 0) setEditDialogOpen(true)
+    else startEdit('keep')
+  }
+
+  async function startEdit(mode) {
+    setStartingEdit(true)
+    setActionError(null)
+
+    try {
+      await startEditing(order, mode)
+      setEditDialogOpen(false)
+      navigate('/')
+    } catch {
+      setActionError('Non è stato possibile aprire la modifica. Riprova.')
+      setEditDialogOpen(false)
+    } finally {
+      setStartingEdit(false)
+    }
+  }
+
+  async function cancelOrder() {
+    setCancelling(true)
+    setActionError(null)
+
+    try {
+      const { data } = await client.post(`/orders/${id}/cancel`)
+      setOrder(data)
+      if (editState?.orderId === data.id) stopEditing()
+      setNotice('Ordine annullato. I prodotti sono tornati disponibili.')
+      window.dispatchEvent(new Event('notifications:refresh'))
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (err) {
+      const errors = err.response?.data?.errors
+      setActionError(errors ? Object.values(errors).flat().join(' ') : "Non è stato possibile annullare l'ordine. Riprova.")
+      await loadOrder()
+    } finally {
+      setCancelling(false)
+      setCancelOpen(false)
+    }
+  }
 
   async function copyTracking() {
     await navigator.clipboard.writeText(order.tracking_number)
@@ -32,6 +100,8 @@ export default function OrderDetail() {
   const { subtotal, shipping, discount, total } = orderAmounts(order)
   const address = formatShippingAddress(order)
   const cancelled = order.status === 'annullato'
+  const editingThis = editState?.orderId === order.id
+  const editingOther = Boolean(editState) && !editingThis
 
   return (
     <div className="page order-page">
@@ -53,6 +123,45 @@ export default function OrderDetail() {
               })}.`}
         </p>
       </header>
+
+      {notice && <Alert type="success">{notice}</Alert>}
+      {actionError && <Alert type="error">{actionError}</Alert>}
+
+      {editable && (
+        <section className="card order-manage-card">
+          <div>
+            <h2>{editingThis ? 'Stai modificando questo ordine' : 'Puoi ancora modificare questo ordine'}</h2>
+            <p className="hint">
+              {editingThis
+                ? "Il catalogo e il carrello lavorano su questo ordine finché non salvi o esci dalla modifica."
+                : editingOther
+                  ? `Stai già modificando l'ordine ${formatOrderNumber(editState.orderId)}: salvalo o esci dalla modifica prima di aprirne un altro.`
+                  : 'Finché non risulta pagato puoi cambiare prodotti, indirizzo e spedizione, oppure annullarlo.'}
+            </p>
+          </div>
+          <div className="order-manage-actions">
+            {editingThis ? (
+              <>
+                <button type="button" className="btn btn-primary" onClick={() => navigate('/checkout')}>
+                  <LuPencil aria-hidden="true" /> Riepilogo e salva
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => navigate('/')}>
+                  Continua a scegliere i prodotti
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="btn btn-primary" onClick={beginEdit} disabled={editingOther || startingEdit}>
+                  <LuPencil aria-hidden="true" /> {startingEdit ? 'Apro la modifica...' : 'Modifica ordine'}
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setCancelOpen(true)}>
+                  <LuX aria-hidden="true" /> Annulla ordine
+                </button>
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {!cancelled && (
         <section className="card whatsapp-card">
@@ -169,6 +278,20 @@ export default function OrderDetail() {
           </div>
         )}
       </section>
+
+      {editDialogOpen && (
+        <EditOrderDialog
+          order={order}
+          cartCount={realCount}
+          busy={startingEdit}
+          onChoose={startEdit}
+          onCancel={() => setEditDialogOpen(false)}
+        />
+      )}
+
+      {cancelOpen && (
+        <CancelOrderDialog order={order} submitting={cancelling} onConfirm={cancelOrder} onCancel={() => setCancelOpen(false)} />
+      )}
 
       <div className="order-actions">
         <Link to="/account" className="btn btn-outline">

@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LuMapPin, LuShoppingBag, LuTicket, LuTruck } from 'react-icons/lu'
+import { LuMapPin, LuPlus, LuShoppingBag, LuTicket, LuTruck } from 'react-icons/lu'
 import client from '../api/client'
 import { useCart } from '../context/CartContext'
+import AddressForm from '../components/AddressForm'
 import Alert from '../components/Alert'
 import CartAdjustmentsNotice from '../components/CartAdjustmentsNotice'
 import EmptyState from '../components/EmptyState'
 import OrderConfirmDialog from '../components/OrderConfirmDialog'
 import Spinner from '../components/Spinner'
-import { formatPrice } from '../utils/format'
+import { formatOrderNumber, formatPrice } from '../utils/format'
 import { itemName, itemPrice, lineKey } from '../utils/cart'
 
 export default function Checkout() {
-  const { items, loading: cartLoading, total, clearCart, syncAvailability } = useCart()
+  const { items, loading: cartLoading, total, clearCart, syncAvailability, editing, finishEditing, stopEditing } = useCart()
   const navigate = useNavigate()
 
   const [addresses, setAddresses] = useState([])
@@ -21,6 +22,9 @@ export default function Checkout() {
   const [addressId, setAddressId] = useState('')
   const [shippingRateId, setShippingRateId] = useState('')
   const [shippingAutoSuggested, setShippingAutoSuggested] = useState(false)
+  // Modifica di un ordine: la tariffa suggerita non deve sovrascrivere quella dell'ordine finché l'indirizzo non cambia.
+  const [addressChanged, setAddressChanged] = useState(false)
+  const [showAddressForm, setShowAddressForm] = useState(false)
   const [discountCode, setDiscountCode] = useState('')
   // Codice già controllato dal server con «Applica»: { code, type, value }.
   const [appliedDiscount, setAppliedDiscount] = useState(null)
@@ -33,12 +37,17 @@ export default function Checkout() {
   useEffect(() => {
     client.get('/addresses').then(({ data }) => {
       setAddresses(data)
-      const defaultAddress = data.find((a) => a.is_default) ?? data[0]
+      // In modifica parte dall'indirizzo dell'ordine (che è una copia: lo ritroviamo confrontando via e CAP).
+      const ofOrder = editing
+        ? data.find((a) => a.address_line === editing.order.shipping_address_line && a.postal_code === editing.order.shipping_postal_code)
+        : null
+      const defaultAddress = ofOrder ?? data.find((a) => a.is_default) ?? data[0]
       if (defaultAddress) setAddressId(String(defaultAddress.id))
       setAddressesLoaded(true)
     })
     client.get('/shipping-rates').then(({ data }) => {
       setShippingRates(data)
+      if (editing?.order.shipping_rate_id) setShippingRateId(String(editing.order.shipping_rate_id))
     })
   }, [])
 
@@ -51,6 +60,7 @@ export default function Checkout() {
   // cambiarla, ad es. per scegliere il punto di ritiro.
   useEffect(() => {
     if (!addressId || shippingRates.length === 0) return
+    if (editing && !addressChanged) return
 
     const address = addresses.find((a) => String(a.id) === addressId)
     const region = address?.comune?.region
@@ -59,14 +69,16 @@ export default function Checkout() {
 
     setShippingRateId(String((matched ?? shippingRates[0]).id))
     setShippingAutoSuggested(Boolean(matched))
-  }, [addressId, addresses, shippingRates])
+  }, [addressId, addresses, shippingRates, addressChanged])
 
   const shippingRate = shippingRates.find((r) => String(r.id) === shippingRateId)
   // Lo sconto si applica ai prodotti, non alla spedizione (come fa il server).
-  const discountAmount = appliedDiscount
-    ? appliedDiscount.type === 'percentuale'
-      ? Math.round(total * appliedDiscount.value) / 100
-      : Math.min(appliedDiscount.value, total)
+  // In modifica resta lo sconto già applicato all'ordine (il codice non si cambia da qui).
+  const activeDiscount = editing ? editing.order.discount : appliedDiscount
+  const discountAmount = activeDiscount
+    ? activeDiscount.type === 'percentuale'
+      ? Math.round(total * Number(activeDiscount.value)) / 100
+      : Math.min(Number(activeDiscount.value), total)
     : 0
   const grandTotal = Math.max(0, total - discountAmount) + (shippingRate ? Number(shippingRate.price) : 0)
 
@@ -110,9 +122,66 @@ export default function Checkout() {
   // Il pulsante del form non invia l'ordine: apre prima la finestra di conferma,
   // perché il pagamento è fuori dal sito e un click per errore creerebbe un ordine
   // da annullare. Un codice scritto ma non ancora applicato viene controllato adesso.
+  // Modifica di un ordine: salva (PATCH) invece di crearne uno nuovo. Il server ricontrolla tutto.
+  async function saveEdit() {
+    setError(null)
+    setSubmitting(true)
+    const orderId = editing.orderId
+
+    try {
+      await client.patch(`/orders/${orderId}`, {
+        address_id: Number(addressId),
+        shipping_rate_id: Number(shippingRateId),
+        items: items.map((item) => ({
+          product_id: item.product.id,
+          product_variant_id: item.variantId,
+          quantity: item.quantity,
+        })),
+      })
+      await finishEditing()
+      window.dispatchEvent(new Event('notifications:refresh'))
+      navigate(`/ordini/${orderId}`, { state: { justEdited: true } })
+    } catch (err) {
+      const errors = err.response?.data?.errors
+
+      // Nel frattempo l'ordine è stato messo in lavorazione (pagato): la modifica si chiude.
+      if (errors?.order) {
+        stopEditing()
+        navigate(`/ordini/${orderId}`, { state: { editBlocked: errors.order[0] } })
+        return
+      }
+
+      if (errors?.items) {
+        const changes = await syncAvailability()
+        if (changes.length > 0) {
+          setError('Le disponibilità sono cambiate: controlla il riepilogo aggiornato e salva di nuovo.')
+          return
+        }
+      }
+
+      setError(errors ? Object.values(errors).flat().join(' ') : 'Non è stato possibile salvare le modifiche. Riprova.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function createAddress(payload) {
+    const { data } = await client.post('/addresses', payload)
+    const list = await client.get('/addresses')
+    setAddresses(list.data)
+    setAddressChanged(true)
+    setAddressId(String(data.id))
+    setShowAddressForm(false)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
+
+    if (editing) {
+      await saveEdit()
+      return
+    }
 
     if (discountCode.trim() && !appliedDiscount && !(await applyDiscount())) return
 
@@ -164,14 +233,16 @@ export default function Checkout() {
         <CartAdjustmentsNotice />
         <EmptyState
           icon={LuShoppingBag}
-          title="Il carrello è vuoto"
+          title={editing ? "Nell'ordine non è rimasto nessun prodotto" : 'Il carrello è vuoto'}
           action={
             <Link to="/" className="btn btn-primary">
               Scopri i prodotti
             </Link>
           }
         >
-          Aggiungi qualche prodotto prima di completare l'ordine.
+          {editing
+            ? "Aggiungi almeno un prodotto, oppure esci dalla modifica (o annulla l'ordine dalla sua pagina)."
+            : "Aggiungi qualche prodotto prima di completare l'ordine."}
         </EmptyState>
       </div>
     )
@@ -202,12 +273,22 @@ export default function Checkout() {
   return (
     <div className="page checkout-page">
       <header className="page-header">
-        <span className="eyebrow">Checkout</span>
+        <span className="eyebrow">{editing ? 'Modifica ordine' : 'Checkout'}</span>
         <h1>
-          Completa il tuo <em>ordine</em>
+          {editing ? (
+            <>
+              Salva le modifiche all'ordine <em>{formatOrderNumber(editing.orderId)}</em>
+            </>
+          ) : (
+            <>
+              Completa il tuo <em>ordine</em>
+            </>
+          )}
         </h1>
         <p className="page-subtitle">
-          Controlla i dati di spedizione e conferma: ti invieremo una email di riepilogo.
+          {editing
+            ? 'Controlla prodotti, indirizzo e spedizione e salva: ti mandiamo una email con il riepilogo aggiornato.'
+            : 'Controlla i dati di spedizione e conferma: ti invieremo una email di riepilogo.'}
         </p>
       </header>
 
@@ -222,7 +303,10 @@ export default function Checkout() {
               <select
                 id="checkout-address"
                 value={addressId}
-                onChange={(e) => setAddressId(e.target.value)}
+                onChange={(e) => {
+                  setAddressId(e.target.value)
+                  setAddressChanged(true)
+                }}
                 required
               >
                 {addresses.map((address) => (
@@ -233,6 +317,17 @@ export default function Checkout() {
                 ))}
               </select>
             </div>
+            {showAddressForm ? (
+              <div className="address-form-panel">
+                <h3>Nuovo indirizzo</h3>
+                <p className="hint">Si salva anche nel tuo profilo, così lo ritrovi per i prossimi ordini.</p>
+                <AddressForm onSubmit={createAddress} onCancel={() => setShowAddressForm(false)} />
+              </div>
+            ) : (
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowAddressForm(true)}>
+                <LuPlus aria-hidden="true" /> Usa un nuovo indirizzo
+              </button>
+            )}
             <Link to="/account" className="text-link">
               Gestisci i tuoi indirizzi
             </Link>
@@ -265,6 +360,7 @@ export default function Checkout() {
             </div>
           </section>
 
+          {!editing && (
           <section className="card">
             <h2 className="card-title">
               <LuTicket aria-hidden="true" /> Codice sconto
@@ -311,10 +407,11 @@ export default function Checkout() {
               {discountError && <p className="error">{discountError}</p>}
             </div>
           </section>
+          )}
         </div>
 
         <aside className="card summary-card">
-          <h2>Riepilogo ordine</h2>
+          <h2>{editing ? 'Nuovo riepilogo' : 'Riepilogo ordine'}</h2>
           <ul className="summary-items">
             {items.map((item) => (
               <li key={lineKey(item.product.id, item.variantId)}>
@@ -330,9 +427,9 @@ export default function Checkout() {
               <span>Subtotale</span>
               <span>{formatPrice(total)}</span>
             </div>
-            {appliedDiscount && (
+            {activeDiscount && (
               <div className="summary-row summary-discount">
-                <span>Sconto · {appliedDiscount.code}</span>
+                <span>Sconto · {activeDiscount.code}</span>
                 <span>−{formatPrice(discountAmount)}</span>
               </div>
             )}
@@ -350,7 +447,7 @@ export default function Checkout() {
           {error && <Alert type="error">{error}</Alert>}
 
           <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={submitting}>
-            Conferma ordine
+            {editing ? (submitting ? 'Salvataggio...' : 'Salva modifiche') : 'Conferma ordine'}
           </button>
         </aside>
       </form>

@@ -17,7 +17,7 @@ function priceRange(product) {
 }
 
 export default function ProductCard({ product }) {
-  const { addItem, updateQuantity, getQuantityInCart } = useCart()
+  const { addItem, updateQuantity, getQuantityInCart, reservedFor } = useCart()
   const quantityInCart = getQuantityInCart(product.id)
 
   return (
@@ -64,7 +64,7 @@ export default function ProductCard({ product }) {
                   size="sm"
                   min={0}
                   value={quantityInCart}
-                  max={product.stock}
+                  max={product.stock + reservedFor(product.id, null)}
                   onChange={(quantity) => updateQuantity(product.id, null, quantity)}
                 />
               </div>

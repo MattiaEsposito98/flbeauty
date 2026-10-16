@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { LuArrowLeft, LuShoppingBag, LuTrash2, LuX } from 'react-icons/lu'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
-import { formatPrice } from '../utils/format'
+import { formatOrderNumber, formatPrice } from '../utils/format'
 import { itemImage, itemName, itemPrice, itemStock, itemVariant, lineKey } from '../utils/cart'
 import CartAdjustmentsNotice from './CartAdjustmentsNotice'
 import ConfirmButton from './ConfirmButton'
@@ -22,6 +22,8 @@ export default function CartDrawer() {
     drawerOpen,
     closeDrawer,
     syncAvailability,
+    editing,
+    reservedFor,
   } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -72,7 +74,7 @@ export default function CartDrawer() {
         <header className="drawer-header">
           <div className="drawer-title">
             <LuShoppingBag aria-hidden="true" />
-            <h2 id="cart-drawer-title">Il tuo carrello</h2>
+            <h2 id="cart-drawer-title">{editing ? `Ordine ${formatOrderNumber(editing.orderId)}` : 'Il tuo carrello'}</h2>
             {count > 0 && <span className="count-pill">{count}</span>}
           </div>
           <button type="button" className="icon-btn" onClick={closeDrawer} aria-label="Chiudi il carrello">
@@ -99,6 +101,7 @@ export default function CartDrawer() {
           <>
             <div className="drawer-body">
               <CartAdjustmentsNotice />
+              {!editing && (
               <div className="list-toolbar">
                 <ConfirmButton
                   className="btn btn-ghost btn-sm btn-ghost-danger"
@@ -108,6 +111,7 @@ export default function CartDrawer() {
                   <LuTrash2 aria-hidden="true" /> Svuota carrello
                 </ConfirmButton>
               </div>
+              )}
               <ul className="drawer-items">
                 {items.map((item) => (
                   <li key={lineKey(item.product.id, item.variantId)} className="drawer-item">
@@ -138,7 +142,7 @@ export default function CartDrawer() {
                         <QuantityStepper
                           size="sm"
                           value={item.quantity}
-                          max={itemStock(item)}
+                          max={itemStock(item) + reservedFor(item.product.id, item.variantId)}
                           onChange={(quantity) => updateQuantity(item.product.id, item.variantId, quantity)}
                         />
                         <span className="item-total">{formatPrice(itemPrice(item) * item.quantity)}</span>
@@ -156,7 +160,7 @@ export default function CartDrawer() {
               </div>
               <p className="hint">La spedizione viene calcolata al momento dell'ordine.</p>
               <button type="button" className="btn btn-primary btn-block btn-lg" onClick={goToCheckout}>
-                Procedi all'ordine
+                {editing ? 'Riepilogo e salva modifiche' : "Procedi all'ordine"}
               </button>
               <div className="drawer-secondary-actions">
                 <button type="button" className="btn btn-outline" onClick={continueShopping}>

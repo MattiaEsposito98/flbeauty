@@ -3,7 +3,7 @@ import { LuCircleCheck, LuTriangleAlert, LuX } from 'react-icons/lu'
 import { useCart } from '../context/CartContext'
 
 export default function CartToast() {
-  const { toast, dismissToast, openDrawer, drawerOpen } = useCart()
+  const { toast, dismissToast, openDrawer, drawerOpen, editing } = useCart()
 
   useEffect(() => {
     if (!toast) return
@@ -28,7 +28,7 @@ export default function CartToast() {
             openDrawer()
           }}
         >
-          Vedi carrello
+          {editing ? 'Vedi ordine' : 'Vedi carrello'}
         </button>
       )}
       <button type="button" className="toast-close" onClick={dismissToast} aria-label="Chiudi avviso">

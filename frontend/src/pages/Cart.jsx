@@ -9,11 +9,11 @@ import EmptyState from '../components/EmptyState'
 import ProductImage from '../components/ProductImage'
 import QuantityStepper from '../components/QuantityStepper'
 import Spinner from '../components/Spinner'
-import { formatPrice } from '../utils/format'
+import { formatOrderNumber, formatPrice } from '../utils/format'
 import { itemImage, itemName, itemPrice, itemStock, itemVariant, lineKey } from '../utils/cart'
 
 export default function Cart() {
-  const { items, loading, updateQuantity, removeItem, clearCart, total, count, syncAvailability } = useCart()
+  const { items, loading, updateQuantity, removeItem, clearCart, total, count, syncAvailability, editing, reservedFor } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -49,9 +49,17 @@ export default function Cart() {
   return (
     <div className="page cart-page">
       <header className="page-header">
-        <span className="eyebrow">Carrello</span>
+        <span className="eyebrow">{editing ? 'Modifica ordine' : 'Carrello'}</span>
         <h1>
-          Il tuo <em>carrello</em>
+          {editing ? (
+            <>
+              Ordine <em>{formatOrderNumber(editing.orderId)}</em>
+            </>
+          ) : (
+            <>
+              Il tuo <em>carrello</em>
+            </>
+          )}
         </h1>
         <p className="page-subtitle">
           {count} {count === 1 ? 'articolo pronto' : 'articoli pronti'} per te
@@ -62,6 +70,7 @@ export default function Cart() {
 
       <div className="cart-layout">
         <div>
+        {!editing && (
         <div className="list-toolbar">
           <ConfirmButton
             className="btn btn-ghost btn-sm btn-ghost-danger"
@@ -71,6 +80,7 @@ export default function Cart() {
             <LuTrash2 aria-hidden="true" /> Svuota carrello
           </ConfirmButton>
         </div>
+        )}
         <ul className="cart-items">
           {items.map((item) => (
             <li key={lineKey(item.product.id, item.variantId)} className="cart-item">
@@ -90,7 +100,7 @@ export default function Cart() {
               </div>
               <QuantityStepper
                 value={item.quantity}
-                max={itemStock(item)}
+                max={itemStock(item) + reservedFor(item.product.id, item.variantId)}
                 onChange={(quantity) => updateQuantity(item.product.id, item.variantId, quantity)}
               />
               <span className="item-total">{formatPrice(itemPrice(item) * item.quantity)}</span>
@@ -124,7 +134,7 @@ export default function Cart() {
             </div>
           </div>
           <button type="button" className="btn btn-primary btn-block btn-lg" onClick={handleCheckout}>
-            Procedi all'ordine
+            {editing ? 'Riepilogo e salva modifiche' : "Procedi all'ordine"}
           </button>
           <Link to="/" className="continue-link">
             <LuArrowLeft aria-hidden="true" /> Continua lo shopping

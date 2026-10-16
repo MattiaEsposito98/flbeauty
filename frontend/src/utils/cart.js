@@ -17,8 +17,10 @@ export function itemStock(item) {
   return itemVariant(item)?.stock ?? 0
 }
 
+// Nella modifica di un ordine le righe già presenti tengono il prezzo di allora (`unitPrice`);
+// quelle aggiunte e il carrello normale usano il prezzo di oggi.
 export function itemPrice(item) {
-  return itemVariant(item)?.price ?? item.product.price
+  return item.unitPrice ?? itemVariant(item)?.price ?? item.product.price
 }
 
 // "Rossetto matte – Rosso"

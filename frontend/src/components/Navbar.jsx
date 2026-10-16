@@ -5,7 +5,9 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useWishlist } from '../context/WishlistContext'
 import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contacts'
+import EditOrderBanner from './EditOrderBanner'
 import Logo from './Logo'
+import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
   const { user } = useAuth()
@@ -42,6 +44,8 @@ export default function Navbar() {
               {user && wishlist.length > 0 && <span className="icon-badge">{wishlist.length}</span>}
             </Link>
 
+            {user && <NotificationBell />}
+
             <Link
               to={user ? '/account' : '/login'}
               className="header-account"
@@ -66,6 +70,8 @@ export default function Navbar() {
           </div>
         </div>
       </header>
+
+      <EditOrderBanner />
     </>
   )
 }

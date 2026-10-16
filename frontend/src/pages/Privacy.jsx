@@ -114,6 +114,7 @@ export default function Privacy() {
           <li>Dati degli ordini e documenti fiscali: 10 anni, come previsto dalla legge.</li>
           <li>Consenso alle email promozionali: fino alla revoca.</li>
           <li>Storico degli accessi al tuo account: 12 mesi.</li>
+          <li>Notifiche nel sito (la campanella: stato degli ordini, codice sconto, avvisi): 60 giorni.</li>
           <li>Dati tecnici di sicurezza (IP e orari delle richieste): al massimo 14 giorni.</li>
         </ul>
 
