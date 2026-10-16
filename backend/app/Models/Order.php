@@ -150,6 +150,12 @@ class Order extends Model
         return $this->belongsTo(ShippingRate::class);
     }
 
+    /** Modifiche e annullamenti, dalla più recente. */
+    public function events(): HasMany
+    {
+        return $this->hasMany(OrderEvent::class)->latest('id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);

@@ -19,4 +19,10 @@ return [
     'welcome_discount_percent' => 15,
     'welcome_discount_days' => 30,
 
+    /*
+    | Notifiche nel sito (la campanella): ogni email ai clienti ha anche una notifica. Si cancellano
+    | da sole dopo questi giorni (comando notifications:prune, ogni notte).
+    */
+    'notification_days' => 60,
+
 ];

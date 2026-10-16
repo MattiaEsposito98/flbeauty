@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Mail\OrderStatusUpdated;
 use App\Models\Order;
+use App\Support\OrderNotices;
 use Illuminate\Support\Facades\Mail;
 
 class OrderObserver
@@ -21,6 +22,9 @@ class OrderObserver
 
         if ($order->wasChanged('status') || $trackingAdded) {
             Mail::to($order->customer_email)->send(new OrderStatusUpdated($order));
+
+            // Stessa informazione nella campanella del cliente (solo se ha un account).
+            OrderNotices::statusChanged($order);
         }
     }
 }

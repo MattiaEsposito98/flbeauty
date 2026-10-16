@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Models\Order;
+use App\Models\OrderEvent;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingRate;
@@ -232,6 +233,15 @@ class OrderForm
                                 ->helperText('Per Poste/SDA lascialo vuoto: il cliente riceve il link diretto alla spedizione. Compilalo solo per altri corrieri o per un link diverso.')
                                 ->columnSpanFull(),
                         ]),
+                    Section::make('Cronologia modifiche')
+                        ->compact()
+                        ->visibleOn('edit')
+                        ->hidden(fn (?Order $record) => ! $record || $record->events()->doesntExist())
+                        ->schema([
+                            Placeholder::make('events_timeline')
+                                ->hiddenLabel()
+                                ->content(fn (?Order $record) => self::timelineHtml($record)),
+                        ]),
                 ])->columnSpan(['lg' => 2]),
 
                 Group::make([
@@ -450,5 +460,25 @@ class OrderForm
     protected static function formatEuro(float $value): string
     {
         return number_format($value, 2, ',', '.').' €';
+    }
+    /** Elenco delle modifiche dell'ordine (cliente e admin), dalla più recente. */
+    private static function timelineHtml(?Order $record): HtmlString
+    {
+        if (! $record) {
+            return new HtmlString('');
+        }
+
+        return new HtmlString($record->events()->get()->map(function (OrderEvent $event) {
+            $who = $event->actor === OrderEvent::ACTOR_CUSTOMER ? 'Cliente' : 'Admin';
+            $what = $event->type === OrderEvent::TYPE_CANCELLED ? "ha annullato l'ordine" : "ha modificato l'ordine";
+            $pending = $event->actor === OrderEvent::ACTOR_ADMIN && ! $event->notified_at
+                ? ' <span style="color:#b45309; font-weight:600;">· cliente non ancora avvisato</span>'
+                : '';
+            $lines = collect($event->summary)->map(fn ($line) => '• '.e($line))->implode('<br>');
+
+            return '<div style="padding:8px 0; border-bottom:1px solid rgba(0,0,0,.08);"><strong>'.$who.'</strong> '.$what
+                .' <span style="opacity:.6;">· '.$event->created_at->timezone('Europe/Rome')->format('d/m/Y H:i').'</span>'.$pending
+                .'<br><span style="font-size:.9em;">'.$lines.'</span></div>';
+        })->implode(''));
     }
 }

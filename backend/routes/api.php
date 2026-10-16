@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\CookieConsentStatController;
 use App\Http\Controllers\Api\DiscountCheckController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\MarketingConsentController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ProductController;
@@ -60,8 +61,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/user', [AccountController::class, 'destroy'])->middleware('throttle:6,1');
 
     Route::apiResource('addresses', AddressController::class)->except(['show']);
-    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
+    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show', 'update']);
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->middleware('throttle:10,1');
     Route::post('/discounts/check', DiscountCheckController::class)->middleware('throttle:30,1');
+
+    // Campanella: notifiche nel sito (ogni email ai clienti ne ha una).
+    Route::middleware('throttle:120,1')->prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('/read-all', [NotificationController::class, 'markAllRead']);
+        Route::post('/{id}/read', [NotificationController::class, 'markRead']);
+    });
 
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist/{product}', [WishlistController::class, 'store']);

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WelcomeCodes\Pages;
 
+use App\Filament\Resources\Discounts\DiscountResource;
 use App\Filament\Resources\WelcomeCodes\WelcomeCodeResource;
 use App\Models\Discount;
 use Filament\Resources\Pages\ListRecords;
@@ -11,6 +12,11 @@ use Illuminate\Database\Eloquent\Builder;
 class ListWelcomeCodes extends ListRecords
 {
     protected static string $resource = WelcomeCodeResource::class;
+
+    public function getSubNavigation(): array
+    {
+        return DiscountResource::subNavigation();
+    }
 
     public function getSubheading(): ?string
     {

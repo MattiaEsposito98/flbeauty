@@ -57,6 +57,15 @@ class WelcomeDiscount
             report($e);
         }
 
+        // Anche nella campanella del sito: se l'email finisce nello spam il codice si rivede da lì.
+        SiteNotifier::toUser(
+            $user,
+            'welcome',
+            "Benvenuto! Il tuo sconto del {$percent}%",
+            "Il tuo codice è {$discount->code}: vale fino al ".$discount->ends_at->locale('it')->translatedFormat('j F Y').', una sola volta, al momento dell\'ordine.',
+            '/',
+        );
+
         return $discount;
     }
 

@@ -11,6 +11,8 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShippingRate;
+use App\Support\OrderEditor;
+use App\Support\OrderNotices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -179,6 +181,39 @@ class OrderController extends Controller
             Mail::to(config('app.admin_order_email'))->send(new NewOrderForAdmin($order));
         }
 
+        // Le stesse cose anche come notifiche nel sito (campanella del cliente e dell'admin).
+        OrderNotices::placed($order);
+
         return response()->json($order, 201);
+    }
+
+    /**
+     * Il cliente modifica il proprio ordine (prodotti, indirizzo, spedizione) finché è in attesa di
+     * pagamento. Vedi OrderEditor.
+     */
+    public function update(Request $request, Order $order)
+    {
+        abort_unless($order->user_id === $request->user()->id, 403);
+
+        $data = $request->validate([
+            'address_id' => ['required', 'integer', 'exists:addresses,id'],
+            'shipping_rate_id' => ['required', 'integer', 'exists:shipping_rates,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.product_variant_id' => ['nullable', 'integer'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $result = OrderEditor::update($order->id, $request->user(), $data);
+
+        return response()->json($result['order']);
+    }
+
+    /** Il cliente annulla il proprio ordine finché è in attesa di pagamento. */
+    public function cancel(Request $request, Order $order)
+    {
+        abort_unless($order->user_id === $request->user()->id, 403);
+
+        return response()->json(OrderEditor::cancel($order->id, $request->user()));
     }
 }

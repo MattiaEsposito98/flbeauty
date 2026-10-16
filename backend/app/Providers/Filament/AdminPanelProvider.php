@@ -43,6 +43,9 @@ class AdminPanelProvider extends PanelProvider
             // Menu in alto e contenuto a tutta larghezza: l'area admin sfrutta
             // tutto lo schermo del PC (su tablet/mobile il menu diventa a scomparsa).
             ->topNavigation()
+            // Campanella dell'admin: nuovo ordine, ordine modificato o annullato dal cliente.
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->maxContentWidth(Width::Full)
             ->bootUsing(function () {
                 // Salva/Annulla restano sempre visibili in fondo allo schermo, e la

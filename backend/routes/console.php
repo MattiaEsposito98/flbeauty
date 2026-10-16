@@ -25,3 +25,6 @@ Schedule::call(fn () => Artisan::call('queue:work', [
 Schedule::call(fn () => Artisan::call('sitemap:generate'))
     ->name('sitemap-generate')
     ->dailyAt('04:00');
+
+// Cancella le notifiche del sito più vecchie di `shop.notification_days` (60 giorni).
+Schedule::command('notifications:prune')->name('notifications-prune')->dailyAt('04:30');

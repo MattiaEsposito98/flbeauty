@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\WelcomeCodes;
 
+use App\Filament\Resources\Discounts\DiscountResource;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\WelcomeCodes\Pages\ListWelcomeCodes;
 use App\Models\Discount;
 use App\Models\Order;
 use BackedEnum;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -32,7 +34,10 @@ class WelcomeCodeResource extends Resource
 
     protected static ?string $slug = 'codici-di-benvenuto';
 
-    protected static ?int $navigationSort = 41;
+    // Non ha una voce nel menu: sta dentro «Sconti», come seconda scheda (vedi DiscountResource::subNavigation()).
+    protected static bool $shouldRegisterNavigation = false;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     public static function getEloquentQuery(): Builder
     {
@@ -44,6 +49,12 @@ class WelcomeCodeResource extends Resource
             ->withExists(['orders as is_used' => $notCancelled])
             ->withMin(['orders as used_at' => $notCancelled], 'created_at')
             ->withMin(['orders as used_order_id' => $notCancelled], 'id');
+    }
+
+    /** Filament metterebbe le maiuscole a ogni parola («Codici Di Benvenuto»). */
+    public static function getTitleCasePluralModelLabel(): string
+    {
+        return 'Codici di benvenuto';
     }
 
     /** Stato del codice, come lo vede l'admin. */

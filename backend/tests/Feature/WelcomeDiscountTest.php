@@ -62,6 +62,11 @@ it('creates a personal 15% code valid for 30 days and emails it when the email i
 
     Mail::assertQueued(WelcomeDiscountMail::class, fn ($mail) => $mail->hasTo('anna@example.test'));
 
+    // Il codice si rivede anche dalla campanella del sito, se l'email finisce nello spam.
+    $notice = $this->anna->notifications()->first();
+    expect($notice->data['kind'])->toBe('welcome')
+        ->and($notice->data['body'])->toContain($this->code->code);
+
     $html = (new WelcomeDiscountMail($this->anna, $this->code))->render();
     expect($html)->toContain($this->code->code)->toContain('15%')->toContain('Anna')
         ->toContain($this->code->ends_at->locale('it')->translatedFormat('j F Y'));

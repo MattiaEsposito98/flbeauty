@@ -28,3 +28,87 @@
     line-height: 1.2;
     color: #B76E79;
 }
+
+/* Campanella delle notifiche: ben visibile. Cerchio rosa tenue; con notifiche da leggere diventa pieno
+   e vivace, con il numero in rosso. */
+.fi-topbar-database-notifications-btn {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 9999px;
+    background: #fde8ec;
+    color: #B76E79;
+    box-shadow: inset 0 0 0 1px #f3c4cc;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.fi-topbar-database-notifications-btn .fi-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: currentColor;
+}
+
+.fi-topbar-database-notifications-btn:hover {
+    background: #fbd3da;
+    transform: scale(1.06);
+}
+
+.fi-topbar-database-notifications-btn:has(.fi-badge) {
+    background: linear-gradient(135deg, #d9808d, #b05665);
+    color: #fff;
+    box-shadow: 0 6px 14px -6px rgba(176, 86, 101, 0.75);
+    animation: fl-bell-pulse 2.4s ease-out infinite;
+}
+
+.fi-topbar-database-notifications-btn:has(.fi-badge):hover {
+    background: linear-gradient(135deg, #cf6f7d, #a34859);
+}
+
+.fi-topbar-database-notifications-btn .fi-badge {
+    min-width: 1.25rem;
+    background: #e11d48;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+@keyframes fl-bell-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(217, 128, 141, 0.55);
+    }
+    70%,
+    100% {
+        box-shadow: 0 0 0 0.7rem rgba(217, 128, 141, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fi-topbar-database-notifications-btn:has(.fi-badge) {
+        animation: none;
+    }
+}
+
+/* Tablet in orizzontale e schermi stretti (1024-1279 px): il menu in alto deve restare su UNA riga.
+   Voci più compatte e ricerca più stretta; sotto i 1024 px Filament passa da solo al menu a scomparsa. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .fi-topbar-nav-groups {
+        flex-wrap: nowrap;
+        column-gap: 0;
+    }
+
+    .fi-topbar-nav-groups .fi-topbar-item-btn {
+        padding-inline: 0.5rem;
+        white-space: nowrap;
+    }
+
+    .fi-global-search-ctn {
+        width: 9.5rem;
+    }
+}
+
+/* Nome esteso solo dove c'è spazio. */
+@media (min-width: 1024px) and (max-width: 1099px) {
+    .fi-topbar-nav-groups .fi-topbar-item-btn {
+        padding-inline: 0.4rem;
+        font-size: 0.92em;
+    }
+}

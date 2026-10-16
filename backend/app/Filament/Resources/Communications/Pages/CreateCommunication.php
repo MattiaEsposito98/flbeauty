@@ -6,11 +6,14 @@ use App\Filament\Resources\Communications\CommunicationResource;
 use App\Http\Controllers\Api\MarketingConsentController;
 use App\Mail\BroadcastCommunication;
 use App\Models\Communication;
+use App\Models\User;
+use App\Support\SiteNotifier;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class CreateCommunication extends CreateRecord
 {
@@ -60,6 +63,20 @@ class CreateCommunication extends CreateRecord
 
             Mail::to($recipient['email'])->send($mail);
         }
+
+        // Anche nella campanella del sito. Il consenso alle offerte vale solo per l'EMAIL: una
+        // promozione compare nelle notifiche di tutti i clienti registrati (scelta dell'utente, 2026-10-16);
+        // quelle di servizio solo ai destinatari scelti.
+        $users = $record->isMarketing()
+            ? User::where('is_admin', false)->get()
+            : $recipients->pluck('user')->filter()->values();
+
+        SiteNotifier::toUsers(
+            $users,
+            $record->isMarketing() ? 'promo' : 'service',
+            $record->subject,
+            Str::limit(trim(strip_tags($record->body)), 600),
+        );
 
         return $record;
     }
