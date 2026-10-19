@@ -8,8 +8,13 @@ export function orderAmounts(order) {
   return { subtotal, shipping, discount, total: Number(order.total) }
 }
 
+// Ritiro a mano: il cliente passa a ritirare di persona, quindi non c'è un indirizzo di spedizione da usare.
+export function isHandPickup(order) {
+  return order.shipping_rate?.type === 'a_mano'
+}
+
 export function formatShippingAddress(order) {
-  if (!order.shipping_address_line) return null
+  if (isHandPickup(order) || !order.shipping_address_line) return null
 
   return `${order.shipping_address_line}, ${order.shipping_postal_code} ${order.shipping_city} (${order.shipping_province})`
 }
@@ -34,13 +39,16 @@ export function orderWhatsAppText(order, user) {
   if (order.discount) lines.push(`Sconto (${order.discount.code}): -${formatPrice(discount)}`)
 
   lines.push(
-    `Spedizione${order.shipping_rate ? ` (${order.shipping_rate.name})` : ''}: ${formatPrice(shipping)}`,
+    isHandPickup(order)
+      ? 'Ritiro a mano: gratis'
+      : `Spedizione${order.shipping_rate ? ` (${order.shipping_rate.name})` : ''}: ${formatPrice(shipping)}`,
     `*Totale: ${formatPrice(total)}*`,
     '',
     '*I miei dati*',
     `Nome: ${order.customer_name}`
   )
 
+  if (isHandPickup(order)) lines.push('Ritiro: passo io a ritirare, ci mettiamo d\'accordo su giorno e orario.')
   if (address) lines.push(`Indirizzo: ${address}`)
   if (order.customer_phone) lines.push(`Telefono: ${order.customer_phone}`)
   lines.push(`Email: ${order.customer_email ?? user?.email ?? ''}`)

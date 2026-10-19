@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ShippingRates\Tables;
 
+use App\Models\ShippingRate;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -26,8 +27,12 @@ class ShippingRatesTable
                 TextColumn::make('type')
                     ->label('Tipo')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => $state === 'ritiro' ? 'Punto di ritiro' : 'Spedizione')
-                    ->color(fn (string $state) => $state === 'ritiro' ? 'info' : 'primary'),
+                    ->formatStateUsing(fn (string $state) => ShippingRate::TYPES[$state] ?? $state)
+                    ->color(fn (string $state) => match ($state) {
+                        ShippingRate::TYPE_PICKUP_POINT => 'info',
+                        ShippingRate::TYPE_HAND => 'success',
+                        default => 'primary',
+                    }),
                 TextInputColumn::make('price')
                     ->label('Prezzo (€)')
                     ->type('number')
@@ -40,10 +45,7 @@ class ShippingRatesTable
             ->filters([
                 SelectFilter::make('type')
                     ->label('Tipo')
-                    ->options([
-                        'regione' => 'Spedizione regionale',
-                        'ritiro' => 'Punto di ritiro',
-                    ]),
+                    ->options(ShippingRate::TYPES),
                 TernaryFilter::make('is_active')
                     ->label('Attivo'),
             ])

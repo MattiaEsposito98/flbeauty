@@ -9,7 +9,7 @@ import CartAdjustmentsNotice from '../components/CartAdjustmentsNotice'
 import EmptyState from '../components/EmptyState'
 import OrderConfirmDialog from '../components/OrderConfirmDialog'
 import Spinner from '../components/Spinner'
-import { formatOrderNumber, formatPrice } from '../utils/format'
+import { formatOrderNumber, formatPrice, formatShippingPrice } from '../utils/format'
 import { itemName, itemPrice, lineKey } from '../utils/cart'
 
 export default function Checkout() {
@@ -350,12 +350,20 @@ export default function Checkout() {
               >
                 {shippingRates.map((rate) => (
                   <option key={rate.id} value={rate.id}>
-                    {rate.name} — {formatPrice(rate.price)}
+                    {rate.name}
+                    {Number(rate.price) > 0 ? ` — ${formatPrice(rate.price)}` : ''}
                   </option>
                 ))}
               </select>
-              {shippingAutoSuggested && (
-                <p className="hint">Tariffa suggerita in base alla regione del tuo indirizzo. Puoi cambiarla.</p>
+              {shippingRate?.type === 'a_mano' ? (
+                <p className="hint">
+                  Passi tu a ritirare il pacco: dopo l'ordine ti scriviamo su WhatsApp per metterci d'accordo su giorno e
+                  orario. L'indirizzo scelto sopra non viene usato.
+                </p>
+              ) : (
+                shippingAutoSuggested && (
+                  <p className="hint">Tariffa suggerita in base alla regione del tuo indirizzo. Puoi cambiarla.</p>
+                )
               )}
             </div>
           </section>
@@ -434,8 +442,8 @@ export default function Checkout() {
               </div>
             )}
             <div className="summary-row">
-              <span>Spedizione</span>
-              <span>{shippingRate ? formatPrice(shippingRate.price) : '—'}</span>
+              <span>{shippingRate?.type === 'a_mano' ? 'Ritiro a mano' : 'Spedizione'}</span>
+              <span>{shippingRate ? formatShippingPrice(shippingRate.price) : '—'}</span>
             </div>
             <div className="summary-row summary-total">
               <span>Totale</span>

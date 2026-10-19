@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ShippingRates\Schemas;
 
+use App\Models\ShippingRate;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -21,16 +22,14 @@ class ShippingRateForm
                     ->schema([
                         TextInput::make('name')
                             ->label('Nome')
-                            ->placeholder('Es. Lombardia, oppure Punto di ritiro')
+                            ->placeholder('Es. Lombardia, Punto di ritiro, Ritiro a mano (gratis)')
                             ->required()
                             ->maxLength(255),
                         Select::make('type')
                             ->label('Tipo')
-                            ->options([
-                                'regione' => 'Spedizione regionale',
-                                'ritiro' => 'Punto di ritiro',
-                            ])
-                            ->default('regione')
+                            ->options(ShippingRate::TYPES)
+                            ->default(ShippingRate::TYPE_REGION)
+                            ->helperText('«Ritiro a mano»: il cliente passa a ritirare di persona (di solito gratis). Nelle email e nell\'ordine non compare l\'indirizzo di spedizione.')
                             ->required(),
                         TextInput::make('price')
                             ->label('Prezzo')

@@ -30,8 +30,14 @@ class ShippingRateSeeder extends Seeder
         }
 
         ShippingRate::updateOrCreate(
-            ['name' => 'Punto di ritiro (Italia e isole comprese)', 'type' => 'ritiro'],
+            ['name' => 'Punto di ritiro (Italia e isole comprese)', 'type' => ShippingRate::TYPE_PICKUP_POINT],
             ['price' => 4.00, 'is_active' => true]
+        );
+
+        // Per i clienti della zona che passano a ritirare di persona.
+        ShippingRate::updateOrCreate(
+            ['name' => 'Ritiro a mano (gratis)', 'type' => ShippingRate::TYPE_HAND],
+            ['price' => 0, 'is_active' => true]
         );
     }
 }

@@ -4,6 +4,11 @@ export function formatPrice(value) {
   return priceFormatter.format(Number(value))
 }
 
+// Prezzo di una tariffa di spedizione: «Gratis» se costa zero (es. ritiro a mano).
+export function formatShippingPrice(value) {
+  return Number(value) === 0 ? 'Gratis' : formatPrice(value)
+}
+
 export function formatOrderNumber(id) {
   return `#${String(id).padStart(5, '0')}`
 }

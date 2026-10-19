@@ -64,10 +64,17 @@ class OrderWhatsApp
             $lines[] = 'Sconto ('.$order->discount->code.'): -'.self::euro($discount);
         }
 
-        $lines[] = 'Spedizione'.($order->shippingRate ? ' ('.$order->shippingRate->name.')' : '').': '.self::euro($shipping);
+        $handPickup = (bool) $order->shippingRate?->isHandPickup();
+
+        $lines[] = $handPickup
+            ? 'Ritiro a mano: gratis'
+            : 'Spedizione'.($order->shippingRate ? ' ('.$order->shippingRate->name.')' : '').': '.self::euro($shipping);
         $lines[] = '*Totale: '.self::euro((float) $order->total).'*';
 
-        if (filled($order->shipping_address_line)) {
+        if ($handPickup) {
+            $lines[] = '';
+            $lines[] = 'Ritiro a mano: passi tu a ritirare il pacco. Ci mettiamo d\'accordo qui su giorno e orario.';
+        } elseif (filled($order->shipping_address_line)) {
             $lines[] = '';
             $lines[] = 'Spedizione a: '.$order->shipping_address_line.', '.$order->shipping_postal_code.' '
                 .$order->shipping_city.($order->shipping_province ? ' ('.$order->shipping_province.')' : '');

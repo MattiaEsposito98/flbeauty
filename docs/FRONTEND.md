@@ -768,3 +768,10 @@ compila da solo e il controllo di disponibilità vale per variante.
 - **Tablet**: da 1024 a 1279 px il menu resta su **una riga** (voci più compatte, ricerca più stretta); sotto i 1024 px (tablet in verticale, telefono) Filament passa al menu a scomparsa (☰). Provato a 1024, 1180, 820 px.
 - **Traduzioni mancanti** aggiunte in `lang/vendor/filament-panels/it/layout.php` e `lang/vendor/filament-notifications/it/database.php`: prima la campanella dell'admin mostrava sigle tecniche (`filament-notifications::database.modal.unread_label`) invece di «Da leggere» e «Notifiche, 3 da leggere».
 - Test: `tests/Feature/DiscountsNavigationTest.php`.
+
+## Ritiro a mano (2026-10-19)
+- Nuova tariffa di spedizione **«Ritiro a mano (gratis)»** (tipo `a_mano`, prezzo 0) per i clienti della zona che passano a ritirare di persona. I tipi sono tre (`ShippingRate::TYPES`): spedizione regionale, punto di ritiro (corriere), ritiro a mano. Il tipo ora è testo libero nel database (prima era un elenco chiuso).
+- **Compare da sola dopo il deploy**: la migration `add_hand_pickup_shipping_type` la crea se non esiste (e il seeder `ShippingRateSeeder` la include). L'admin può rinominarla, cambiare il prezzo o disattivarla da **Spedizioni**, e può creare altre tariffe dello stesso tipo (campo «Tipo»: «Ritiro a mano»).
+- **Cliente**: al pagamento la scelta si chiama «Ritiro a mano (gratis)»; scegliendola compare l'avviso «Passi tu a ritirare il pacco… ti scriviamo su WhatsApp per giorno e orario. L'indirizzo scelto sopra non viene usato» e il riepilogo dice «Ritiro a mano · Gratis». L'indirizzo resta comunque obbligatorio nel modulo (ogni cliente ne ha uno dalla registrazione), ma **non viene mostrato** dove sarebbe fuorviante.
+- **Dove non compare l'indirizzo per il ritiro a mano**: pagina dell'ordine del cliente (al suo posto un riquadro «Ritiro a mano»), email di conferma/aggiornamento/admin (`emails/partials/order-summary`), messaggio WhatsApp del cliente (`utils/orderSummary.js`) e quello dell'admin (`OrderWhatsApp`). Il corriere/tracking nell'admin resta com'è.
+- Test: `tests/Feature/HandPickupShippingTest.php`.

@@ -1,4 +1,5 @@
 @php
+    $handPickup = (bool) $order->shippingRate?->isHandPickup();
     $itemsTotal = $order->items->sum(fn ($item) => $item->quantity * $item->unit_price);
     $discountAmount = max(0, $itemsTotal + (float) $order->shipping_cost - (float) $order->total);
     $euro = fn ($value) => '&euro;'.number_format((float) $value, 2, ',', '.');
@@ -29,8 +30,8 @@
         </tr>
     @endif
     <tr>
-        <td style="padding:4px 0; color:#7b6468;">Spedizione{{ $order->shippingRate ? ' ('.$order->shippingRate->name.')' : '' }}</td>
-        <td align="right" style="padding:4px 0;">{!! $euro($order->shipping_cost) !!}</td>
+        <td style="padding:4px 0; color:#7b6468;">{{ $handPickup ? 'Ritiro a mano' : 'Spedizione'.($order->shippingRate ? ' ('.$order->shippingRate->name.')' : '') }}</td>
+        <td align="right" style="padding:4px 0;">{!! $handPickup && (float) $order->shipping_cost == 0.0 ? 'Gratis' : $euro($order->shipping_cost) !!}</td>
     </tr>
     <tr>
         <td style="padding:12px 0 0; border-top:2px solid #f5e1e0; font-family:Georgia, 'Times New Roman', serif; font-size:18px;">Totale</td>
@@ -38,7 +39,15 @@
     </tr>
 </table>
 
-@if ($order->shipping_address_line)
+@if ($handPickup)
+    <p style="margin:0 0 18px; font-size:14px; line-height:1.65;">
+        <strong style="color:#8e4f5b;">Ritiro a mano</strong><br>
+        Passi tu a ritirare il pacco: ci mettiamo d'accordo su giorno e orario (ti scriviamo su WhatsApp).
+        @if ($order->customer_phone)
+            <br>Tel. {{ $order->customer_phone }}
+        @endif
+    </p>
+@elseif ($order->shipping_address_line)
     <p style="margin:0 0 18px; font-size:14px; line-height:1.65;">
         <strong style="color:#8e4f5b;">Spedizione a</strong><br>
         {{ $order->customer_name }}<br>

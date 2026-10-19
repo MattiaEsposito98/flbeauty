@@ -10,8 +10,8 @@ import CancelOrderDialog from '../components/CancelOrderDialog'
 import EditOrderDialog from '../components/EditOrderDialog'
 import Spinner from '../components/Spinner'
 import { whatsappUrl } from '../config/contacts'
-import { ORDER_STATUS_LABELS, formatOrderNumber, formatPrice } from '../utils/format'
-import { formatShippingAddress, orderAmounts, orderWhatsAppText } from '../utils/orderSummary'
+import { ORDER_STATUS_LABELS, formatOrderNumber, formatPrice, formatShippingPrice } from '../utils/format'
+import { formatShippingAddress, isHandPickup, orderAmounts, orderWhatsAppText } from '../utils/orderSummary'
 
 export default function OrderDetail() {
   const { id } = useParams()
@@ -256,14 +256,26 @@ export default function OrderDetail() {
             </div>
           )}
           <div className="summary-row">
-            <span>Spedizione{order.shipping_rate ? ` · ${order.shipping_rate.name}` : ''}</span>
-            <span>{formatPrice(shipping)}</span>
+            <span>
+              {isHandPickup(order) ? 'Ritiro a mano' : `Spedizione${order.shipping_rate ? ` · ${order.shipping_rate.name}` : ''}`}
+            </span>
+            <span>{formatShippingPrice(shipping)}</span>
           </div>
           <div className="summary-row summary-total">
             <span>Totale</span>
             <strong>{formatPrice(total)}</strong>
           </div>
         </div>
+
+        {isHandPickup(order) && (
+          <div className="order-address">
+            <LuMapPin aria-hidden="true" />
+            <div>
+              <strong>Ritiro a mano</strong>
+              <p className="muted">Passi tu a ritirare il pacco: ti scriviamo su WhatsApp per metterci d'accordo su giorno e orario.</p>
+            </div>
+          </div>
+        )}
 
         {address && (
           <div className="order-address">
