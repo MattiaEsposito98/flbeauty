@@ -315,16 +315,25 @@ class OrderForm
                             Placeholder::make('subtotal_preview')
                                 ->label('Subtotale articoli')
                                 ->content(fn (callable $get) => self::formatEuro(self::itemsSubtotal($get))),
+                            Placeholder::make('discount_preview')
+                                ->label('Sconto')
+                                ->content(function (callable $get) {
+                                    $discount = filled($get('discount_id')) ? \App\Models\Discount::find($get('discount_id')) : null;
+
+                                    return $discount
+                                        ? $discount->code.' · −'.self::formatEuro(self::discountAmount($get))
+                                        : 'Nessuno';
+                                }),
                             Placeholder::make('total_preview')
                                 ->label('Totale ordine')
                                 ->content(function (callable $get) {
-                                    $total = self::itemsSubtotal($get) + (float) ($get('shipping_cost') ?? 0);
+                                    $total = max(0, self::itemsSubtotal($get) - self::discountAmount($get)) + (float) ($get('shipping_cost') ?? 0);
 
                                     return new HtmlString(
                                         '<span class="fl-total">'.self::formatEuro($total).'</span>'
                                     );
                                 })
-                                ->helperText('Articoli + spedizione. Ricalcolato al salvataggio.'),
+                                ->helperText('Articoli − sconto + spedizione. Ricalcolato al salvataggio.'),
                         ]),
                 ])->columnSpan(['lg' => 1]),
             ]);
@@ -479,6 +488,22 @@ class OrderForm
         return collect($items)->sum(
             fn ($item) => (float) ($item['quantity'] ?? 0) * (float) ($item['unit_price'] ?? 0)
         );
+    }
+
+    /** Sconto del codice scelto sul subtotale: stesso calcolo di Order::recalculateTotal(). */
+    protected static function discountAmount(callable $get): float
+    {
+        $discount = filled($get('discount_id')) ? \App\Models\Discount::find($get('discount_id')) : null;
+
+        if (! $discount || ! $discount->is_active) {
+            return 0;
+        }
+
+        $subtotal = self::itemsSubtotal($get);
+
+        return $discount->type === 'percentuale'
+            ? round($subtotal * (float) $discount->value / 100, 2)
+            : min((float) $discount->value, $subtotal);
     }
 
     protected static function formatEuro(float $value): string
