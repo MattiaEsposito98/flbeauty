@@ -75,6 +75,17 @@ class Discount extends Model
         return $query->where('kind', self::KIND_WELCOME);
     }
 
+    /** Codice di benvenuto di questo cliente che si può ancora usare (stesse regole di errorFor()). */
+    public function scopeUsableWelcomeFor(Builder $query, int $userId): Builder
+    {
+        return $query->where('kind', self::KIND_WELCOME)
+            ->where('user_id', $userId)
+            ->where('is_active', true)
+            ->where(fn (Builder $q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->where(fn (Builder $q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
+            ->unused();
+    }
+
     public function scopeStandard(Builder $query): Builder
     {
         return $query->where('kind', self::KIND_STANDARD);

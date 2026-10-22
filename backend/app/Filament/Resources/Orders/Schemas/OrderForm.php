@@ -263,15 +263,39 @@ class OrderForm
                                 ->helperText('I pezzi restano scalati dal magazzino finché l\'ordine non è annullato: annullandolo tornano disponibili, riattivandolo vengono riscalati.'),
                             Select::make('discount_id')
                                 ->label('Codice sconto')
-                                // Solo i codici validi per tutti; il codice personale (benvenuto) lo sceglie il cliente
-                                // all'ordine. Se l'ordine ne ha già uno resta visibile e non si perde salvando.
-                                ->relationship('discount', 'code', fn ($query, ?\App\Models\Order $record) => $query->where(
-                                    fn ($q) => $q->where('kind', \App\Models\Discount::KIND_STANDARD)
-                                        ->when($record?->discount_id, fn ($q, $id) => $q->orWhere('id', $id))
-                                ))
+                                // I codici validi per tutti, più il codice di benvenuto del cliente scelto in «Account
+                                // registrato» (solo se ancora utilizzabile). Se l'ordine ne ha già uno resta visibile
+                                // e non si perde salvando.
+                                ->relationship('discount', 'code', function ($query, ?\App\Models\Order $record, callable $get) {
+                                    $userId = $get('user_id');
+
+                                    return $query->where(
+                                        fn ($q) => $q->where('kind', \App\Models\Discount::KIND_STANDARD)
+                                            ->when($record?->discount_id, fn ($q, $id) => $q->orWhere('id', $id))
+                                            ->when($userId, fn ($q) => $q->orWhere(
+                                                fn ($w) => $w->usableWelcomeFor((int) $userId)
+                                            ))
+                                    );
+                                })
                                 ->searchable()
                                 ->preload()
-                                ->placeholder('Nessuno'),
+                                ->placeholder('Nessuno')
+                                ->helperText('Scegliendo un cliente registrato compare anche il suo codice di benvenuto, se ancora valido.')
+                                // Anche a salvataggio: un codice personale vale solo per il suo cliente, una volta, entro la scadenza.
+                                ->rule(fn (callable $get, ?\App\Models\Order $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $discount = \App\Models\Discount::find($value);
+
+                                    if (! $discount?->isWelcome() || $record?->discount_id === $discount->id) {
+                                        return;
+                                    }
+
+                                    $user = filled($get('user_id')) ? User::find($get('user_id')) : null;
+
+                                    if ($error = $discount->errorFor($user)) {
+                                        $fail($error);
+                                    }
+                                })
+                                ->live(),
                             Textarea::make('notes')
                                 ->label('Note interne')
                                 ->rows(3),
