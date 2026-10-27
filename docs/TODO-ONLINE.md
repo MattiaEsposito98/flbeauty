@@ -97,3 +97,7 @@ tecnica passo passo è in [DEPLOY.md](DEPLOY.md).
 - [x] Email: SMTP di Aruba con `info@flbeauty.it` attivo e provato (verifica account arrivata a Hotmail, 2026-10-08)
 - [x] Utente SSH `claude` e chiave `~/.ssh/aruba_claude`: **si TENGONO** per i deploy automatici (decisione del 2026-10-10, vedi CLAUDE.md). Per revocare l'accesso: eliminare l'utente e la chiave in Aruba (Chiavi SSH)
 - [ ] Cambiare la passphrase della chiave SSH personale (`ssh-keygen -p`), è comparsa in chat
+
+## Passare Aruba a PHP 8.5 (da fare con calma)
+- [x] Locale gia su PHP 8.5.12 e openspout aggiornato alla 4.32.0 (2026-10-27): test 159/159 verdi.
+- [ ] Aruba: Strumenti e impostazioni, Gestione PHP, portare da 8.3 a 8.5; poi `bash tools/deploy.sh backend` e provare home, /admin, un ordine e l invio email. Se qualcosa va storto si torna a 8.3 dallo stesso pannello.

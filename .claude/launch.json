@@ -12,7 +12,6 @@
       "runtimeExecutable": "D:/xampp/php/php.exe",
       "runtimeArgs": [
         "-d", "xdebug.mode=off",
-        "-d", "zend_extension=opcache",
         "-d", "opcache.enable=1",
         "-d", "opcache.enable_cli=1",
         "-d", "opcache.memory_consumption=128",

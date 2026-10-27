@@ -10,7 +10,7 @@ set PHP_BIN=D:\xampp\php\php.exe
 
 echo Avvio backend Laravel (http://127.0.0.1:8000)...
 REM Con OPcache attivo e Xdebug spento (circa 4 volte piu' veloce); vedi tools\dev-server.php.
-start "Backend Laravel" /D "%ROOT%" "%PHP_BIN%" -d xdebug.mode=off -d zend_extension=opcache -d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.memory_consumption=128 -d opcache.revalidate_freq=0 -S 127.0.0.1:8000 -t backend\public tools\dev-server.php
+start "Backend Laravel" /D "%ROOT%" "%PHP_BIN%" -d xdebug.mode=off -d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.memory_consumption=128 -d opcache.revalidate_freq=0 -S 127.0.0.1:8000 -t backend\public tools\dev-server.php
 
 echo Avvio Mailpit (http://127.0.0.1:8025)...
 start "Mailpit" /D "%~dp0mailpit" mailpit.exe --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025

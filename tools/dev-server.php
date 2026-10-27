@@ -7,10 +7,10 @@
 | passare opzioni a PHP: così il backend locale gira con OPcache attivo e Xdebug spento, circa
 | 4 volte più veloce (senza toccare il php.ini di XAMPP, usato anche da altri progetti).
 |
-|   php -d xdebug.mode=off -d zend_extension=opcache -d opcache.enable=1 -d opcache.enable_cli=1 \
+|   php -d xdebug.mode=off -d opcache.enable=1 -d opcache.enable_cli=1 \
 |       -S 127.0.0.1:8000 -t backend/public tools/dev-server.php
 |
-| Per fare debug con Xdebug usa invece il normale `php artisan serve`.
+| Per fare debug serve prima un Xdebug per PHP 8.5 (ora spento), poi `php artisan serve`.
 */
 
 $public = realpath(__DIR__.'/../backend/public');
