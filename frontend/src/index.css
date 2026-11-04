@@ -1364,6 +1364,83 @@ input[type='checkbox'] {
   box-shadow: 0 8px 18px -10px rgba(142, 79, 91, 0.8);
 }
 
+/* «Nuovi arrivi»: pillola in evidenza (secondo posto, dopo «Tutte»). Fondo blush, bordo rose-gold,
+   icona scintille e un riflesso che passa ogni tanto; attiva torna al fondo pieno come le altre. */
+.pill.pill-new {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow: hidden;
+  padding: calc(0.5rem - 0.5px) calc(1.15rem - 0.5px);
+  background: linear-gradient(150deg, #fdf0ee 0%, #f5d6d4 100%);
+  border: 1.5px solid var(--rose-500);
+  color: var(--rose-800);
+  font-weight: 700;
+  box-shadow:
+    0 0 0 3px rgba(183, 110, 121, 0.16),
+    0 8px 18px -8px rgba(142, 79, 91, 0.7);
+}
+
+.pill.pill-new svg {
+  flex-shrink: 0;
+  width: 1.05em;
+  height: 1.05em;
+  color: var(--rose-600);
+  animation: pill-new-twinkle 2.4s ease-in-out infinite;
+}
+
+.pill.pill-new::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.75) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: pill-new-shine 5s ease-in-out 1.5s infinite;
+  pointer-events: none;
+}
+
+.pill.pill-new.active {
+  background: var(--grad-button);
+  border-color: transparent;
+  color: #fff;
+}
+
+.pill.pill-new.active svg {
+  color: #fff;
+}
+
+@keyframes pill-new-shine {
+  0%,
+  70% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes pill-new-twinkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.22) rotate(14deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill.pill-new::after {
+    animation: none;
+    display: none;
+  }
+
+  .pill.pill-new svg {
+    animation: none;
+  }
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));

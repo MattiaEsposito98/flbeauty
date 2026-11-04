@@ -98,7 +98,10 @@ Gradienti pronti: `--grad-rose-gold` (decorativo/metallico), `--grad-rose-gold-t
 - Form: `.field`, `.form-grid` (2 colonne, `.span-2` a tutta larghezza),
   `.input-icon` (input con icona), `.checkbox`, `.form-actions`
 - Testi: `.hint`, `.error`, `.muted`, `.text-link`, `.link-button`
-- Filtri e stati: `.pill` (+ `.active`), `.badge`, `.status-badge .status-<stato>`,
+- Filtri e stati: `.pill` (+ `.active`), `.pill.pill-new` (pillola in evidenza di «Nuovi arrivi»: sempre al
+  secondo posto dopo «Tutte», fondo blush, bordo rose-gold, scintille che pulsano e un riflesso ogni 5 secondi,
+  fermi con `prefers-reduced-motion`; la categoria si riconosce dall'indirizzo `nuovi-arrivi`, costante
+  `NEW_ARRIVALS_SLUG` in `pages/Catalog.jsx`), `.badge`, `.status-badge .status-<stato>`,
   `.in-cart-badge`
 - Pagine legali: `.legal-page`, `.legal-content` (testo lungo), `.legal-table`;
   caselle di consenso su più righe `.checkbox.consent-checkbox`

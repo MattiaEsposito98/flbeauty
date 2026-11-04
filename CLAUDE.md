@@ -45,7 +45,7 @@ Le migration partono da sole con il deploy del backend.
 | Chiave pubblica | importata nel pannello Aruba (Hosting Linux → Strumenti e impostazioni → Chiavi SSH) |
 
 Prova di connessione: `ssh -o BatchMode=yes -i ~/.ssh/aruba_claude -p 2222 k29tzap-claude@p5pws5i.zonep5.webhostingaruba.it "pwd"`
-(deve rispondere `/web/htdocs/www.flbeauty.it/home`). Sul server ci sono PHP 8.3, `composer` e `git`; non si può clonare con
+(deve rispondere `/web/htdocs/www.flbeauty.it/home`). Sul server ci sono PHP 8.5, `composer` e `git`; non si può clonare con
 `git@github.com:` (Aruba non permette git via SSH): si usa `https://`. La chiave **non va mai** letta, stampata o copiata in
 chat, file o commit. Per revocare l'accesso basta eliminare l'utente `claude` (e la sua chiave) dal pannello Aruba.
 
@@ -90,7 +90,7 @@ Sempre via SSH nella cartella `home` (usa `ssh … "comando"`; per script lunghi
 - **Windows / Git Bash**: gli heredoc con apostrofi (`'`) nel testo rompono la shell. Per scrivere file o script usa lo
   strumento di scrittura file (Write), non `cat <<EOF` con testo italiano. `sed` con `#` o apostrofi nel testo: meglio un piccolo
   script PHP o l'editor di file.
-- **PHP locale = 8.5 (dal 2026-10-27)**: il PHP di XAMPP (`D:/xampp/php`) è **8.5.12**; il vecchio 8.2 è in `D:/xampp/php82-backup` (per tornare indietro: rinominare le due cartelle, con Apache fermo). **Xdebug e `mongodb` sono spenti** (non esistono per 8.5: vanno installati a parte se servono). In 8.5 OPcache è già incluso: non usare `-d zend_extension=opcache` (dà un avviso). Il server Aruba è ancora su 8.3: il codice deve funzionare su entrambi (`composer.json` dice `^8.2`).
+- **PHP locale = 8.5 (dal 2026-10-27)**: il PHP di XAMPP (`D:/xampp/php`) è **8.5.12**; il vecchio 8.2 è in `D:/xampp/php82-backup` (per tornare indietro: rinominare le due cartelle, con Apache fermo). **Xdebug e `mongodb` sono spenti** (non esistono per 8.5: vanno installati a parte se servono). In 8.5 OPcache è già incluso: non usare `-d zend_extension=opcache` (dà un avviso). Anche il server Aruba è passato a **8.5.12** (2026-10-28); `composer.json` resta `^8.2`. Da SSH ogni comando PHP stampa un avviso innocuo su `opcache.so` (il `php.ini` di Aruba lo carica due volte): si ignora.
 - **Backend locale lento**: il PHP di XAMPP ha OPcache spento di base (ogni richiesta ~350 ms). Il backend di sviluppo si avvia con `tools/dev-server.php` e le opzioni di `.claude/launch.json` / `tools/start-dev.bat` (OPcache on, ~80 ms): non cambiare il `php.ini` di XAMPP, serve anche ad altri progetti. La prima richiesta dopo l'avvio è lenta (OPcache compila), poi va veloce.
 - **Test locali**: PHP di XAMPP (`D:/xampp/php/php.exe`); il database MySQL locale può essere spento, i test usano SQLite in memoria.
 - **Livewire** (pannello) usa indirizzi con un codice (`/livewire-xxxx/update`): il `.htaccess` li manda al backend; se il pannello

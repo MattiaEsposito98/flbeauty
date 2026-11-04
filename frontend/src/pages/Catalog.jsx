@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useNavigationType, useParams, useSearchParams } from 'react-router-dom'
-import { LuChevronDown, LuChevronLeft, LuChevronRight, LuSearch, LuSearchX, LuX } from 'react-icons/lu'
+import { LuChevronDown, LuChevronLeft, LuChevronRight, LuSearch, LuSearchX, LuSparkles, LuX } from 'react-icons/lu'
 import PillScroller from '../components/PillScroller'
 import client from '../api/client'
 import ProductCard from '../components/ProductCard'
@@ -12,6 +12,10 @@ import { DEFAULT_DESCRIPTION } from '../config/site'
 import { initialHomeSeed, refreshHomeSeed } from '../utils/homeSeed'
 
 const PAGE_SIZE = 24
+
+// «Nuovi arrivi» sta sempre al secondo posto (dopo «Tutte») e ha una pillola in evidenza.
+// Si riconosce dall'indirizzo della categoria: se si rinomina nel pannello va aggiornato qui.
+const NEW_ARRIVALS_SLUG = 'nuovi-arrivi'
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -136,6 +140,12 @@ export default function Catalog() {
     return <Navigate to={`/categoria/${encodeURIComponent(legacyCategory)}`} replace />
   }
 
+  // Ordine delle pillole: «Nuovi arrivi» subito dopo «Tutte», le altre come arrivano dal server.
+  const newArrivals = categories.find((category) => category.slug === NEW_ARRIVALS_SLUG)
+  const pillCategories = newArrivals
+    ? [newArrivals, ...categories.filter((category) => category !== newArrivals)]
+    : categories
+
   const activeCategoryData = categories.find((category) => category.slug === activeCategory)
   const activeCategoryName = activeCategoryData?.name
   const activeBrandData = brands.find((brand) => brand.slug === activeBrand)
@@ -235,16 +245,20 @@ export default function Catalog() {
           >
             Tutte
           </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              className={`pill ${activeCategory === category.slug ? 'active' : ''}`}
-              onClick={() => selectCategory(category.slug)}
-            >
-              {category.name}
-            </button>
-          ))}
+          {pillCategories.map((category) => {
+            const isNew = category.slug === NEW_ARRIVALS_SLUG
+            return (
+              <button
+                key={category.id}
+                type="button"
+                className={`pill ${isNew ? 'pill-new' : ''} ${activeCategory === category.slug ? 'active' : ''}`}
+                onClick={() => selectCategory(category.slug)}
+              >
+                {isNew && <LuSparkles aria-hidden="true" />}
+                {category.name}
+              </button>
+            )
+          })}
         </PillScroller>
 
         {activeBrandData && (
