@@ -74,6 +74,14 @@ banner non compare finché non c'è Google Analytics.
 - `last_login_at`, `login_count` e tabella `user_logins`: storico accessi senza
   IP, conservato 12 mesi, per le statistiche della voce "Utenti" dell'admin
 - Tabella `cookie_consent_stats`: solo totali giornalieri anonimi del banner
+- **Registro degli account eliminati (2026-11-19)**: tabella `account_deletions` (`App\Models\AccountDeletion`),
+  una riga quando il cliente si elimina l'account dal sito: nome, email (minuscola), data di registrazione, se aveva
+  ricevuto il codice di benvenuto, data di eliminazione. Serve a **saperlo** (scheda «Eliminati» dentro Utenti, in
+  sola lettura) e a **non ridare il codice di benvenuto** a chi si riregistra con la stessa email
+  (`WelcomeDiscount::issueFor()`), sul legittimo interesse. Si svuota da sola dopo **12 mesi**
+  (`shop.deletion_log_months`, attività `account-deletions-prune`, ogni notte) ed è dichiarata nel paragrafo 5
+  dell'informativa (`Privacy.jsx`). Limite: con un'email diversa il codice si può riavere. L'account vero **non**
+  resta nel database: si cancella per intero (gli ordini restano senza collegamento, per legge).
 
 ## API
 - `POST /api/register`: `privacy_accepted` obbligatorio (`accepted`),

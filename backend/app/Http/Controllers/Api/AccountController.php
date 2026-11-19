@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AccountDeletion;
+use App\Models\Discount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -58,6 +60,14 @@ class AccountController extends Controller
         }
 
         DB::transaction(function () use ($user) {
+            // Registro minimo dell'eliminazione (vedi AccountDeletion), scritto prima di cancellare l'account.
+            AccountDeletion::create([
+                'name' => $user->name,
+                'email' => $user->email,
+                'registered_at' => $user->created_at,
+                'welcome_code_issued' => Discount::where('user_id', $user->id)->where('kind', Discount::KIND_WELCOME)->exists(),
+            ]);
+
             $user->tokens()->delete();
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
             $user->delete();

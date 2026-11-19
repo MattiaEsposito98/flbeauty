@@ -25,4 +25,11 @@ return [
     */
     'notification_days' => 60,
 
+    /*
+    | Registro degli account eliminati dal cliente (App\Models\AccountDeletion): nome, email e date.
+    | Serve a saperlo e a non ridare il codice di benvenuto a chi si riregistra. Si svuota da solo
+    | dopo questi mesi (ogni notte). Va dichiarato nell'informativa privacy (frontend, Privacy.jsx).
+    */
+    'deletion_log_months' => 12,
+
 ];

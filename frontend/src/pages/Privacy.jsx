@@ -111,6 +111,11 @@ export default function Privacy() {
             Dati dell'account: finché l'account resta attivo. Puoi eliminarlo in ogni momento dal tuo
             profilo ("Elimina account") o chiederci di farlo.
           </li>
+          <li>
+            Dopo l'eliminazione dell'account teniamo per 12 mesi solo nome, email, data di registrazione e di
+            eliminazione, per sapere che è avvenuta e per non assegnare due volte il codice sconto di benvenuto
+            allo stesso indirizzo email (legittimo interesse); poi vengono cancellati.
+          </li>
           <li>Dati degli ordini e documenti fiscali: 10 anni, come previsto dalla legge.</li>
           <li>Consenso alle email promozionali: fino alla revoca.</li>
           <li>Storico degli accessi al tuo account: 12 mesi.</li>

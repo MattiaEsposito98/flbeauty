@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Filament\Resources\AccountDeletions\AccountDeletionResource;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Pages\UserStats;
 use App\Filament\Resources\Users\Pages\ViewUser;
@@ -11,6 +12,7 @@ use App\Filament\Resources\Users\Widgets\CookieBannerStats;
 use App\Filament\Resources\Users\Widgets\TopCitiesChart;
 use App\Filament\Resources\Users\Widgets\UserActivityChart;
 use App\Filament\Resources\Users\Widgets\UsersOverview;
+use App\Models\AccountDeletion;
 use App\Models\User;
 use BackedEnum;
 use Filament\Navigation\NavigationItem;
@@ -75,6 +77,11 @@ class UserResource extends Resource
                 ->icon(Heroicon::OutlinedChartBar)
                 ->url(static::getUrl('statistiche'))
                 ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.statistiche')),
+            NavigationItem::make('Eliminati')
+                ->icon(Heroicon::OutlinedUserMinus)
+                ->url(AccountDeletionResource::getUrl('index'))
+                ->isActiveWhen(fn () => request()->routeIs(AccountDeletionResource::getRouteBaseName().'.index'))
+                ->badge(fn () => AccountDeletion::count() ?: null),
         ];
     }
 

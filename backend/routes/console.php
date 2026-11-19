@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AccountDeletion;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -25,6 +26,11 @@ Schedule::call(fn () => Artisan::call('queue:work', [
 Schedule::call(fn () => Artisan::call('sitemap:generate'))
     ->name('sitemap-generate')
     ->dailyAt('04:00');
+
+// Svuota il registro degli account eliminati dopo `shop.deletion_log_months` mesi (privacy).
+Schedule::call(fn () => AccountDeletion::prune())
+    ->name('account-deletions-prune')
+    ->dailyAt('04:45');
 
 // Cancella le notifiche del sito più vecchie di `shop.notification_days` (60 giorni).
 // Con Schedule::call (non ::command): Aruba blocca proc_open nel cron e il comando esterno falliva ogni notte.

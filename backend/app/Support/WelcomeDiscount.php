@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Mail\WelcomeDiscountMail;
+use App\Models\AccountDeletion;
 use App\Models\Discount;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -26,6 +27,12 @@ class WelcomeDiscount
     public static function issueFor(User $user): ?Discount
     {
         if ($user->is_admin || Discount::where('user_id', $user->id)->where('kind', Discount::KIND_WELCOME)->exists()) {
+            return null;
+        }
+
+        // Chi si era già eliminato un account con questa email dopo aver ricevuto il codice non lo riceve
+        // una seconda volta (registro AccountDeletion, tenuto per shop.deletion_log_months mesi).
+        if (AccountDeletion::hadWelcomeCode($user->email)) {
             return null;
         }
 

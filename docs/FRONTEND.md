@@ -550,7 +550,9 @@ pannello con dati di prova, poi cancellati.
 ## Cambio password ed eliminazione account (nuovo, sessione del 2026-09-28)
 Decisione presa con l'utente: dal profilo si può cambiare **solo la password**;
 nome, username ed email non sono modificabili dal sito. In fondo alla pagina
-account c'è "Elimina account".
+account c'è "Elimina account". L'eliminazione scrive una riga nel **registro degli account eliminati** (visibile da
+admin in Utenti → scheda «Eliminati», 12 mesi; vedi [PRIVACY.md](PRIVACY.md)) e chi si riregistra con la stessa email,
+se aveva già ricevuto il codice di benvenuto, non lo riceve una seconda volta.
 
 - `PUT /api/user/password` (`AccountController::updatePassword`): password
   attuale (`current_password:sanctum`), nuova password (min 8, confermata, diversa
